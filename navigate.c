@@ -48,7 +48,8 @@ void navigate(void)
 	//	Then flip the sign.
 	//	(Yes, it would have been simpler to subtract present from the origin!)
 	
-	accum_nav.WW = ((lat_gps.WW - lat_origin.WW)/90) ; // in meters, range is about 20 miles
+
+	accum_nav.WW = ((lat_gps.WW - lat_origin.WW)/90) ;  // in meters
 	vector_to_origin.y = - accum_nav._.W0 ;
 	GPSlocation.y = accum_nav._.W0 ;
 
@@ -57,11 +58,10 @@ void navigate(void)
 	GPSlocation.z = height ;
 
 	//	multiply the longitude delta by the cosine of the latitude
-	accum_nav.WW = ((long_gps.WW - long_origin.WW)/90) ; // in meters
+	accum_nav.WW = ((long_gps.WW - long_origin.WW)/90) ;  // in meters
 	accum_nav.WW = ((__builtin_mulss ( cos_lat , accum_nav._.W0 )<<2)) ;
 	vector_to_origin.x = - accum_nav._.W1 ;
 	GPSlocation.x = accum_nav._.W1 ;
-
 
 	//	convert to polar to produce
 	bearing_to_origin = rect_to_polar( &vector_to_origin ) ;
@@ -75,19 +75,15 @@ void navigate(void)
 	}
 
 	//	convert course over ground from CW GPS units to mathematical CCW units
-	accum_nav.WW = __builtin_muluu ( COURSEDEG_2_BYTECIR , cog_gps.BB ) ;
+	accum_nav.WW = __builtin_mulss ( COURSEDEG_2_BYTECIR , cog_gps.BB ) ;
 	actual_dir = -accum_nav.__.B2 + 64 ;
 
-//	velocity_3D.x = sog_gps.BB ;
-//	velocity_3D.y = climb_gps.BB ;
-//	GPS_pitch = rect_to_polar( &velocity_3D ) ;
 	velocity_magnitude = sog_gps.BB ;
 	forward_acceleration = velocity_magnitude - velocity_previous ;
 	velocity_previous = velocity_magnitude ;
 
 	accum_velocity.WW = __builtin_mulss( cosine( actual_dir ) , velocity_magnitude) << 2 ;
 	GPSvelocity.x = accum_velocity._.W1 ;
-
 
 	accum_velocity.WW = __builtin_mulss( sine( actual_dir ) , velocity_magnitude) << 2 ;
 	GPSvelocity.y = accum_velocity._.W1 ;
