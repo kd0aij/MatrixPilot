@@ -11,6 +11,10 @@
 
 #include "p30f4011.h"
 #include "defines.h"
+#include "definesRmat.h"
+
+extern union intbb		u_dot_sim, v_dot_sim, w_dot_sim; 
+extern union intbb		p_sim, q_sim, r_sim; 
 
 //	All numbers are stored in 2.14 format.
 //	Vector and matrix libraries work in 1.15 format.
@@ -20,19 +24,12 @@
 #define GGAIN SCALEGYRO*6*(RMAX*0.025)		//	integration multiplier for gyros 15mv/degree/sec
 fractional ggain = GGAIN ;
 
+//Paul's gains:
+#define KPROLLPITCH 256*10
+#define KIROLLPITCH 256*2
 
-#define KPROLLPITCH 256*10 // Paul's gains
-#define KIROLLPITCH 256*2 // Paul's gains
-
-#define KPYAW 256*4 // Paul's gains
-#define KIYAW 32 // Paul's gains
-
-
-//#define KPROLLPITCH 256*50 
-//#define KIROLLPITCH 256*20
-
-//#define KPYAW 256*10
-//#define KIYAW 256
+#define KPYAW 256*4
+#define KIYAW 32
 
 
 #define GYROSAT 15000
@@ -43,9 +40,7 @@ fractional ggain = GGAIN ;
 //	The columns of rmat are the axis vectors of the plane,
 //	as measured in the earth reference frame.
 //	rmat is initialized to the identity matrix in 2.14 fractional format
-fractional rmat[] = { RMAX , 0 , 0 , 0  , RMAX  , 0 , 0, 0, RMAX  } ;
-//fractional rmat[] = { 0 , 0 , RMAX , -RMAX , 0 , 0 , 0  , -RMAX  , 0  } ;
-
+fractional rmat[] = { RMAX , 0 , 0 , 0 , RMAX , 0 , 0 , 0 , RMAX } ;
 
 //	rup is the rotational update matrix.
 //	At each time step, the new rmat is equal to the old one, multiplied by rup.
@@ -58,8 +53,6 @@ fractional omega[] = { 0 , 0 , 0 } ;
 //	gyro correction vectors:
 fractional omegacorrP[] = { 0 , 0 , 0 } ;
 fractional omegacorrI[] = { 0 , 0 , 0 } ;
-
-#define LONGMAX 0x7FFFFFFF
 
 //	correction vector integrators ;
 union longww CorrectionIntegral[] =  { { 0 } , { 0 } ,  { 0 } } ;
@@ -112,15 +105,11 @@ void VectorCross( fractional * dest , fractional * src1 , fractional * src2 )
 }
 
 // the compiler does not respect the resource used by the Microchip math
-// library, so interrupts should be temporarily suspended
-void interruptsOff(void)
+// library, so interrupts need to save and restore extended state, and
+// reset CORCON if firing in the middle of a math lib call.
+void setDSPLibInUse(boolean inUse)
 {
-	__asm__("DISI #1000");
-	return ;
-}
-void interruptsOn(void)
-{
-	DISICNT = 0 ;
+	needSaveExtendedState = inUse ;
 	return ;
 }
 
@@ -136,32 +125,29 @@ void read_gyros()
 	vref_adj = 0 ;
 #endif
 
+#if (HILSIM == 1)
+	gx = omegagyro[0] = q_sim.BB;
+	gy = omegagyro[1] = p_sim.BB;
+	gz = omegagyro[2] = r_sim.BB;  
+#else
 	gx = omegagyro[0] = XSIGN ((xrate.value>>1) - (xrate.offset>>1) + vref_adj) ;
-//	omegagyro[0] += 0 ;
 	gy = omegagyro[1] = YSIGN ((yrate.value>>1) - (yrate.offset>>1) + vref_adj) ;
-//	omegagyro[1] += 0 ;
 	gz = omegagyro[2] = ZSIGN ((zrate.value>>1) - (zrate.offset>>1) + vref_adj) ;
-//	omegagyro[2] += 256 ;
-//	gx=gy=gz= 0 ;
-
-	if ( 	( gx < GYROSAT ) && ( gx > - GYROSAT )
-			&&( gy < GYROSAT ) && ( gy > - GYROSAT )
-			&&( gz < GYROSAT ) && ( gz > - GYROSAT )  )
-	{
-		LATFbits.LATF0 = 1 ;
-	}
-	else
-	{
-		LATFbits.LATF0 = 0 ;
-	}
+#endif
 	return ;
 }
 
 void read_accel()
 {
+#if (HILSIM == 1)
+	gplane[0] = v_dot_sim.BB;
+	gplane[1] = u_dot_sim.BB; 
+	gplane[2] = w_dot_sim.BB;
+#else
 	gplane[0] =   ( xaccel.value>>1 ) - ( xaccel.offset>>1 ) ;
 	gplane[1] =   ( yaccel.value>>1 ) - ( yaccel.offset>>1 ) ;
 	gplane[2] =   ( zaccel.value>>1 ) - ( zaccel.offset>>1 ) ;
+#endif
 	return ;
 }
 
@@ -171,7 +157,7 @@ int omegaSOG ( int omega , unsigned int speed  )
 	union longww working ;
 	speed = speed>>3 ;
 	working.WW = __builtin_mulsu( omega , speed ) ;
-	if ( working._.W1 > CENTRIFSAT )
+	if ( ((int)working._.W1 )> ((int)CENTRIFSAT) )
 	{
 		return RMAX ;
 	}
@@ -188,15 +174,16 @@ int omegaSOG ( int omega , unsigned int speed  )
 	}
 }
 
-extern int velocity_magnitude ;
-extern signed char computed_cog ;
-extern int forward_acceleration ;
-
 void adj_accel()
 {
-	gplane[0]=gplane[0] - omegaSOG( omegaAccum[2] , (unsigned int) velocity_magnitude ) ;
-	gplane[1]=gplane[1] + forward_acceleration ;
-	gplane[2]=gplane[2] + omegaSOG( omegaAccum[0] , (unsigned int) velocity_magnitude ) ;
+	gplane[0]=gplane[0]- omegaSOG( omegaAccum[2] , (unsigned int) sog_gps.BB ) ;
+//	gplane[1]=gplane[1] ;
+	gplane[2]=gplane[2]+ omegaSOG( omegaAccum[0] , (unsigned int) sog_gps.BB ) ;
+	
+//	gplane[0]=gplane[0]- omegaSOG( omegaAccum[2] , (unsigned int) velocity_magnitude ) ;
+	gplane[1]=gplane[1]+ ACCELSCALE*forward_acceleration ;
+//	gplane[2]=gplane[2]+ omegaSOG( omegaAccum[0] , (unsigned int) velocity_magnitude ) ;
+	
 	return ;
 }
 
@@ -206,7 +193,7 @@ void rupdate(void)
 //	on the direction cosine matrix, based on the gyro vector and correction.
 //	It uses vector and matrix routines furnished by Microchip.
 {
-	interruptsOff();
+	setDSPLibInUse(true) ;
 	VectorAdd( 3 , omegaAccum , omegagyro , omegacorrI ) ;
 	VectorAdd( 3 , omega , omegaAccum , omegacorrP ) ;
 	//	scale by the integration factor:
@@ -222,7 +209,7 @@ void rupdate(void)
 	MatrixMultiply( 3 , 3 , 3 , rbuff , rmat , rup ) ;
 	//	multiply by 2 and copy back from rbuff to rmat:
 	MatrixAdd( 3 , 3 , rmat , rbuff , rbuff ) ; 
-	interruptsOn() ;
+	setDSPLibInUse(false) ;
 	return ;
 }
 
@@ -236,7 +223,7 @@ void normalize(void)
 {
 	fractional norm ; // actual magnitude
 	fractional renorm ;	// renormalization factor
-	interruptsOff() ;
+	setDSPLibInUse(true) ;
 	//	compute -1/2 of the dot product between rows 1 and 2
 	error =  - VectorDotProduct( 3 , &rmat[0] , &rmat[3] ) ; // note, 1/2 is built into 2.14
 	//	scale rows 1 and 2 by the error
@@ -265,15 +252,15 @@ void normalize(void)
 	renorm = RMAX15 - norm ;
 	VectorScale( 3 , &rbuff[6] , &rbuff[6] , renorm ) ;
 	VectorAdd( 3 , &rmat[6] , &rbuff[6] , &rbuff[6] ) ;
-	interruptsOn() ;
+	setDSPLibInUse(false) ;
 	return ;
 }
 
 void roll_pitch_drift()
 {
-	interruptsOff() ;
+	setDSPLibInUse(true) ;
 	VectorCross( errorRP , gplane , &rmat[6] ) ;
-	interruptsOn() ;
+	setDSPLibInUse(false) ;
 	return ;
 }
 
@@ -282,13 +269,9 @@ void yaw_drift()
 	//	although yaw correction is done in horizontal plane,
 	//	this is done in 3 dimensions, just in case we change our minds later
 	//	form the horizontal direction over ground based on rmat
-	interruptsOff() ;
+	setDSPLibInUse(true) ;
 	if (flags._.yaw_req )
-//	if ( 1 )
 	{
-//		dirovergndHGPS[0] = RMAX ;
-//		dirovergndHGPS[1] = 0 ;
-//		dirovergndHGPS[2] = 0 ;		
 		//	vector cross product to get the rotation error in ground frame
 		VectorCross( errorYawground , dirovergndHRmat , dirovergndHGPS ) ;
 		//	convert to plane frame:
@@ -297,20 +280,24 @@ void yaw_drift()
 
 		flags._.yaw_req = 0 ;
 	}
-	interruptsOn();
+	setDSPLibInUse(false) ;
 	return ;
 }
 
 void PI_feedback(void)
 {
 	fractional errorRPScaled[3] ;
-	interruptsOff();
+	
+	setDSPLibInUse(true) ;
+	
 	VectorAdd( 3 , errorTotal , errorRP , errorYawplane ) ;
 
 	VectorScale( 3 , omegacorrP , errorYawplane , KPYAW ) ;
 	VectorScale( 3 , errorRPScaled , errorRP , KPROLLPITCH ) ;
 	VectorAdd( 3 , omegacorrP , omegacorrP , errorRPScaled ) ;
 
+	setDSPLibInUse(false) ;
+	
 	CorrectionIntegral[0].WW += ( __builtin_mulss( errorRP[0] , KIROLLPITCH )>>3) ;
 	CorrectionIntegral[1].WW += ( __builtin_mulss( errorRP[1] , KIROLLPITCH )>>3) ;
 	CorrectionIntegral[2].WW += ( __builtin_mulss( errorRP[2] , KIROLLPITCH )>>3) ;
@@ -323,33 +310,16 @@ void PI_feedback(void)
 	omegacorrI[1] = CorrectionIntegral[1]._.W1>>3 ;
 	omegacorrI[2] = CorrectionIntegral[2]._.W1>>3 ;
 	
-	interruptsOn();
-}
-
-int pitchrate = 0 ;
-
-#define PITCHKD 0.5
-int pitchkd = (int) (PITCHKD*RMAX) ;
-
-void r7dot( void )
-{
-	union longww accum ;
-	accum.WW = (	__builtin_mulss( rmat[8] , omegaAccum[0] ) 
-				- __builtin_mulss( rmat[6] , omegaAccum[2] )) << 2;
-	pitchrate = accum._.W1 ;
 	return ;
 }
 
+/*
 void output_matrix(void)
 //	This routine makes the direction cosine matrix evident
 //	by setting the three servos to the three values in the
 //	matrix.
 {
 	union longww accum ;
-	
-	int output ;
-
-//	int pitchrateout ;
 	accum.WW = __builtin_mulss( rmat[6] , 4000 ) ;
 	PDC1 = 3000 + accum._.W1 ;
 	accum.WW = __builtin_mulss( rmat[7] , 4000 ) ;
@@ -357,29 +327,11 @@ void output_matrix(void)
 	accum.WW = __builtin_mulss( rmat[4] , 4000 ) ;
 	PDC3 = 3000 + accum._.W1 ;
 
-//	accum.WW = __builtin_mulss( pitchkd , pitchrate ) ;
-//	pitchrateout = accum._.W1 + 3000 ;
-//	if ( pitchrateout > 4000 ) pitchrateout = 4000 ;
-//	if ( pitchrateout < 2000 ) pitchrateout = 2000 ;
-//	PDC3 = pitchrateout ;
-
-//	accum.WW = __builtin_mulss( rmat[7] , 4000 ) ;
-//	PDC1 = 3000 + accum._.W1 ;
-
-//	output = ((gplane[1])>>1)+3000 ;
-//	if ( output > 4000 ) output = 4000 ;
-//	if ( output < 2000 ) output = 2000 ;
-//	PDC2 = output ;
-
-//	output = ((forward_acceleration)>>1)+3000 ;
-//	if ( output > 4000 ) output = 4000 ;
-//	if ( output < 2000 ) output = 2000 ;
-//	PDC3 = output ;	
-
 	return ;
 }
+*/
 
-void imu_demo(void)
+void imu(void)
 //	Read the gyros and accelerometers, 
 //	update the matrix, renormalize it, 
 //	adjust for roll and pitch drift,
@@ -387,14 +339,16 @@ void imu_demo(void)
 {
 	read_gyros() ;
 	read_accel() ;
+#if (HILSIM != 1)
 	adj_accel() ;
+#endif
 	rupdate() ;
 	normalize() ;
 	roll_pitch_drift() ;
 	yaw_drift() ;
 	PI_feedback() ;
-	r7dot() ;
-	output_matrix() ;	
+//	output_matrix() ;
+	
 	return ;
 }
 
