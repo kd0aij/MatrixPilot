@@ -1,0 +1,104 @@
+#include "libUDB_internal.h"
+
+//	Analog to digital processing.
+//	Sampling and conversion is done automatically, so that all that needs to be done during 
+//	interrupt processing is to read the data out of the buffer.
+//	Raw samples are taken approximately 500 per second per channel.
+//	A first order digital lowpass filter with a time constant of about 32 milliseconds 
+//  is applied to improve signal to noise.
+
+//	Variables.
+
+struct ADchannel udb_xaccel, udb_yaccel , udb_zaccel ; // x, y, and z accelerometer channels
+struct ADchannel udb_xrate , udb_yrate, udb_zrate ;  // x, y, and z gyro channels
+struct ADchannel udb_vref ; // reference voltage
+
+int firstsamp ; // used on startup to detect first A/D sample
+
+
+void udb_init_ADC( void )
+{
+	TRISB =  0b0000000111111111 ; // all inputs
+	ADCON1 = 0b0010001111100100 ; // signed fractional , auto convert , seq, auto samp
+//	ADCON2 = 0b0000010000011000 ; // supply ref, scana ch0, int every 7, 16word, usa A only
+	ADCON2 = ADCON2CONFIG ;
+//	ADCON3 = 0b0001111100111111 ; // slowest possible, approximately 500 samples per second for each channel
+	ADCON3 = 0b0000001100111111 ;
+	ADCHS  = 0b0000000000000001 ; // channel AN1
+	ADPCFG = 0b1111111000110000 ; // analog inputs on 8 7 6 3 2 1 0
+	ADCSSL = 0b0000000111001111 ; 
+	
+	firstsamp = 1 ;
+	
+	IFS0bits.ADIF = 0 ; 	// clear the AD interrupt
+	IPC2bits.ADIP = 5 ;     // priority 5
+	IEC0bits.ADIE = 1 ;     // enable the interrupt
+	ADCON1bits.ADON = 1 ;	// turn on the A to D
+	return ;
+}
+
+
+void udb_a2d_record_offsets(void)
+{
+	// almost ready to turn the control on, save the input offsets
+	udb_xaccel.offset = udb_xaccel.value ;
+	udb_xrate.offset = udb_xrate.value ;
+	udb_yaccel.offset = udb_yaccel.value ;
+	udb_yrate.offset = udb_yrate.value ;
+	udb_zaccel.offset = udb_zaccel.value - 2*GRAVITY ; // GRAVITY is measured in A-D/2 units
+	udb_zrate.offset = udb_zrate.value ;
+#ifdef VREF
+	udb_vref.offset = udb_vref.value ;
+#endif
+	return ;
+}
+
+
+void __attribute__((__interrupt__,__no_auto_psv__)) _ADCInterrupt(void)
+{
+	interrupt_save_extended_state ;
+	
+	indicate_loading_inter ;
+	
+	udb_xrate.input =  xrateBUFF  ;
+	udb_yrate.input =  yrateBUFF  ;
+	udb_zrate.input =  zrateBUFF ;
+#ifdef VREF
+	udb_vref.input  =   vrefBUFF ;
+#endif
+	udb_xaccel.input =   xaccelBUFF ;
+	udb_yaccel.input =   yaccelBUFF ;
+	udb_zaccel.input =   zaccelBUFF ;
+	if ( firstsamp )	// use the first sample to initialize the filters
+	{
+		firstsamp = 0 ;
+		udb_xaccel.value = udb_xaccel.input ;
+		udb_yaccel.value = udb_yaccel.input ;
+		udb_zaccel.value = udb_zaccel.input ;
+#ifdef VREF
+		udb_vref.value   = udb_vref.input ;
+#endif
+		udb_xrate.value = udb_xrate.input ;
+		udb_yrate.value = udb_yrate.input ;
+		udb_zrate.value = udb_zrate.input ;
+		IEC2bits.PWMIE = 1 ;     // enable the PWM interrupt
+	}
+	else
+	{
+		// perform just a little bit of filtering to improve signal to noise
+ 	    udb_xaccel.value = udb_xaccel.value + (( (udb_xaccel.input>>1) - (udb_xaccel.value>>1) )>> FILTERSHIFT ) ;
+	    udb_xrate.value = udb_xrate.value + (( (udb_xrate.input>>1) - (udb_xrate.value>>1) )>> FILTERSHIFT ) ;
+	    udb_yaccel.value = udb_yaccel.value + (( ( udb_yaccel.input>>1) - (udb_yaccel.value>>1) )>> FILTERSHIFT ) ;
+	    udb_yrate.value = udb_yrate.value + (( (udb_yrate.input>>1) - (udb_yrate.value>>1) )>> FILTERSHIFT ) ;
+	    udb_zaccel.value = udb_zaccel.value + (( (udb_zaccel.input>>1) - (udb_zaccel.value>>1) )>> FILTERSHIFT ) ;
+	    udb_zrate.value = udb_zrate.value + ((( udb_zrate.input>>1) - (udb_zrate.value>>1) )>> FILTERSHIFT ) ;
+#ifdef VREF
+		udb_vref.value = udb_vref.value + (( (udb_vref.input>>1) - (udb_vref.value>>1) )>> FILTERSHIFT ) ;
+#endif
+	}
+	
+	IFS0bits.ADIF = 0 ; 	// clear the AD interrupt
+	
+	interrupt_restore_extended_state ;
+	return ;
+}
