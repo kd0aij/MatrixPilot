@@ -666,10 +666,7 @@ boolean process_one_instruction( struct logoInstructionDef instr )
 					int ind = get_current_stack_parameter_frame_index() ;
 					if (ind >= 0)
 					{
-						if (instr.arg != 0) // Avoid divide by 0
-						{
-							logoStack[ind].arg /= instr.arg ;
-						}
+						logoStack[ind].arg /= instr.arg ;
 					}
 					break ;
 				}
