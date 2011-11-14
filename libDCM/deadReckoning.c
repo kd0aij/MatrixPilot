@@ -161,6 +161,8 @@ void dead_reckon(void)
 	energy.WW += IMUlocationz.WW ;
 	total_energy = energy._.W1 ;
 	
+	estimatedWind[2] = (( IMUvelocityz.WW + ( __builtin_mulsu ( rmat[7] , air_speed_3DIMU ) << 2 ) ) >> 16 )   ;
+
 	return ;
 }
 
