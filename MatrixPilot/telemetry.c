@@ -20,14 +20,8 @@
 
 
 #include "defines.h"
+
 #include "../libDCM/libDCM_internal.h" // Needed for access to internal DCM values
-
-//Note:  The trap flags need to be moved out of telemetry.c and mavlink.c
-volatile int trap_flags __attribute__ ((persistent));
-volatile long trap_source __attribute__ ((persistent));
-volatile int osc_fail_count __attribute__ ((persistent));
-
-#if (SERIAL_OUTPUT_FORMAT != SERIAL_MAVLINK) // All MAVLink telemetry code is in MAVLink.c
 
 #define _ADDED_C_LIB 1 // Needed to get vsnprintf()
 #include <stdio.h>
@@ -454,7 +448,7 @@ void serial_output_8hz( void )
 
 #elif ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB || SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA )
 
-int telemetry_counter = 8 ;
+int telemetry_counter = 6 ;
 
 #if ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA )
 int pwIn_save[NUM_INPUTS + 1] ;
@@ -482,33 +476,19 @@ void serial_output_8hz( void )
 	switch (telemetry_counter)
 	{
 		// The first lines of telemetry contain info about the compile-time settings from the options.h file
-		case 8:
+		case 6:
 			if ( _SWR == 0 )
 			{
 				// if there was not a software reset (trap error) clear the trap data
 				trap_flags = trap_source = osc_fail_count = 0 ;
 			}
 			serial_output("\r\nF14:WIND_EST=%i:GPS_TYPE=%i:DR=%i:BOARD_TYPE=%i:AIRFRAME=%i:RCON=0x%X:TRAP_FLAGS=0x%X:TRAP_SOURCE=0x%lX:ALARMS=%i:"  \
-							"CLOCK=%i:FP=%d\r\n",
-				WIND_ESTIMATION, GPS_TYPE, DEADRECKONING, BOARD_TYPE, AIRFRAME_TYPE, RCON , trap_flags , trap_source , osc_fail_count, CLOCK_CONFIG, FLIGHT_PLAN_TYPE ) ;
+							"CLOCK=%i:\r\n",
+				WIND_ESTIMATION, GPS_TYPE, DEADRECKONING, BOARD_TYPE, AIRFRAME_TYPE, RCON , trap_flags , trap_source , osc_fail_count, CLOCK_CONFIG ) ;
 				RCON = 0 ;
 				trap_flags = 0 ;
 				trap_source = 0 ;
 				osc_fail_count = 0 ;
-			break ;
-		case 7:
-			serial_output("F15:IDA=");
-			serial_output(ID_VEHICLE_MODEL_NAME );
-			serial_output(":IDB=");
-			serial_output(ID_VEHICLE_REGISTRATION );
-			serial_output(":\r\n" );
-			break ;
-		case 6:
-			serial_output("F16:IDC=" );
-			serial_output( ID_LEAD_PILOT );
-			serial_output( ":IDD=");
-			serial_output( ID_DIY_DRONES_URL );
-			serial_output(":\r\n") ;
 			break ;
 		case 5:
 			serial_output("F4:R_STAB_A=%i:R_STAB_RD=%i:P_STAB=%i:Y_STAB_R=%i:Y_STAB_A=%i:AIL_NAV=%i:RUD_NAV=%i:AH_STAB=%i:AH_WP=%i:RACE=%i:\r\n",
@@ -591,8 +571,8 @@ void serial_output_8hz( void )
 					serial_output("p%ii%i:",i,pwIn_save[i]);
 				for (i= 1; i <= NUM_OUTPUTS; i++)
 					serial_output("p%io%i:",i,pwOut_save[i]);
-				serial_output("imx%i:imy%i:imz%i:fgs%X:ofc%i:tx%i:ty%i:tz%i:G%d,%d,%d:",IMUlocationx._.W1 ,IMUlocationy._.W1 ,IMUlocationz._.W1,
-					 flags.WW, osc_fail_count, IMUvelocityx._.W1, IMUvelocityy._.W1, IMUvelocityz._.W1, goal.x, goal.y, goal.height );
+				serial_output("imx%i:imy%i:imz%i:fgs%X:ofc%i:",IMUlocationx._.W1 ,IMUlocationy._.W1 ,IMUlocationz._.W1,
+					 flags.WW, osc_fail_count );
 #if (RECORD_FREE_STACK_SPACE == 1)
 				serial_output("stk%d:", (int)(4096-maxstack));
 #endif
@@ -716,4 +696,3 @@ void serial_output_8hz( void )
 }
 
 #endif
-#endif //  (SERIAL_OUTPUT_FORMAT != SERIAL_MAVLINK)
