@@ -8,7 +8,7 @@ dir_src=
 dir_bin=
 dir_tmp=build/udb4
 dir_sin=
-dir_inc=.
+dir_inc=C:\Program Files\Microchip\mplabc30\v3.30c\support\dsPIC33F\h;.
 dir_lib=C:\Program Files\Microchip\MPLAB C30\lib
 dir_lkr=
 [CAT_FILTERS]
@@ -158,7 +158,7 @@ file_028=..\libDCM\libDCM_internal.h
 file_029=..\libUDB\ConfigIXZ500RAD2a.h
 file_030=..\libUDB\ConfigUDB4.h
 file_031=..\libUDB\boardRotation_defines.h
-file_032=C:\Program Files\Microchip\MPLAB C30\lib\libdsp-coff.a
+file_032=C:\Program Files\Microchip\mplabc30\v3.30c\lib\libdsp-coff.a
 [SUITE_INFO]
 suite_guid={479DDE59-4D56-455E-855E-FFF59A3DB57E}
 suite_state=

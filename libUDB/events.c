@@ -25,9 +25,15 @@
 #include "events.h"
 #include "libUDB_internal.h"
 
+#if (BOARD_TYPE != MADRE_BOARD)
 #define _EVENT_TRIGGERIP _C2IP
 #define _EVENT_TRIGGERIF _C2IF
 #define _EVENT_TRIGGERIE _C2IE
+#else
+#define _EVENT_TRIGGERIP _C1IP
+#define _EVENT_TRIGGERIF _C1IF
+#define _EVENT_TRIGGERIE _C1IE
+#endif
 
 #define MAX_EVENTS	32
 
@@ -87,7 +93,11 @@ void init_events(void)	/* initialize events handler */
 
 
 //  process EVENT TRIGGER interrupt = software interrupt
+#if (BOARD_TYPE != MADRE_BOARD)
 void __attribute__((__interrupt__,__no_auto_psv__)) _C2Interrupt(void) 
+#else
+void __attribute__((__interrupt__,__no_auto_psv__)) _C1Interrupt(void) 
+#endif
 {
 	indicate_loading_inter ;
 	interrupt_save_set_corcon ;

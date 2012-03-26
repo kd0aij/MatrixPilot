@@ -45,7 +45,7 @@ int main (void)
 	udb_init() ;
 	dcm_init() ;
 	
-	udb_serial_set_rate(19200) ;
+	udb_serial_set_rate(57600) ;
 	
 	LED_GREEN = LED_OFF ;
 	
@@ -62,12 +62,12 @@ void udb_background_callback_periodic(void)
 	if (!dcm_flags._.calib_finished)
 	{
 		// If still calibrating, blink RED
-		udb_led_toggle(LED_RED) ;
+		udb_led_toggle(LED_GREEN) ;
 	}
 	else
 	{
 		// No longer calibrating: solid RED and send debug output
-		LED_RED = LED_ON ;
+		LED_GREEN = LED_OFF ;
 	}
 	
 	return ;
@@ -78,7 +78,7 @@ void udb_background_callback_periodic(void)
 void dcm_callback_gps_location_updated(void)
 {
 	// Blink GREEN led to show that the GPS is communicating
-	udb_led_toggle(LED_GREEN) ;
+//	udb_led_toggle(LED_GREEN) ;
 	return ;
 }
 
@@ -88,22 +88,24 @@ void dcm_servo_callback_prepare_outputs(void)
 {
 	if (!dcm_flags._.calib_finished)
 	{
-		udb_pwOut[ROLL_OUTPUT_CHANNEL] = 3000 ;
-		udb_pwOut[PITCH_OUTPUT_CHANNEL] = 3000 ;
-		udb_pwOut[YAW_OUTPUT_CHANNEL] = 3000 ;
+		udb_pwOut[ROLL_OUTPUT_CHANNEL] = SERVOCENTER ;
+		udb_pwOut[PITCH_OUTPUT_CHANNEL] = SERVOCENTER ;
+		udb_pwOut[3] = SERVOCENTER ;		
+		udb_pwOut[YAW_OUTPUT_CHANNEL] = SERVOCENTER ;
+		udb_pwOut[5] = SERVOCENTER ;
 	}
 	else
 	{
 		union longww accum ;
 		
-		accum.WW = __builtin_mulss( rmat[6] , 4000 ) ;
-		udb_pwOut[ROLL_OUTPUT_CHANNEL] = udb_servo_pulsesat(3000 + accum._.W1) ;
+		accum.WW = __builtin_mulss( rmat[6] , 10000 ) ;
+		udb_pwOut[ROLL_OUTPUT_CHANNEL] = udb_servo_pulsesat(SERVOCENTER + accum._.W1) ;
 		
-		accum.WW = __builtin_mulss( rmat[7] , 4000 ) ;
-		udb_pwOut[PITCH_OUTPUT_CHANNEL] = udb_servo_pulsesat(3000 + accum._.W1) ;
+		accum.WW = __builtin_mulss( rmat[7] , 10000 ) ;
+		udb_pwOut[PITCH_OUTPUT_CHANNEL] = udb_servo_pulsesat(SERVOCENTER + accum._.W1) ;
 		
-		accum.WW = __builtin_mulss( rmat[4] , 4000 ) ;
-		udb_pwOut[YAW_OUTPUT_CHANNEL] = udb_servo_pulsesat(3000 + accum._.W1) ;
+		accum.WW = __builtin_mulss( rmat[4] , 10000 ) ;
+		udb_pwOut[YAW_OUTPUT_CHANNEL] = udb_servo_pulsesat(SERVOCENTER + accum._.W1) ;
 	}
 	
 	// Serial output at 2Hz  (40Hz / 20)
@@ -111,7 +113,7 @@ void dcm_servo_callback_prepare_outputs(void)
 	{
 		if (dcm_flags._.calib_finished)
 		{
-			send_debug_line() ;
+//			send_debug_line() ;
 		}
 	}
 	
@@ -122,13 +124,33 @@ void dcm_servo_callback_prepare_outputs(void)
 // Prepare a line of serial output and start it sending
 void send_debug_line( void )
 {
+	extern unsigned char magreg[6] ;
+	extern unsigned char accreg[6] ;
+	extern int magFieldRaw[3] ;
+	extern int accMeasureRaw[3];
+	extern int gyroMeasureRaw[3];
+	extern int udb_magFieldBody[3] ; 
+	extern int magMessage;
+	extern int I2C1_ERROR;
+	static unsigned int i = 0;
 	db_index = 0 ;
-	sprintf( debug_buffer , "lat: %li, long: %li, alt: %li\r\nrmat: %i, %i, %i, %i, %i, %i, %i, %i, %i\r\n" , 
+/*	sprintf( debug_buffer , "lat: %li, long: %li, alt: %li\r\nrmat:\t %i, %i, %i,\r\n\t %i,\t %i,\t %i,\r\n\t %i,\t %i,\t %i\r\n" , 
 		lat_gps.WW , long_gps.WW , alt_sl_gps.WW , 
 		rmat[0] , rmat[1] , rmat[2] , 
 		rmat[3] , rmat[4] , rmat[5] , 
 		rmat[6] , rmat[7] , rmat[8]  ) ; 
-	
+*/
+//	sprintf( debug_buffer , "mag raw:%u, %i, %i\t\t %i, %i\t\t %i, %i\r\n",i++, magreg[0], magreg[1], magreg[2], magreg[3], magreg[4], magreg[5] ) ;	
+//	sprintf( debug_buffer , "acc raw:%u, %X, %X\t\t %X, %X\t\t %X, %X\r\n",i++, accreg[0], accreg[1], accreg[2], accreg[3], accreg[4], accreg[5] ) ;	
+///	sprintf( debug_buffer , "magFieldRaw:%u, %i, %i, %i\r\n",i++, magFieldRaw[0], magFieldRaw[1], magFieldRaw[2] ) ;	
+//	sprintf( debug_buffer , "accMeasureRaw:%u, %i, %i, %i\r\n",i++, accMeasureRaw[0], accMeasureRaw[1], accMeasureRaw[2] ) ;	
+	sprintf( debug_buffer , "gyroMeasureRaw:%u, %i, %i, %i\r\n",i++, gyroMeasureRaw[0], gyroMeasureRaw[1], gyroMeasureRaw[2] ) ;	
+//	sprintf( debug_buffer , "I2C1STAT:%u, %X\r\n",i++, I2C1STAT ) ;
+//	I2C1_ERROR = 0;	
+//	sprintf( debug_buffer , "%u\tI2C1CON: %X\tI2C1STAT: %X\r\n",i++, I2C1CON, I2C1STAT ) ;	
+//	sprintf( debug_buffer , "magFieldBody:%u, %i, %i, %i\r\n",i++, udb_magFieldBody[0], udb_magFieldBody[1], udb_magFieldBody[2] ) ;	
+//	sprintf( debug_buffer , "mag message:%u, %i \r\n",i++, magMessage ) ;	
+
 	udb_serial_start_sending_data() ;
 	
 	return ;

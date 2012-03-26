@@ -20,6 +20,7 @@
 
 #include "libUDB_internal.h"
 
+#if (BOARD_TYPE == UDB4_BOARD)
 
 #define SCL			PORTGbits.RG2		// I2C Clock PORTG pin 2
 #define SDA			PORTGbits.RG3		// I2C Data PORTG pin 3
@@ -276,3 +277,4 @@ void eeprom_SequentialRead(unsigned int address, unsigned char *data, unsigned i
     }
     bstop();                        // Generate Stop condition
 }
+#endif // #if (BOARD_TYPE == UDB4_BOARD)

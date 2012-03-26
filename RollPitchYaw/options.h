@@ -37,7 +37,8 @@
 // AUAV1_BOARD - Nick Arsov's UDB3 clone, version one
 // See the MatrixPilot wiki for more details on different UDB boards.
 // If building for UDB4, use the RollPitchYaw-udb4.mcp project file.
-#define BOARD_TYPE 							UDB3_BOARD
+// If building for MADRE, use the RollPitchYaw-madre.mcp project file.
+#define BOARD_TYPE 							MADRE_BOARD
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +70,7 @@
 
 // Define MAG_YAW_DRIFT to be 1 to use magnetometer for yaw drift correction.
 // Otherwise, if set to 0 the GPS will be used.
-#define MAG_YAW_DRIFT 						0
+#define MAG_YAW_DRIFT 						1
 
 // Set this to 1 if you want the UAV Dev Board to fly your plane without a radio transmitter or
 // receiver. (Totally autonomous.)  This is just meant for debugging.  It is not recommended that
@@ -91,7 +92,7 @@
 //   4 also enables E0 as the 4th output channel
 //   5 also enables E2 as the 5th output channel
 //   6 also enables E4 as the 6th output channel
-#define NUM_OUTPUTS	3
+#define NUM_OUTPUTS	5
 
 // Channel numbers for each output
 // Use as is, or edit to match your setup.
@@ -102,9 +103,9 @@
 // connect THROTTLE_OUTPUT_CHANNEL to one of the built-in Outputs (1, 2, or 3) to make
 // sure your board gets power.
 // 
-#define ROLL_OUTPUT_CHANNEL					CHANNEL_1
-#define PITCH_OUTPUT_CHANNEL				CHANNEL_2
-#define YAW_OUTPUT_CHANNEL					CHANNEL_3
+#define ROLL_OUTPUT_CHANNEL					1
+#define PITCH_OUTPUT_CHANNEL				2
+#define YAW_OUTPUT_CHANNEL					4
 
 
 ////////////////////////////////////////////////////////////////////////////////

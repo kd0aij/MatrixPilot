@@ -22,7 +22,7 @@
 #include "libUDB_internal.h"
 #include "../libDCM/libDCM.h"
 
-#if (BOARD_TYPE == UDB4_BOARD)
+#if (BOARD_TYPE == UDB4_BOARD)							// UDB4
 
 #define SERVO_OUT_PIN_1			_LATD0
 #define SERVO_OUT_PIN_2			_LATD1
@@ -38,8 +38,18 @@
 
 #define SCALE_FOR_PWM_OUT(x)	(x)
 
+#elif (BOARD_TYPE == MADRE_BOARD)						// MADRE
+#define SERVO_OUT_PIN_1			_LATA8
+#define SERVO_OUT_PIN_2			_LATB4
+#define SERVO_OUT_PIN_3			_LATA4
+#define SERVO_OUT_PIN_4			_LATA9
+#define SERVO_OUT_PIN_5			_LATC3
 
-#else //#if (BOARD_IS_CLASSIC_UDB == 1)
+#define ACTION_OUT_PIN			SERVO_OUT_PIN_3
+
+#define SCALE_FOR_PWM_OUT(x)	(x)
+
+#else 													//#if (BOARD_IS_CLASSIC_UDB == 1)
 
 #define SERVO_OUT_PIN_1			_LATE1
 #define SERVO_OUT_PIN_2			_LATE3
@@ -97,7 +107,7 @@ void udb_init_pwm( void )	// initialize the PWM
 	{
 		// Set up Timer 4.  Use it to send PWM outputs manually, at high priority.
 		T4CON = 0b1000000000000000  ;		// turn on timer 4 with no prescaler
-#if ( (BOARD_IS_CLASSIC_UDB == 1 && CLOCK_CONFIG == FRC8X_CLOCK) || BOARD_TYPE == UDB4_BOARD)
+#if ( (BOARD_IS_CLASSIC_UDB == 1 && CLOCK_CONFIG == FRC8X_CLOCK) || BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == MADRE_BOARD)
 		T4CONbits.TCKPS = 1 ;				// prescaler 8:1
 #endif
 		_T4IP = 7 ;							// priority 7
@@ -107,8 +117,8 @@ void udb_init_pwm( void )	// initialize the PWM
 #if (BOARD_TYPE == UDB4_BOARD)
 	_TRISD0 = _TRISD1 = _TRISD2 = _TRISD3 = _TRISD4 = _TRISD5 = _TRISD6 = _TRISD7 = 0 ;
 	if (NUM_OUTPUTS >= 9) _TRISA4 = 0 ;	
-	
-	
+#elif (BOARD_TYPE == MADRE_BOARD)	
+	_TRISA8 = _TRISB4 = _TRISA4 = _TRISA9 = _TRISC3 = 0 ;
 #else // Classic board
 	TRISE = 0b1111111111000000 ;
 	
@@ -150,7 +160,7 @@ void start_pwm_outputs( void )
 	if (NUM_OUTPUTS > 0)
 	{
 		outputNum = 0 ;
-		PR4 = SCALE_FOR_PWM_OUT(200) ;	// set timer to delay 0.1ms
+		PR4 = SCALE_FOR_PWM_OUT(500) ;	// set timer to delay 0.1ms
 		
 		TMR4 = 0 ;				// start timer at 0
 		_T4IF = 0 ;				// clear the interrupt
@@ -179,7 +189,7 @@ extern unsigned int maxstack ;
 		}													\
 		else												\
 		{													\
-			PR4 = SCALE_FOR_PWM_OUT(100) ;					\
+			PR4 = SCALE_FOR_PWM_OUT(250) ;					\
 			pin = 0 ;										\
 		}													\
 		TMR4 = 0 ;											\
@@ -212,30 +222,47 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _T4Interrupt(void)
 			SERVO_OUT_PIN_3 = 0 ;
 			HANDLE_SERVO_OUT(4, SERVO_OUT_PIN_4) ;
 			break ;
+#if (NUM_OUTPUTS >= 5)
 		case 4:
 			SERVO_OUT_PIN_4 = 0 ;
 			HANDLE_SERVO_OUT(5, SERVO_OUT_PIN_5) ;
 			break ;
+#endif
+		case 5:
+			SERVO_OUT_PIN_5 = 0 ;	// end the pulse by setting the SERVO_OUT_PIN_9 pin low
+			_T4IE = 0 ;				// disable timer 4 interrupt
+			break ;
+
+#if (NUM_OUTPUTS >= 6)
 		case 5:
 			SERVO_OUT_PIN_5 = 0 ;
 			HANDLE_SERVO_OUT(6, SERVO_OUT_PIN_6) ;
 			break ;
+#endif
+#if (NUM_OUTPUTS >= 7)
 		case 6:
 			SERVO_OUT_PIN_6 = 0 ;
 			HANDLE_SERVO_OUT(7, SERVO_OUT_PIN_7) ;
 			break ;
+#endif
+#if (NUM_OUTPUTS >= 8)
 		case 7:
 			SERVO_OUT_PIN_7 = 0 ;
 			HANDLE_SERVO_OUT(8, SERVO_OUT_PIN_8) ;
 			break ;
+#endif
+#if (NUM_OUTPUTS >= 9)
 		case 8:
 			SERVO_OUT_PIN_8 = 0 ;
 			HANDLE_SERVO_OUT(9, SERVO_OUT_PIN_9) ;
 			break ;
+#endif
+#if (NUM_OUTPUTS >= 9)
 		case 9:
 			SERVO_OUT_PIN_9 = 0 ;	// end the pulse by setting the SERVO_OUT_PIN_9 pin low
 			_T4IE = 0 ;				// disable timer 4 interrupt
 			break ;
+#endif
 	}
 	
 	_T4IF = 0 ;						// clear the interrupt

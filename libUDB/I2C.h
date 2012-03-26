@@ -18,7 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
-#if (BOARD_TYPE == UDB4_BOARD)
+#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == MADRE_BOARD)
 
 #ifndef I2C_H
 #define I2C_H
@@ -66,6 +66,12 @@ extern void I2C1_trigger_service(void);
 
 // Trigger the I2C1 service routine to run at low priority
 extern void I2C1_init(void);
+
+// Reset the I2C1 module
+extern void I2C1_reset(void);
+
+// Check if the I2C1CON and I2C1STAT register are normal
+extern boolean I2C1_Normal(void);
 
 #endif	//I2C_H
 

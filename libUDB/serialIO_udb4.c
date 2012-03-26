@@ -21,15 +21,25 @@
 
 #include "libUDB_internal.h"
 
-#if (BOARD_TYPE == UDB4_BOARD)
+#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == MADRE_BOARD)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// GPS
-
+// UART 1
+#if (BOARD_TYPE == UDB4_BOARD)
 void udb_init_GPS(void)
+#elif (BOARD_TYPE == MADRE_BOARD)
+void udb_init_USART(void)
+#endif
 {
-	// configure U2MODE
+#if (BOARD_TYPE == MADRE_BOARD)	
+	_TRISC4		= 0;			// dsPic TX Xbee RX
+	_TRISC5 	= 1;			// dsPic RX Xbee TX
+	_U1RXR 		= 21;			//Pin 38: DSPRX_XBEETX,	RP21
+	_RP20R	 	= 0b00011;		//Pin 37: DSPTX_XBEERX,	RP20
+#endif
+	
+	// configure U1MODE
 	U1MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
 	//						// Bit14
 	U1MODEbits.USIDL = 0;	// Bit13 Continue in Idle
@@ -80,20 +90,32 @@ void udb_init_GPS(void)
 
 void udb_gps_set_rate(long rate)
 {
+#if (BOARD_TYPE == UDB4_BOARD)
 	U1BRG = UDB_BAUD(rate) ;
+#elif (BOARD_TYPE == MADRE_BOARD)
+	U2BRG = UDB_BAUD(rate) ;
+#endif
 	return ;
 }
 
 
 boolean udb_gps_check_rate(long rate)
 {
+#if (BOARD_TYPE == UDB4_BOARD)
 	return ( U1BRG == UDB_BAUD(rate) ) ;
+#elif (BOARD_TYPE == MADRE_BOARD)
+	return ( U2BRG == UDB_BAUD(rate) ) ;
+#endif
 }
 
 
 void udb_gps_start_sending_data(void)
 {
+#if (BOARD_TYPE == UDB4_BOARD)
 	_U1TXIF = 1 ; // fire the tx interrupt
+#elif (BOARD_TYPE == MADRE_BOARD)
+	_U2TXIF = 1 ; // fire the tx interrupt
+#endif
 	return ;
 }
 
@@ -105,7 +127,11 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _U1TXInterrupt(void)
 	
 	_U1TXIF = 0 ; // clear the interrupt 
 	
+#if (BOARD_TYPE == UDB4_BOARD)
 	int txchar = udb_gps_callback_get_byte_to_send() ;
+#elif (BOARD_TYPE == MADRE_BOARD)
+	int txchar = udb_serial_callback_get_byte_to_send() ;
+#endif
 	
 	if ( txchar != -1 )
 	{
@@ -125,7 +151,11 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(void)
 	while ( U1STAbits.URXDA )
 	{
 		unsigned char rxchar = U1RXREG ;
+#if (BOARD_TYPE == UDB4_BOARD)
 		udb_gps_callback_received_byte(rxchar) ;
+#elif (BOARD_TYPE == MADRE_BOARD)
+		udb_serial_callback_received_byte(rxchar) ;
+#endif
 	}
 
 	U1STAbits.OERR = 0 ;
@@ -141,10 +171,20 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(void)
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// Serial
-
+// UART 2
+#if (BOARD_TYPE == UDB4_BOARD)
 void udb_init_USART(void)
+#elif (BOARD_TYPE == MADRE_BOARD)
+void udb_init_GPS(void)
+#endif
 {
+#if (BOARD_TYPE == MADRE_BOARD)
+	_TRISB2 	= 1;			// dsPic RX GPS TX
+	_TRISB3 	= 0;			// dsPic TX GPS RX
+	_U2RXR		= 2;			//Pin 23: DSPRX_GPSTX,	RP2
+	_RP3R 		= 0b00101;		//Pin 24: DSPTX_GPSRX,	RP3
+#endif
+	
 	// configure U2MODE
 	U2MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
 	//						// Bit14
@@ -196,20 +236,32 @@ void udb_init_USART(void)
 
 void udb_serial_set_rate(long rate)
 {
+#if (BOARD_TYPE == UDB4_BOARD)
 	U2BRG = UDB_BAUD(rate) ;
+#elif (BOARD_TYPE == MADRE_BOARD)
+	U1BRG = UDB_BAUD(rate) ;
+#endif
 	return ;
 }
 
 
 boolean udb_serial_check_rate(long rate)
 {
+#if (BOARD_TYPE == UDB4_BOARD)
 	return ( U2BRG == UDB_BAUD(rate) ) ;
+#elif (BOARD_TYPE == MADRE_BOARD)
+	return ( U1BRG == UDB_BAUD(rate) ) ;
+#endif
 }
 
 
 void udb_serial_start_sending_data(void)
 {
+#if (BOARD_TYPE == UDB4_BOARD)
 	_U2TXIF = 1 ; // fire the tx interrupt
+#elif (BOARD_TYPE == MADRE_BOARD)
+	_U1TXIF = 1 ; // fire the tx interrupt
+#endif
 	return ;
 }
 
@@ -221,7 +273,11 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _U2TXInterrupt(void)
 	
 	_U2TXIF = 0 ; // clear the interrupt 
 	
+#if (BOARD_TYPE == UDB4_BOARD)
 	int txchar = udb_serial_callback_get_byte_to_send() ;
+#elif (BOARD_TYPE == MADRE_BOARD)
+	int txchar = udb_gps_callback_get_byte_to_send() ;
+#endif
 	
 	if ( txchar != -1 )
 	{
@@ -241,7 +297,11 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U2RXInterrupt(void)
 	while ( U2STAbits.URXDA )
 	{
 		unsigned char rxchar = U2RXREG ;
+#if (BOARD_TYPE == UDB4_BOARD)
 		udb_serial_callback_received_byte(rxchar) ;
+#elif (BOARD_TYPE == MADRE_BOARD)
+		udb_gps_callback_received_byte(rxchar) ;
+#endif
 	}
 
 	U2STAbits.OERR = 0 ;

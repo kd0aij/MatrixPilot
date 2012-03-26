@@ -24,13 +24,13 @@
 #include "NV_memory.h"
 #include "events.h"
 
-#if (BOARD_TYPE == UDB4_BOARD)
+#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == MADRE_BOARD)
 
-#define I2C1_SDA 		_RG3
-#define I2C1_SCL 		_RG2
+#define I2C1_SDA 		_RB9
+#define I2C1_SCL 		_RB8
 
-#define I2C1_SDA_TRIS 	_TRISG3
-#define I2C1_SCL_TRIS 	_TRISG2
+#define I2C1_SDA_TRIS 	_TRISB9
+#define I2C1_SCL_TRIS 	_TRISB8
 
 #define _I2C1EN 		I2C1CONbits.I2CEN
 
@@ -62,7 +62,9 @@ boolean I2C1_Busy = true;
 
 void (* I2C1_state ) ( void ) = &I2C1_idle ;
 
-#define I2C1BRGVAL 60 // 200 Khz
+//#define I2C1BRGVAL 60 // 200 Khz
+#define I2C1FSCL 400000	// Bus speed measured in Hz
+#define I2C1BRGVAL ((FREQOSC/(CLK_PHASES *I2C1FSCL))-(FREQOSC/(CLK_PHASES * 10000000)))-1
 
 #define I2C1_NORMAL ((( I2C1CON & 0b0000000000011111 ) == 0) && ( (I2C1STAT & 0b0100010011000001) == 0 ))
 
@@ -79,7 +81,7 @@ unsigned char* pI2C1commandBuffer = NULL;	// pointer to receive  buffer
 
 unsigned int I2C1_service_handle = INVALID_HANDLE;
 
-
+unsigned int I2C1_ERROR = 0;
 
 void I2C1_init(void)
 {
@@ -91,10 +93,26 @@ void I2C1_init(void)
 	_MI2C1IF = 0 ; 			// clear the I2C1 master interrupt
 	_MI2C1IE = 1 ; 			// enable the interrupt
 
-	I2C1_service_handle = register_event(&serviceI2C1);
+//	I2C1_service_handle = register_event(&serviceI2C1);
 
 	I2C1_Busy = false;
 
+	return ;
+}
+
+void I2C1_reset(void)
+{
+	I2C1_state = &I2C1_idle ;		// disable the response to any more interrupts
+	I2C1_ERROR = I2C1STAT ; 		// record the error for diagnostics
+	
+	_I2C1EN = 0 ;  					// turn off the I2C
+	_MI2C1IF = 0 ; 					// clear the I2C master interrupt
+	_MI2C1IE = 0 ; 					// disable the interrupt
+	I2C1_SCL = I2C1_SDA = 0 ; 		// pull SDA and SCL low
+	Nop();
+	I2C1_SCL = I2C1_SDA = 1 ; 		// pull SDA and SCL high
+
+	I2C1_init() ;
 	return ;
 }
 
@@ -168,10 +186,10 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _MI2C1Interrupt(void)
 {
 	indicate_loading_inter ;
 	interrupt_save_set_corcon ;
-	
+//LED_GREEN = LED_ON;	
 	_MI2C1IF = 0 ; // clear the interrupt
 	(* I2C1_state) () ; // execute the service routine
-	
+//LED_GREEN = LED_OFF;
 	interrupt_restore_corcon ;
 	return ;
 }
@@ -186,6 +204,17 @@ inline boolean I2C1_CheckAvailable(void)
 	I2C1_Busy = true;
 
 	return true;
+}
+
+boolean I2C1_Normal(void)
+{
+	if(I2C1_NORMAL )
+		return true;
+	else
+	{
+		I2C1_ERROR = I2C1STAT;
+		return false;
+	}	
 }
 
 
@@ -264,8 +293,8 @@ void I2C1_startWrite(void)
 // Write command byte without checking ACK first.
 void I2C1_writeCommand(void)
 {
-	I2C1TRN = I2C1_CommandByte & 0xFE ;
 	I2C1_state = &I2C1_writeCommandData ;
+	I2C1TRN = I2C1_CommandByte & 0xFE ;
 	return;
 }
 

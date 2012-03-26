@@ -59,6 +59,22 @@ _FGS(	GSS_OFF &
 _FPOR(	FPWRT_PWR1 ) ;
 _FICD(	JTAGEN_OFF &
 		ICS_PGD2 ) ;
+
+#elif (BOARD_TYPE == MADRE_BOARD)
+_FOSCSEL(	FNOSC_PRIPLL & 			// Primary oscillator (XT, HS, EC) with PLL
+			IESO_OFF);				// No Clock switching during startup
+_FOSC(	FCKSM_CSDCMD & 				// Clock Switching and Fail Safe Clock Monitor disabled
+		OSCIOFNC_OFF  & 			// Function of pin OSC2: OSC2 is used by the oscilator
+		POSCMD_HS);					// Primary Oscillator Mode: High speed oscillator HS
+_FWDT(	FWDTEN_OFF &				// Watchdog Timer disabled
+		WINDIS_OFF);				// Watchdog Timer window mode	
+_FGS(	GSS_OFF &					// Code security config
+		GCP_OFF &
+		GWRP_OFF ) ;
+_FPOR(	ALTI2C_OFF);				// Use the BUS I2C on pins SDA1/SCL1
+_FICD(	JTAGEN_OFF &
+		ICS_PGD3 );					// JTAG OFF, use PGD3 pins
+
 #endif
 
 
@@ -88,6 +104,11 @@ void udb_init(void)
 	
 #if (BOARD_TYPE == UDB4_BOARD)
 	PLLFBDbits.PLLDIV = 30 ; // FOSC = 32 MHz (XT = 8.00MHz, N1=2, N2=4, M = 32)
+#elif (BOARD_TYPE == MADRE_BOARD)
+	_PLLPRE = 2 -2;					// Prescaler del PLL, (il valore da settare al registro è inferire di 2 rispetto al valore di divisione)
+	_PLLDIV = 32 -2;				// Divisore del PLL, (il valore da settare al registro è inferire di 2 rispetto al valore di divisione)
+	_PLLPOST = 0;					// Postscaler del PLL, 0 = /2
+	while(!OSCCONbits.LOCK);		// Attendi che il PLL sia agganciato
 #endif
 	
 	udb_flags.B = 0 ;
@@ -108,10 +129,12 @@ void udb_init(void)
 	udb_init_leds() ;
 	udb_init_ADC() ;
 	udb_init_clock() ;
-	udb_init_capture() ;
+//	udb_init_capture() ;
 	
 #if (MAG_YAW_DRIFT == 1)
-	udb_init_I2C() ;
+//	udb_init_I2C() ;
+//	init_events();
+	I2C1_init();
 #endif
 	
 	udb_init_GPS() ;
@@ -149,6 +172,10 @@ void udb_init_leds( void )
 #elif (BOARD_TYPE == UDB4_BOARD)
 	_TRISE1 = _TRISE2 = _TRISE3 = _TRISE4 = 0 ;
 	_LATE1 = _LATE2 = _LATE3 = _LATE4 = LED_OFF ;
+
+#elif (BOARD_TYPE == MADRE_BOARD)
+	_TRISA7 = _TRISA10 = 0 ;
+	_LATA7 = _LATA10 = LED_OFF ;
 #endif
 	
 	return ;
@@ -188,9 +215,9 @@ void udb_a2d_record_offsets(void)
 
 void udb_servo_record_trims(void)
 {
-	int i;
-	for (i=0; i <= NUM_INPUTS; i++)
-		udb_pwTrim[i] = udb_pwIn[i] ;
+//	int i;
+//	for (i=0; i <= NUM_INPUTS; i++)
+//		udb_pwTrim[i] = udb_pwIn[i] ;
 	
 	return ;
 }

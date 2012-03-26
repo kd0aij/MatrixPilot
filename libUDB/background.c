@@ -20,15 +20,13 @@
 
 
 #include "libUDB_internal.h"
-#include "defines.h"
 
 // Include the NV memory services if required
-#if((USE_NV_MEMORY == 1) && (SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK))
+#if(USE_NV_MEMORY == 1 && BOARD_TYPE == UDB4_BOARD)
 #include "I2C.h"
 #include "NV_memory.h"
 #include "data_storage.h"
 #include "data_services.h"
-#include "events.h"
 #endif
 
 // Include flexifunction mixers if required
@@ -43,7 +41,7 @@
 #define CPU_LOAD_PERCENT	16*109   // = ((100 / (8192 * 2)) * (256**2))/3.6864
 #endif
 
-#elif (BOARD_TYPE == UDB4_BOARD)
+#elif (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == MADRE_BOARD)
 #define CPU_LOAD_PERCENT	16*100
 #endif
 
@@ -71,6 +69,10 @@ void udb_run_init_step( void ) ;
 #define _THEARTBEATIP _T6IP
 #define _THEARTBEATIF _T6IF
 #define _THEARTBEATIE _T6IE
+#elif (BOARD_TYPE == MADRE_BOARD)	// Unused HW source
+#define _THEARTBEATIP _SPI2IP
+#define _THEARTBEATIF _SPI2IF
+#define _THEARTBEATIE _SPI2IE
 #else
 #define _THEARTBEATIP _PWMIP
 #define _THEARTBEATIF _PWMIF
@@ -80,9 +82,11 @@ void udb_run_init_step( void ) ;
 
 void udb_init_clock(void)	/* initialize timers */
 {
+#if (BOARD_TYPE == UDB4_BOARD)
 	TRISF = 0b1111111111101100 ;
+#endif
 
-#if((USE_NV_MEMORY == 1) && (SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK))
+#if(USE_NV_MEMORY == 1 && BOARD_TYPE == UDB4_BOARD)
 	init_events();
 	I2C1_init();
 	nv_memory_init();
@@ -105,6 +109,26 @@ void udb_init_clock(void)	/* initialize timers */
 #elif ( CLOCK_CONFIG == FRC8X_CLOCK )
 	PR1 = 46080 ;			// 25 millisecond period at 58.982 Mz clock,inst. prescale 4, tmr prescale 8	
 	T1CONbits.TCKPS = 1;	// prescaler = 8
+#elif ( CLOCK_CONFIG == MADRE_CLOCK )					// Adaptive code to select a 40Hz T1 interrupt
+	#if ( FREQOSC/( CLK_PHASES * 1 * 40) < 65535 )
+		PR1 = FREQOSC/( CLK_PHASES * 1 * 40);			
+		T1CONbits.TCKPS = 0;	// no prescaler
+		#warning: "auto T1 prescaler: 1"
+	#elif ( FREQOSC/( CLK_PHASES * 8 * 40) < 65535 )
+		PR1 = FREQOSC/( CLK_PHASES * 8 * 40);
+		T1CONbits.TCKPS = 1;	// prescaler = 8
+		#warning: "auto T1 prescaler: 8"
+	#elif ( FREQOSC/( CLK_PHASES * 64 * 40) < 65535 )
+		PR1 = FREQOSC/( CLK_PHASES * 64 * 40);
+		T1CONbits.TCKPS = 2;	// prescaler = 64
+		#warning: "auto T1 prescaler: 64"
+	#elif ( FREQOSC/( CLK_PHASES * 256 * 40) < 65535 )
+		PR1 = FREQOSC/( CLK_PHASES * 246 * 40);
+		T1CONbits.TCKPS = 3;	// prescaler = 256
+		#warning: "auto T1 prescaler: 256"
+	#else 
+		//#error: "can't select PR1 value"
+	#endif
 #endif
 	T1CONbits.TCS = 0 ;		// use the crystal to drive the clock
 	_T1IP = 6 ;				// High priority
@@ -140,7 +164,7 @@ void udb_init_clock(void)	/* initialize timers */
 	// start all the 40Hz processing at a lower priority.
 	_THEARTBEATIF = 0 ;					// clear the PWM interrupt
 	_THEARTBEATIP = 3 ;					// priority 3
-#if (BOARD_TYPE != UDB4_BOARD)
+#if (BOARD_TYPE != UDB4_BOARD && BOARD_TYPE != MADRE_BOARD)
 	_PEN1L = _PEN2L = _PEN3L = 0 ;		// low pins used as digital I/O
 	_PEN1H = _PEN2H = _PEN3H = 0 ;		// high pins used as digital I/O
 #endif
@@ -240,6 +264,8 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _T5Interrupt(void)
 //	This is a good place to eventually compute pulse widths for servos.
 #if ( BOARD_TYPE == UDB4_BOARD )
 void __attribute__((__interrupt__,__no_auto_psv__)) _T6Interrupt(void)
+#elif (BOARD_TYPE == MADRE_BOARD)
+void __attribute__((__interrupt__,__no_auto_psv__)) _SPI2Interrupt(void)
 #else
 void __attribute__((__interrupt__,__no_auto_psv__)) _PWMInterrupt(void)
 #endif
@@ -264,7 +290,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _PWMInterrupt(void)
 		else
 		{
 			udb_flags._.radio_on = 1 ;
-			LED_GREEN = LED_ON ;
+//			LED_GREEN = LED_ON ;
 		}
 		failSafePulses = 0 ;
 	}
@@ -282,7 +308,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _PWMInterrupt(void)
 	
 	udb_servo_callback_prepare_outputs() ;
 	
-#if ((USE_NV_MEMORY == 1) && (SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK))
+#if (USE_NV_MEMORY == 1)
 	I2C1_trigger_service();
 	nv_memory_service_trigger();
 	storage_service_trigger();

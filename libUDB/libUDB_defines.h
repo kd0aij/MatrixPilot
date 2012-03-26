@@ -41,12 +41,13 @@ union longww { long  WW ; struct ww _ ; } ;
 #define UDB4_BOARD		5	// board with dsPIC33 and integrally mounted 500 degree/second Invensense gyros
 #define CAN_INTERFACE	6
 #define AUAV1_BOARD		7	// Nick Arsov's UDB3 clone, first version
+#define MADRE_BOARD		8	// Uavfirmware's board, with ITG-3205 2000 deg/s Invensense gyros
 
 // Clock configurations
 #define CRYSTAL_CLOCK	1
 #define FRC8X_CLOCK		2
 #define UDB4_CLOCK		3
-
+#define	MADRE_CLOCK		4
 
 // Include the necessary files for the current board type
 #if (BOARD_TYPE == RED_BOARD)
@@ -76,6 +77,11 @@ union longww { long  WW ; struct ww _ ; } ;
 #elif (BOARD_TYPE == CAN_INTERFACE)
 #include "p30f6010A.h"
 #include "../CANInterface/ConfigCANInterface.h"
+
+#elif (BOARD_TYPE == MADRE_BOARD)
+#include "p33fj128gp804.h"
+#include "ConfigMADRE.h"
+
 #endif
 
 
@@ -86,9 +92,9 @@ union longww { long  WW ; struct ww _ ; } ;
 
 #if (USE_PPM_INPUT == 1)
 #undef MAX_INPUTS
-#define MAX_INPUTS 8
+#define MAX_INPUTS 6
 #undef MAX_OUTPUTS
-#define MAX_OUTPUTS 9
+#define MAX_OUTPUTS 5
 #endif
 
 
@@ -127,7 +133,7 @@ Otherwise, please remove the CLOCK_CONFIG line from your options.h file."
 // FRC8X_CLOCK runs the fast RC clock (7.3728 MHz) with 8X PLL multiplier, and supports much
 // faster baud rates.  CRYSTAL_CLOCK is deprecated, but can still be tested by developers by changing
 // its value here:
-#define CLOCK_CONFIG 						FRC8X_CLOCK
+#define CLOCK_CONFIG 						MADRE_CLOCK
 
 
 #if ( CLOCK_CONFIG == CRYSTAL_CLOCK )
@@ -138,9 +144,9 @@ Otherwise, please remove the CLOCK_CONFIG line from your options.h file."
 
 #else
 #define BOARD_IS_CLASSIC_UDB		0
-#define FREQOSC 					32000000
+#define FREQOSC 					80000000
 #define CLK_PHASES					2
-#define CLOCK_CONFIG 				UDB4_CLOCK
+#define CLOCK_CONFIG 				MADRE_CLOCK
 #endif
 
 
@@ -201,8 +207,8 @@ struct udb_flag_bits {
 #endif
 
 // LED states
-#define LED_ON		0
-#define LED_OFF		1
+#define LED_ON		1
+#define LED_OFF		0
 
 
 // Channel numbers on the board, mapped to positions in the pulse width arrays.
@@ -222,15 +228,15 @@ struct udb_flag_bits {
 #define RMAX   0b0100000000000000	//	1.0 in 2.14 fractional format
 #define GRAVITY ((long)(5280.0/SCALEACCEL))  // gravity in AtoD/2 units
 
-#define SERVOCENTER 3000
-#define SERVORANGE ((int)(SERVOSAT*1000))
+#define SERVOCENTER 7500
+#define SERVORANGE ((int)(SERVOSAT*2500))
 #define SERVOMAX SERVOCENTER + SERVORANGE
 #define SERVOMIN SERVOCENTER - SERVORANGE
 
-#define MAX_CURRENT 			900	// 90.0 Amps max for the sensor from SparkFun (in tenths of Amps)
+#define MAX_CURRENT 			500	// 50.0 Amps max for the sensor from FlyTron (in tenths of Amps)
 #define CURRENT_SENSOR_OFFSET	10	// Add 1.0 Amp to whatever value we sense
 
-#define MAX_VOLTAGE				543	// 54.3 Volts max for the sensor from SparkFun (in tenths of Volts)
+#define MAX_VOLTAGE				400	// 40.0 Volts max for the sensor from FlyTron (in tenths of Volts)
 #define VOLTAGE_SENSOR_OFFSET	0	// Add 0.0 Volts to whatever value we sense
 	
 extern int magMessage ;
