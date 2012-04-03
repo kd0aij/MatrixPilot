@@ -92,8 +92,8 @@ void udb_init_clock(void)	/* initialize timers */
 
 #if (USE_FLEXIFUNCTION_MIXING == 1)
 	flexiFunctionServiceInit();
-#endif
-	
+#endif	
+
 	// Initialize timer1, used as the 40Hz heartbeat of libUDB.
 	TMR1 = 0 ;
 #if (BOARD_TYPE == UDB4_BOARD)

@@ -25,6 +25,11 @@
 #define USE_FLEXIFUNCTION_MIXING		0
 
 
+////////////////////////////////////////////////////////////////////////////////
+// Use the I2C shared device driver on the second I2C port
+#define USE_I2C_SECOND_PORT_DRIVER		1
+
+
 #endif //NV_MEMORY_OPTIONS_H
 
 
