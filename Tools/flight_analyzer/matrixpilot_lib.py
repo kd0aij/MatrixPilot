@@ -55,29 +55,9 @@ class telemetry :
         self.lat = [0,0]
         self.alt = [0,0]
         self.dead_reckoning = 0
-        self.id_vehicle_model_name = "Not seen in telemetry"
-        self.id_vehicle_registration = "Not seen in telemetry"
-        self.id_lead_pilot = "Not seen in telemetry"
-        self.id_diy_drones_url = "Not seen in telemetry"
-        self.inline_waypoint_x = 0 #waypoint data reported inline in F2 format
-        self.inline_waypoint_y = 0
-        self.inline_waypoint_z = 0
-        self.trap_flags = 0
-        self.trap_source = 0
-        self.alarms = 0
-        self.clock_type = 0
-        self.flight_plan_type = 0
-        self.rollkd_rudder = 0
-        self.rollkp_rudder = 0
         
     def parse(self,line,line_no, max_tm_actual) :
         self.line_no = line_no
-
-        # Discard lines that have non alpha numeric characters and so are corrupt
-        match = re.search("[^a-zA-Z:\d\r\n\s\/=_,.-]", line)
-        if match :
-             print "Bad chars so discarding; [", match.group(0),"]",
-             return "Error"
         # Get the Format Revision No.
         # This allows us to change revisions in the future, and
         # have this code still be able to cope with changes.
@@ -536,8 +516,7 @@ class telemetry :
             match = re.match(".*:ma([-0-9]*?):",line) # Earth Ref Magnetic Vector East
             if match :
                 try:
-                    # The mag vector is actually measured west in UDB, so we negate to make it East
-                    self.earth_mag_vec_E = - int(match.group(1))
+                    self.earth_mag_vec_E = int(match.group(1))
                 except:
                     print "Corrupt :ma (Earth magnetic vector) at line", line_no
                     return "Error"
@@ -758,7 +737,7 @@ class telemetry :
                     print "Corrupt IMULocationX value in line", line_no
                     return "Error"
             else :
-                pass  
+                return "Error" 
             match = re.match(".*:imy([-0-9]*?):",line) # IMUlocation y. Meters from origin
             if match :
                 try:
@@ -767,26 +746,16 @@ class telemetry :
                     print "Corrupt IMULocaitonY value in line", line_no
                     return "Error"
             else :
-                pass
+                return "Error" # 
             match = re.match(".*:imz([-0-9]*?):",line) # IMUlocation z. Meters from origin
             if match :
                 try:
                     self.IMUlocationz_W1 = int(match.group(1))
                 except:
-                    print "Corrupt IMUlocationZ value in line", line_no
+                    print "Corrupt IMUlocaitonZ value in line", line_no
                     return "Error"
             else :
-                pass
-
-            match = re.match(".*:G([-0-9]*?),([-0-9]*?),([-0-9]*?):",line) # Next waypoint X,Y,Z in meters from origin
-            if match :
-                try:
-                    self.inline_waypoint_x = int(match.group(1))
-                    self.inline_waypoint_y = int(match.group(2))
-                    self.inline_waypoint_z = int(match.group(3))
-                except:
-                    print "Corrupt F2: waypoint value in line", line_no
-                    pass
+                return "Error" 
             
              # line was parsed without major errors
             return "F2"
@@ -966,20 +935,6 @@ class telemetry :
             else :
                 print "Failure parsing YAWKD_RUDDER at line", line_no
                 return "Error"
-
-            match = re.match(".*:RLKP_RUD=(.*?):",line) # ROLLKP_RUDDER *** ! 
-            if match :
-                self.rollkp_rudder = float (match.group(1))
-            else :
-                print "Failure parsing RLKP_RUD at line", line_no
-                pass  # May not be in some telemetry
-
-            match = re.match(".*:RLKD_RUD=(.*?):",line) # ROLLKD_RUDDER *** ! 
-            if match :
-                self.rollkd_rudder = float (match.group(1))
-            else :
-                print "Failure parsing RLKD_RUD at line", line_no
-                pass # May not be in some telemetry
             
             match = re.match(".*:RUD_BOOST=(.*?):",line) # RUDDER_BOOST
             if match :
@@ -994,6 +949,7 @@ class telemetry :
             else :
                 print "Failure parsing RTL_PITCH_DOWN at line", line_no
                 return "Error"
+            
             # line was parsed without Errors
             return "F7"
 
@@ -1099,46 +1055,6 @@ class telemetry :
             # line was parsed without Errors
             return "F11"
         
-        
-
-        #################################################################
-        # Try Another format of telemetry
-        
-        match = re.match("^F13:",line) # If line starts with F13
-        if match :
-            # Parse the line for options.h values
-          
-            match = re.match(".*:week(.*?):",line) # GPS Week Number
-            if match :
-                self.gps_week = int (match.group(1))
-            else :
-                print "Failure parsing GPS Week at line", line_no
-                return "Error"  
-            match = re.match(".*:origN(.*?):",line) # ORIGIN NORTH
-            if match :
-                self.origin_north = int (match.group(1))
-            else :
-                print "Failure parsing Origin North at line", line_no
-                return "Error"
-            
-            match = re.match(".*:origE(.*?):",line) # ORIGIN EAST
-            if match :
-                self.origin_east = int(match.group(1))
-            else :
-                print "Failure parsing Origin East at line", line_no
-                return "Error"
-            
-            match = re.match(".*:origA(.*?):",line) # ORIGIN ALTITUDE 
-            if match :
-                self.origin_altitude = int (match.group(1))
-            else :
-                print "Failure parsing Origin Altitude at line", line_no
-                return "Error"
-
-            
-            # line was parsed without Errors
-            return "F13"
-
         #################################################################
         # Try Another format of telemetry
         
@@ -1178,83 +1094,52 @@ class telemetry :
                 self.rcon = int (match.group(1), 16)
             else :
                 print "Failure parsing RCON at line", line_no
-            match = re.match(".*:TRAP_FLAGS=0x(.*?):",line) # Trap Flags
-            if match :
-                self.trap_flags = int (match.group(1), 16)
-            else :
-                print "Failure parsing Trap Flags at line", line_no
-            match = re.match(".*:TRAP_SOURCE=0x(.*?):",line) # Trap Source
-            if match :
-                self.trap_source = int (match.group(1), 16)
-            else :
-                print "Failure parsing Trap Source at line", line_no
-            
-            match = re.match(".*:ALARMS=(.*?):",line) # ALARMS
-            if match :
-                self.alarms = int (match.group(1))
-            else :
-                print "Failure parsing ALARMS at line", line_no
-            match = re.match(".*:CLOCK=(.*?):",line) # CLOCK
-            if match :
-                self.clock_type = int (match.group(1))
-            else :
-                print "Failure parsing CLOCK (type) at line", line_no
-            match = re.match(".*:FP=(.*?):",line) # FP (Flight Plan Type)
-            if match :
-                self.flight_plan_type = int (match.group(1))
-            else :
-                ### There was an error in the telemetry format for some months
-                # So we try the error format alternative
-                match = re.match(".*:FP=(.*?)$",line) # FP (Flight Plan Type)
-                if match :
-                    self.flight_plan_type = int (match.group(1))
-                else :
-                    print "Failure parsing FP (flight plan type) at line", line_no
-                
 
             
-            # line was parsed 
+            # line was parsed without Errors
             return "F14"
 
-
         #################################################################
         # Try Another format of telemetry
         
-        match = re.match("^F15:",line) # If line starts with F15
+        match = re.match("^F13:",line) # If line starts with F8
         if match :
             # Parse the line for options.h values
-           
-            match = re.match(".*:IDA=(.*?):",line) # ID_VEHICLE_MODEL_NAME
+          
+            match = re.match(".*:week(.*?):",line) # GPS Week Number
             if match :
-                self.id_vehicle_model_name =  match.group(1)
+                self.gps_week = int (match.group(1))
             else :
-                print "Failure parsing ID_VEHICLE_MODEL_NAME at line", line_no
-            match = re.match(".*:IDB=(.*?):",line) # ID_VEHICLE_REGISTRATION
+                print "Failure parsing GPS Week at line", line_no
+                return "Error"  
+            match = re.match(".*:origN(.*?):",line) # ORIGIN NORTH
             if match :
-                self.id_vehicle_registration = match.group(1)
+                self.origin_north = int (match.group(1))
             else :
-                print "Failure parsing ID_VEHICLE_REGISTRATION at line", line_no
-            return "F15"
+                print "Failure parsing Origin North at line", line_no
+                return "Error"
+            
+            match = re.match(".*:origE(.*?):",line) # ORIGIN EAST
+            if match :
+                self.origin_east = int(match.group(1))
+            else :
+                print "Failure parsing Origin East at line", line_no
+                return "Error"
+            
+            match = re.match(".*:origA(.*?):",line) # ORIGIN ALTITUDE 
+            if match :
+                self.origin_altitude = int (match.group(1))
+            else :
+                print "Failure parsing Origin Altitude at line", line_no
+                return "Error"
 
-        #################################################################
-        # Try Another format of telemetry
-        
-        match = re.match("^F16:",line) # If line starts with F16
-        if match :
-            # Parse the line for options.h values
-           
-            match = re.match(".*:IDC=(.*?):",line) # ID_LEAD_PILOT
-            if match :
-                self.id_lead_pilot =  match.group(1)
-            else :
-                print "Failure parsing ID_LEAD_PILOT at line", line_no
-            match = re.match(".*:IDD=(.*?:.*?):",line) # ID_DIY_DRONES_URL
-            if match :
-                self.id_diy_drones_url = match.group(1)
-            else :
-                print "Failure parsing ID_DIY_DRONES_URL at line", line_no
-            return "F16"
- 
+            
+            # line was parsed without Errors
+            return "F13"
+
+
+
+            
         #################################################################
         # Try Another format of telemetry
         

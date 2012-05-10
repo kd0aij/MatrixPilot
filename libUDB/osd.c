@@ -3,41 +3,16 @@
 #if (USE_OSD == 1)
 
 
-#if (BOARD_IS_CLASSIC_UDB == 1)
 #define OSD_CS		_LATE0
 #define OSD_SCK 	_LATE2
 #define OSD_MOSI 	_LATE4
 // #define OSD_MISO 	0
 
-#else // UDB4 uses SPI1 port
-#define OSD_CS		_LATF7 // _LATB2
-#define OSD_SCK 	_LATF8 // _LATF6
-#define OSD_MOSI 	_LATF6 // _LATF7
-// #define OSD_MISO 	0  // _LATF8
-#endif
-
 
 void udb_init_osd( void )
 {
-#if (BOARD_IS_CLASSIC_UDB == 1)
-//	_TRISE0 = _TRISE2 = _TRISE4 = 0 ;
-//	_LATE0  = _LATE2  = _LATE4  = 1 ;
-	_TRISE0 = 0;
-    _TRISE2 = 0;
-    _TRISE4 = 0 ;
-	_LATE0  = 1;
-    _LATE2  = 1;
-    _LATE4  = 1 ;
-#else
-//	_TRISF6 = _TRISF7 = _TRISF8 = 0 ;
-//	_LATF6  = _LATF7  = _LATF8  = 1 ;
-	_TRISF6 = 0;
-    _TRISF7 = 0;
-    _TRISF8 = 0 ;
-	_LATF6  = 1;
-    _LATF7  = 1;
-    _LATF8  = 1 ;
-#endif
+	_TRISE0 = _TRISE2 = _TRISE4 = 0 ;
+	_LATE0  = _LATE2  = _LATE4  = 1 ;
 }
 
 
@@ -52,7 +27,7 @@ void spi_write_raw_byte(unsigned char byte)
 		else 		OSD_MOSI = 0 ;
 		
 		OSD_SCK = 1 ;								// Toggle the clock line up
-#if ( BOARD_IS_CLASSIC_UDB == 1 && CLOCK_CONFIG == CRYSTAL_CLOCK )
+#if ( CLOCK_CONFIG == CRYSTAL_CLOCK )
 		Nop(); Nop(); Nop();						// Kill some time with SCK high to make a more solid pulse
 #else
 		Nop(); Nop(); Nop(); Nop(); Nop(); Nop();	// Kill some time with SCK high to make a more solid pulse
@@ -197,7 +172,7 @@ void osd_spi_erase_chars(unsigned char n)
 }
 
 
-void osd_spi_write_number(long val, char num_digits, char decimal_places, char num_flags, char header, char footer)
+void osd_spi_write_number(long val, char num_digits, char num_flags, char header, char footer)
 {
 	boolean startWriting = 0 ;
 	long d;
@@ -225,7 +200,7 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 1000000000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(0x80 + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
@@ -236,9 +211,9 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 100000000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 9) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*100000000 ;
@@ -247,9 +222,9 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 10000000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 8) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*10000000 ;
@@ -258,9 +233,9 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 1000000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 7) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*1000000 ;
@@ -269,9 +244,9 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 100000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 6) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*100000 ;
@@ -280,9 +255,9 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 10000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 5) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*10000 ;
@@ -291,9 +266,9 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 1000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 4) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*1000 ;
@@ -302,9 +277,9 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 100) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 3) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*100 ;
@@ -313,15 +288,15 @@ void osd_spi_write_number(long val, char num_digits, char decimal_places, char n
 			d = (val / 10) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 2) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*10 ;
 		
 		case 1:
-			osd_spi_write_byte(((decimal_places == 1) ? 0xE0 : 0x80) + val) ;
+			osd_spi_write_byte((val) ? 0x80 + val : 0x8A) ;
 	}
 	
 	if (footer)

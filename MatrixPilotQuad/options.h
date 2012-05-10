@@ -1,4 +1,4 @@
-// This file is part of the MatrixPilot RollPitchYaw demo.
+// This file is part of the MatrixPilotQuad firmware.
 //
 //    http://code.google.com/p/gentlenav/
 //
@@ -44,7 +44,8 @@
 // more compatible with other add-ons. The CRYSTAL_CLOCK supports a maximum baud rate of 19200 bps.
 // FRC8X_CLOCK runs the fast RC clock (7.3728 MHz) with 8X PLL multiplier, and supports much
 // faster baud rates.
-#define CLOCK_CONFIG 						CRYSTAL_CLOCK
+//#define CLOCK_CONFIG 						CRYSTAL_CLOCK
+#define CLOCK_CONFIG 						FRC8X_CLOCK
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +61,16 @@
 // ORIENTATION_ROLLCW180: Rick's pitcure #11, board rolled 90 degrees clockwise,
 //		from point of view of the pilot, then rotate the board 180 around the Z axis of the plane,
 //		so that the GPS connector points toward the tail of the plane
+// ********** NOTE: orientations are withrespect to the front motor for + configuration,  *******
+// or with respect to left front motor, for X configuration
+
 #define BOARD_ORIENTATION					ORIENTATION_FORWARDS
+
+/////////////////////////////////////////////////////////////////////////////
+// Select + or X flying configuration by defining exactly one of the following
+
+//#define CONFIG_PLUS
+//#define CONFIG_X
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -77,23 +87,42 @@
 // receiver. (Totally autonomous.)  This is just meant for debugging.  It is not recommended that
 // you actually use this since there is no automatic landing code yet, and you'd have no manual
 // control to fall back on if things go wrong.  It may not even be legal in your area.
-#define NORADIO								1
+#define NORADIO								0
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Configure Input and Output Channels
-//
+
+// Use a single PPM input connection from the RC receiver to the UDB on RC input channel 4.
+// This frees up RC inputs 3, 2, and 1 to act as RC outputs 4, 5, and 6.
+// If you're not sure, leave USE_PPM_INPUT set to 0.
+// PPM_NUMBER_OF_CHANNELS is the number of channels sent on the PWM signal.  This is
+// often different from the NUM_INPUTS value below, and should usually be left at 8.
+// If PPM_ALT_OUTPUT_PINS is set to 0, the 9 available RC outputs will be sent to the
+// following pins, in this order: Out1, Out2, Out3, In3, In2, In1, RE0, RE2, RE4.
+// With it set to 1, the RC outputs will be in this alternate configuration:
+// Out1, Out2, Out3, RE0, RE2, RE4, In3, In2, In1.
+#define USE_PPM_INPUT						0
+#define PPM_NUMBER_OF_CHANNELS				8
+#define PPM_SIGNAL_INVERTED					0
+#define PPM_ALT_OUTPUT_PINS					0
+
 // NUM_INPUTS: Set to 0-5 
 //   1-4 enables only the first 1-4 of the 4 standard input channels
 //   5 also enables E8 as the 5th input channel
-#define NUM_INPUTS	0
+#define NUM_INPUTS	4
+
+#define ROLL_INPUT_CHANNEL					CHANNEL_1
+#define PITCH_INPUT_CHANNEL					CHANNEL_2
+#define THROTTLE_INPUT_CHANNEL				CHANNEL_3
+#define YAW_INPUT_CHANNEL					CHANNEL_4
 
 // NUM_OUTPUTS: Set to 3, 4, 5, or 6
 //   3 enables only the standard 3 output channels
-//   4 also enables E0 as the 4th output channel
-//   5 also enables E2 as the 5th output channel
-//   6 also enables E4 as the 6th output channel
-#define NUM_OUTPUTS	3
+//   4 also enables E0 as the 4th output channel on UDB3
+//   5 also enables E2 as the 5th output channel on UDB3
+//   6 also enables E4 as the 6th output channel on UDB3
+#define NUM_OUTPUTS	4
 
 // Channel numbers for each output
 // Use as is, or edit to match your setup.
@@ -104,10 +133,13 @@
 // connect THROTTLE_OUTPUT_CHANNEL to one of the built-in Outputs (1, 2, or 3) to make
 // sure your board gets power.
 // 
-#define ROLL_OUTPUT_CHANNEL					CHANNEL_1
-#define PITCH_OUTPUT_CHANNEL				CHANNEL_2
-#define YAW_OUTPUT_CHANNEL					CHANNEL_3
+#define MOTOR_A_OUTPUT_CHANNEL				CHANNEL_1		// + front or X left front, CCW
+#define MOTOR_B_OUTPUT_CHANNEL				CHANNEL_2		// + right or X right front, CW
+#define MOTOR_C_OUTPUT_CHANNEL				CHANNEL_3		// + rear or X right rear, CCW
+#define MOTOR_D_OUTPUT_CHANNEL				CHANNEL_4		// + left or Z left rear,	CW	
 
+// after you have read the above, delete the following line:
+//#error("The motor channels have been changed to the standard assignments. Go to the options.h file and read the section on output channels.")
 
 ////////////////////////////////////////////////////////////////////////////////
 // The Failsafe Channel is the RX channel that is monitored for loss of signal
@@ -127,14 +159,34 @@
 #define FAILSAFE_INPUT_MAX					4500
 
 
-////////////////////////////////////////////////////////////////////////////////
-// Control gains.
-// All gains should be positive real numbers.
-
 // SERVOSAT limits servo throw by controlling pulse width saturation.
 // set it to 1.0 if you want full servo throw, otherwise set it to the portion that you want
 #define SERVOSAT							1.0
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Control gains.
+// All gains should be positive real numbers.
+
+
+// Tilt PID(DD) control gains
+#define TILT_KI 0.05
+#define TILT_KP 0.08
+#define TILT_KD 0.5
+#define TILT_KDD 0.8
+
+// Yaw PID control gains
+#define YAW_KI 0.5
+#define YAW_KP 0.3
+#define YAW_KD 3.0
+
+
+// Vertical damping 
+// ****Note*** if your ESCs work "backwards", meaning that faster speed requires shorter pulses, then flip the sign to minus
+#define ACCEL_K 1.0
+
+#define MAX_YAW_RATE 51  // maximum yaw rate, degrees per second, must be between 50 and 500 degrees/second
+#define MAX_TILT 45       // maximum roll or pitch, degrees, not to exceed 45 degrees
 
 ////////////////////////////////////////////////////////////////////////////////
 // Hardware In the Loop Simulation
@@ -142,9 +194,3 @@
 // Requires setting GPS_TYPE to GPS_UBX_4HZ.
 // See the MatrixPilot wiki for more info on using HILSIM.
 #define HILSIM 								0
-
-
-////////////////////////////////////////////////////////////////////////////////
-// the following define is used to test the above gains and parameters.
-// if you define TestGains, their functions will be enabled, even without GPS or Tx turned on.
-// #define TestGains						// uncomment this line if you want to test your gains without using GPS

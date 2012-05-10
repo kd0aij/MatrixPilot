@@ -21,25 +21,25 @@
 
 // used for the UDB4
 
-#define	xrateBUFF			2
-#define	yrateBUFF			1
-#define	zrateBUFF			3
+#define	ADCON2CONFIG 0b0010010000011000 ; //?
 
-#define	xaccelBUFF			5
-#define	yaccelBUFF			6
-#define	zaccelBUFF			4
+#define	xrateBUFF	2
+#define	yrateBUFF	1
+#define	zrateBUFF	3
 
-#define analogInput1BUFF	7
-#define analogInput2BUFF	8
-#define analogInput3BUFF	9
-#define analogInput4BUFF	10
+#define	xaccelBUFF	5
+#define	yaccelBUFF	6
+#define	zaccelBUFF	4
+
+//#define analogInput1BUFF	?
+//#define analogInput2BUFF	?
 
 #define XRATE_SIGN -
 #define YRATE_SIGN -
 #define ZRATE_SIGN -
 
-#define XACCEL_SIGN -
-#define YACCEL_SIGN -
+#define XACCEL_SIGN +
+#define YACCEL_SIGN +
 #define ZACCEL_SIGN +
 
 //#define VREF
@@ -52,8 +52,8 @@
 #define MAX_OUTPUTS	8
 
 // LED pins
-#define LED_BLUE			LATEbits.LATE4
-#define LED_ORANGE			LATEbits.LATE3
+#define LED_ORANGE			LATEbits.LATE4
+#define LED_BLUE			LATEbits.LATE3
 #define LED_GREEN			LATEbits.LATE2
 #define LED_RED				LATEbits.LATE1
 

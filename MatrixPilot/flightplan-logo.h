@@ -106,10 +106,6 @@
 // ALT_DOWN(z)		- Drop z meters of altitude.
 // SET_ALT(z)		- Set altitude to z.
 
-// SPEED_INCREASE(x)- Increases the target speed by x m/s
-// SPEED_DECREASE(x)- Decreases the target speed by x m/s
-// SET_SPEED(x)		- Sets the target speed to x m/s
-
 // REPEAT(n)		- Repeat all of the instructions until the matching END, n times
 // REPEAT_FOREVER	- Repeat all of the instructions until the matching END, forever
 // END				- End the current REPEAT loop or Subroutine definition
@@ -177,7 +173,6 @@
 //		FD_PARAM, BK_PARAM, RT_PARAM, LT_PARAM, SET_ANGLE_PARAM, 
 //		EAST_PARAM, WEST_PARAM, NORTH_PARAM, SOUTH_PARAM, ALT_UP_PARAM, ALT_DOWN_PARAM, 
 //		SET_X_POS_PARAM, SET_Y_POS_PARAM, SET_ALT_PARAM, 
-//		SPEED_INCREASE_PARAM, SPEED_DECREASE_PARAM, SET_SPEED_PARAM
 //		REPEAT_PARAM, DO_PARAM(FUNC), EXEC_PARAM(FUNC)
 //		PARAM_SET(x), PARAM_ADD(x), PARAM_SUB(x), PARAM_MUL(x), PARAM_DIV(x)
 

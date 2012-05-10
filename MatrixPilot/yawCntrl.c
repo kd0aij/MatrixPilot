@@ -23,18 +23,16 @@
 
 #define HOVERYOFFSET ((long)(HOVER_YAW_OFFSET*(RMAX/57.3)))
 
-#if (( SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK ) || ( GAINS_VARIABLE == 1 ))
-	int yawkdrud 	= YAWKD_RUDDER*SCALEGYRO*RMAX ;
-	int rollkprud 	= ROLLKP_RUDDER*RMAX ;
-	int rollkdrud 	= ROLLKD_RUDDER*SCALEGYRO*RMAX ;
-	int hoveryawkp 	= HOVER_YAWKP*RMAX ;
-	int hoveryawkd 	= HOVER_YAWKD*SCALEGYRO*RMAX ;
-#else
+#if(GAINS_VARIABLE == 0)
 	const int yawkdrud 	= YAWKD_RUDDER*SCALEGYRO*RMAX ;
 	const int rollkprud 	= ROLLKP_RUDDER*RMAX ;
-	const int rollkdrud		= ROLLKD_RUDDER*SCALEGYRO*RMAX ;
 	const int hoveryawkp 	= HOVER_YAWKP*RMAX ;
 	const int hoveryawkd 	= HOVER_YAWKD*SCALEGYRO*RMAX ;
+#else
+	int yawkdrud 	= YAWKD_RUDDER*SCALEGYRO*RMAX ;
+	int rollkprud 	= ROLLKP_RUDDER*RMAX ;
+	int hoveryawkp 	= HOVER_YAWKP*RMAX ;
+	int hoveryawkd 	= HOVER_YAWKD*SCALEGYRO*RMAX ;
 #endif
 
 
@@ -102,12 +100,11 @@ void normalYawCntrl(void)
 		{
 			rollStabilization.WW = - __builtin_mulss( rmat[6] , rollkprud ) ;
 		}
-		rollStabilization.WW -= __builtin_mulss( rollkdrud , omegaAccum[1] ) ;
 	}
 	
 	if ( flags._.pitch_feedback )
 	{
-		int ail_offset = (udb_flags._.radio_on) ? (udb_pwIn[AILERON_INPUT_CHANNEL] - udb_pwTrim[AILERON_INPUT_CHANNEL]) : 0 ;
+		int ail_offset = udb_pwIn[AILERON_INPUT_CHANNEL] - udb_pwTrim[AILERON_INPUT_CHANNEL] ;
 		ail_rud_mix = MANUAL_AILERON_RUDDER_MIX * REVERSE_IF_NEEDED(AILERON_CHANNEL_REVERSED, ail_offset) ;
 		if ( canStabilizeInverted() && current_orientation == F_INVERTED ) ail_rud_mix = -ail_rud_mix ;
 	}

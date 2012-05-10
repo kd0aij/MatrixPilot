@@ -27,21 +27,6 @@
 
 
 // Check RC Inputs
-#if (BOARD_IS_CLASSIC_UDB == 1)
-	#if (USE_PPM_INPUT != 1 && NUM_INPUTS > 5)
-		#error("NUM_INPUTS can't be more than 5 without using PPM Input.")
-	#elif (USE_PPM_INPUT == 1 && NUM_INPUTS > 9)
-		#error("NUM_INPUTS can't be more than 9 when using PPM Input.")
-	#endif
-#else
-	// UDB4
-	#if (USE_PPM_INPUT != 1 && NUM_INPUTS > 8)
-		#error("NUM_INPUTS can't be more than 8 without using PPM Input.")
-	#elif (USE_PPM_INPUT == 1 && NUM_INPUTS > 9)
-		#error("NUM_INPUTS can't be more than 9 when using PPM Input.")
-	#endif
-#endif
-
 #if (THROTTLE_INPUT_CHANNEL > NUM_INPUTS)
 	#error("THROTTLE_INPUT_CHANNEL > NUM_INPUTS.")
 #endif
@@ -93,18 +78,6 @@
 
 
 // Check RC Outputs
-#if (BOARD_IS_CLASSIC_UDB == 1)
-	#if (USE_PPM_INPUT != 1 && NUM_OUTPUTS > 6)
-		#error("NUM_OUTPUTS can't be more than 6 without using PPM Input.")
-	#elif (USE_PPM_INPUT == 1 && NUM_OUTPUTS > 9)
-		#error("NUM_OUTPUTS can't be more than 9 when using PPM Input.")
-	#endif
-#else
-	// UDB4
-	#if (NUM_OUTPUTS > 10)
-		#error("NUM_OUTPUTS can't be more than 10.")
-	#endif
-#endif
 
 #if (THROTTLE_OUTPUT_CHANNEL > NUM_OUTPUTS)
 	#error("THROTTLE_OUTPUT_CHANNEL > NUM_OUTPUTS.")
@@ -161,13 +134,7 @@
 	#error("When using HILSIM, GPS_TYPE must be set to GPS_UBX_4HZ.")
 #endif
 
-// Check HILSIM and magnetometer setting
-#if ( (HILSIM == 1) && (MAG_YAW_DRIFT == 1) )
-	#error("Can't use HILSIM with the magnetometer yaw drift correction")
-#endif
 
-
-#if (BOARD_IS_CLASSIC_UDB == 1)
 
 // Check OSD Settings
 #if (USE_OSD == 1 && CLOCK_CONFIG == CRYSTAL_CLOCK )
@@ -175,11 +142,8 @@
 #endif
 
 
-// Check MediaTek Settings
-#if (UGPS_TYPE == GPS_MTEK && CLOCK_CONFIG == CRYSTAL_CLOCK )
-	#error("When using GPS_MTEK, CLOCK_CONFIG must be set to FRC8X_CLOCK.")
-#endif
 
+#if (BOARD_IS_CLASSIC_UDB == 1)
 
 // Check for Analog Sensor Pin Conflicts
 #if (NUM_ANALOG_INPUTS >= 1)
@@ -194,11 +158,6 @@
 	#endif
 #endif
 
-#else
-	// UDB4
-	#if (NUM_ANALOG_INPUTS > 4)
-		#error("Only 4 extra Analog Inputs are available the UDB4.")
-	#endif
 #endif
 
 
@@ -214,61 +173,4 @@
 #if (ANALOG_RSSI_INPUT_CHANNEL > NUM_ANALOG_INPUTS)
 	#error("ANALOG_RSSI_INPUT_CHANNEL > NUM_ANALOG_INPUTS.")
 #endif
-
-// Check Magnetometer Options
-#if ( MAG_YAW_DRIFT == 1 )
-#ifdef MAG_DIRECT
-#if ( BOARD_ORIENTATION != ORIENTATION_FORWARDS )
-	#error("This board orientation is not yet supported with MAG_DIRECT mag option."
-#endif
-#endif
-#else
-#if( ( SERIAL_OUTPUT_FORMAT == SERIAL_MAGNETOMETER) )
-	#error("SERIAL_MAGNETOMETER requires the use of MAG_YAW_DRIFT")
-#endif
-#endif
-
-// Check MAVLink Options
-#if ( SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK ) && ( BOARD_TYPE != UDB4_BOARD )
-	#error("SERIAL_MAVLINK requires use of the UDB4 to ensure sufficient RAM available.")
-#endif
-
-
-
-// Check flexifunction options
-#if( (USE_FLEXIFUNCTION_MIXING == 1) && (USE_NV_MEMORY == 0) )
-	#error("Must use NV memory with flexifunction mixing on UDB4+ only")
-#endif
-
-#if( (USE_FLEXIFUNCTION_MIXING == 1) && (SERIAL_OUTPUT_FORMAT != SERIAL_MAVLINK) )
-	#error("Must use SERIAL_MAVLINK with flexifunction mixing on UDB4+ only")
-#endif
-
-// Check non volatile memory services are not being used with classic UDB
-#if( (USE_I2C1_DRIVER == 1) && ( BOARD_IS_CLASSIC_UDB == 1 ) )
-	#error("I2C1 driver can't be used with classic UDB types")
-#endif
-
-// Check non volatile memory services are not being used with classic UDB
-#if( (USE_I2C2_DRIVER == 1) && ( BOARD_IS_CLASSIC_UDB == 1 ) )
-	#error("I2C2 driver can't be used with classic UDB types")
-#endif
-
-// Check that I2C1 drivers are active when using NV memory drivers
-#if( (USE_NV_MEMORY == 1) && ( USE_I2C1_DRIVER == 0) )
-	#error("NV memory must use I2C1 driver with USE_I2C1_DRIVER = 1")
-#endif
-
-// Check that non volatile memory is being used with MAVlink
-#if( (USE_NV_MEMORY == 1) && ( SERIAL_OUTPUT_FORMAT != SERIAL_MAVLINK) )
-	#error("Non volatile memory services can only be used with SERIAL_MAVLINK")
-#endif
-
-// Check that declination variable is only used with the magnetometer
-#if( (DECLINATIONANGLE_VARIABLE == 1) && (MAG_YAW_DRIFT != 1) )
-{
-	#error("Can't use variable declination angle with no magnetometer. Set MAG_YAW_DRIFT = 1 or DECLINATIONANGLE_VARIABLE = 0")
-}
-#endif
-
 

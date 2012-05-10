@@ -32,6 +32,14 @@ const int aileronbgain = (int)(8.0*AILERON_BOOST) ;
 const int elevatorbgain = (int)(8.0*ELEVATOR_BOOST) ;
 const int rudderbgain = (int)(8.0*RUDDER_BOOST) ;
 
+extern int theta[3] ;
+
+int roll_feedback ;
+int pitch_feedback ;
+int yaw_feedback ;
+int accel_feedback ;
+int theta_previous[2] = { 0 , 0 } ;
+int theta_delta[2] ;
 
 void servoMix( void )
 {
@@ -174,11 +182,123 @@ void servoMix( void )
 			udb_pwOut[THROTTLE_OUTPUT_CHANNEL] = udb_servo_pulsesat( temp ) ;
 		}
 #endif
-		
-		udb_pwOut[PASSTHROUGH_A_OUTPUT_CHANNEL] = udb_servo_pulsesat( pwManual[PASSTHROUGH_A_INPUT_CHANNEL] ) ;
-		udb_pwOut[PASSTHROUGH_B_OUTPUT_CHANNEL] = udb_servo_pulsesat( pwManual[PASSTHROUGH_B_INPUT_CHANNEL] ) ;
-		udb_pwOut[PASSTHROUGH_C_OUTPUT_CHANNEL] = udb_servo_pulsesat( pwManual[PASSTHROUGH_C_INPUT_CHANNEL] ) ;
-		udb_pwOut[PASSTHROUGH_D_OUTPUT_CHANNEL] = udb_servo_pulsesat( pwManual[PASSTHROUGH_D_INPUT_CHANNEL] ) ;
+
+		int commanded_roll ;
+		int commanded_pitch ;
+		int commanded_yaw ;
+
+
+		int min_throttle ;
+
+		int motor_A ;
+		int motor_B ;
+		int motor_C ;
+		int motor_D ;
+
+		union longww long_accum ;
+
+//#define ROLL_KP 0.05
+//#define PITCH_KP 0.05
+//#define ROLL_KD 1.0
+//#define PITCH_KD 1.0
+//#define YAW_KD 1.0
+
+//#define ROLL_KP 0.05
+//#define PITCH_KP 0.05
+//#define ROLL_KD 0.5
+//#define PITCH_KD 0.5
+//#define YAW_KD 0.5
+
+//#define ROLL_KP 0.025
+//#define PITCH_KP 0.025
+//#define ROLL_KD 1.5
+//#define PITCH_KD 1.5
+//#define YAW_KD 1.5
+
+//#define ROLL_KP 0.05
+//#define PITCH_KP 0.05
+//#define ROLL_KD 1.0
+//#define PITCH_KD 1.0
+//#define YAW_KD 1.0
+//#define ROLL_KDD 1.0
+//#define PITCH_KDD 1.0
+
+//#define ROLL_KP 0.075
+//#define PITCH_KP 0.075
+//#define ROLL_KD 1.5
+//#define PITCH_KD 1.5
+//#define YAW_KD 2.0
+//#define ROLL_KDD 1.5
+//#define PITCH_KDD 1.5
+
+//#define ROLL_KP 0.05
+//#define PITCH_KP 0.05
+//#define ROLL_KD 1.0
+//#define PITCH_KD 1.0
+//#define YAW_KD 2.0
+//#define ROLL_KDD 1.5
+//#define PITCH_KDD 1.5
+
+#define ROLL_KP 0.04
+#define PITCH_KP 0.04
+#define ROLL_KD 0.8
+#define PITCH_KD 0.8
+#define YAW_KD 0.8
+#define ROLL_KDD 0.8
+#define PITCH_KDD 0.8
+#define ACCEL_K 1.0
+
+		commanded_roll =  ( pwManual[PASSTHROUGH_A_INPUT_CHANNEL] 
+						- udb_pwTrim[PASSTHROUGH_A_INPUT_CHANNEL]) >> 2 ;
+		commanded_pitch = ( pwManual[PASSTHROUGH_B_INPUT_CHANNEL] 
+						- udb_pwTrim[PASSTHROUGH_B_INPUT_CHANNEL] ) >> 2 ;
+		commanded_yaw = ( pwManual[PASSTHROUGH_D_INPUT_CHANNEL] 
+						- udb_pwTrim[PASSTHROUGH_D_INPUT_CHANNEL] ) >> 1 ;
+
+		min_throttle = udb_pwTrim[PASSTHROUGH_C_INPUT_CHANNEL] ;
+
+		long_accum.WW = __builtin_mulus ( (unsigned int) (RMAX*ACCEL_K ) , accelEarth[2] ) ;
+		accel_feedback = long_accum._.W1 ;
+
+		motor_A = motor_B = motor_C = motor_D = pwManual[PASSTHROUGH_C_INPUT_CHANNEL] - accel_feedback ;
+
+		theta_delta[0] = theta[0] - theta_previous[0] ;
+		theta_delta[1] = theta[1] - theta_previous[1] ;
+
+		theta_previous[0] = theta[0] ;
+		theta_previous[1] = theta[1] ;
+
+		long_accum.WW = __builtin_mulus ( (unsigned int) (RMAX*ROLL_KP) , -rmat[6] ) ;
+		roll_feedback = long_accum._.W1 ;
+
+		long_accum.WW = __builtin_mulus ( (unsigned int) (RMAX*ROLL_KD) , theta[1] ) ;
+		roll_feedback += long_accum._.W1 ;
+
+		long_accum.WW = __builtin_mulus ( (unsigned int) (RMAX*ROLL_KDD) , theta_delta[1] ) << 2 ;
+		roll_feedback += long_accum._.W1 ;
+
+		long_accum.WW = __builtin_mulus ( (unsigned int) (RMAX*PITCH_KP) , rmat[7] ) ;
+		pitch_feedback = long_accum._.W1 ;
+
+		long_accum.WW = __builtin_mulus ( (unsigned int) (RMAX*PITCH_KD) , theta[0] ) ;
+		pitch_feedback += long_accum._.W1 ;
+
+		long_accum.WW = __builtin_mulus ( (unsigned int) (RMAX*PITCH_KDD) , theta_delta[0] ) << 2 ;
+		pitch_feedback += long_accum._.W1 ;
+
+		long_accum.WW = __builtin_mulus ( (unsigned int) (RMAX*YAW_KD) , theta[2] ) ;
+		yaw_feedback = long_accum._.W1 ;
+
+		motor_A += commanded_pitch + commanded_yaw - pitch_feedback - yaw_feedback ;
+		motor_B += commanded_roll - commanded_yaw - roll_feedback + yaw_feedback ;
+		motor_C += -commanded_pitch + commanded_yaw + pitch_feedback - yaw_feedback ;
+		motor_D += -commanded_roll - commanded_yaw + roll_feedback + yaw_feedback ;
+
+		udb_pwOut[PASSTHROUGH_A_OUTPUT_CHANNEL] = udb_servo_pulsesat( motor_A ) ;		
+		udb_pwOut[PASSTHROUGH_B_OUTPUT_CHANNEL] = udb_servo_pulsesat( motor_B ) ;
+		udb_pwOut[PASSTHROUGH_C_OUTPUT_CHANNEL] = udb_servo_pulsesat( motor_C ) ;
+		udb_pwOut[PASSTHROUGH_D_OUTPUT_CHANNEL] = udb_servo_pulsesat( motor_D ) ;
+
 }
 
 

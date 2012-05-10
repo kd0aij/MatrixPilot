@@ -81,6 +81,7 @@ boolean gps_nav_valid(void)
 
 void gps_startup_sequence(int gpscount)
 {
+	
 	if (gpscount == 100)
 		week_no.BB = 0 ;
 	else if (gpscount == 60)

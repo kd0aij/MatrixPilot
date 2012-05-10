@@ -20,7 +20,7 @@
 
 
 #include "../libDCM/libDCM.h"
-
+#include "gain_variables.h"
 
 
 #define BYTECIR_TO_DEGREE 92160		// (360.0/256 * 2^16)
@@ -61,6 +61,7 @@ extern union fbts_int flags ;
 void init_servoPrepare( void ) ;
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Control code - rollCntrl.c, pitchCntrl.c, yawCntrl.c, altitudeCntrl.c
 void rollCntrl( void ) ;
@@ -76,10 +77,6 @@ extern unsigned int wind_gain ;
 extern int pitch_control, roll_control, yaw_control, throttle_control ;
 extern union longww throttleFiltered ;
 extern int pitchAltitudeAdjust ;
-
-#if ( SPEED_CONTROL == 1)
-extern int desiredSpeed ; // Stored in 10ths of meters per second
-#endif
 
 // AltitudeHold type
 #define AH_NONE				0
@@ -206,7 +203,6 @@ extern union bfbts_word desired_behavior ;
 void init_serial( void ) ;
 void serial_output( char* format, ... ) ;
 void serial_output_8hz( void ) ;
-void mavlink_output_40hz( void ) ;
 
 // Serial Output Format
 #define SERIAL_NONE			0	// No serial data is sent
@@ -218,7 +214,6 @@ void mavlink_output_40hz( void ) ;
 #define SERIAL_MAGNETOMETER	6	// Debugging the magnetometer
 #define SERIAL_UDB_EXTRA	7	// Extra Telemetry beyond that provided by SERIAL_UDB for higher bandwidth connections
 #define SERIAL_CAM_TRACK	8	// Output Location in a format usable by a 2nd UDB to target its camera at this plane
-#define SERIAL_MAVLINK		9	// The Micro Air Vehicle Link protocol from the PixHawk Project
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -241,5 +236,3 @@ void osd_run_step( void );
 
 #define OSD_NTSC			0
 #define OSD_PAL				1
-
-#include "gain_variables.h"

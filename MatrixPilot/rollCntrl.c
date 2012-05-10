@@ -21,23 +21,23 @@
 
 #include "defines.h"
 
-#if (SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || (GAINS_VARIABLE == 1)
-	int yawkdail 		= YAWKD_AILERON*SCALEGYRO*RMAX ;
-	int rollkp 			= ROLLKP*RMAX ;
-	int rollkd 			= ROLLKD*SCALEGYRO*RMAX ;
-#else 
+
+#if(GAINS_VARIABLE == 0)
 	const int yawkdail 	= YAWKD_AILERON*SCALEGYRO*RMAX ;
 
 	const int rollkp 	= ROLLKP*RMAX ;
 	const int rollkd 	= ROLLKD*SCALEGYRO*RMAX ;
-#endif	
-
-#if (SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || (GAINS_VARIABLE == 1)
-	int hoverrollkp 	= HOVER_ROLLKP*SCALEGYRO*RMAX ;
-	int hoverrollkd 	= HOVER_ROLLKD*SCALEGYRO*RMAX ;
-#else
+	
 	const int hoverrollkp = HOVER_ROLLKP*SCALEGYRO*RMAX ;
 	const int hoverrollkd = HOVER_ROLLKD*SCALEGYRO*RMAX ;
+#else
+	int yawkdail 		= YAWKD_AILERON*SCALEGYRO*RMAX ;
+
+	int rollkp 			= ROLLKP*RMAX ;
+	int rollkd 			= ROLLKD*SCALEGYRO*RMAX ;
+	
+	int hoverrollkp 	= HOVER_ROLLKP*SCALEGYRO*RMAX ;
+	int hoverrollkd 	= HOVER_ROLLKD*SCALEGYRO*RMAX ;
 #endif
 
 void normalRollCntrl(void) ;

@@ -19,6 +19,8 @@
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
 
+#error( "Do not use the MatrixPilot directory for quads. Use MatrixPilotQuad instead."
+
 ////////////////////////////////////////////////////////////////////////////////
 // options.h
 // Bill Premerlani's UAV Dev Board
@@ -36,25 +38,27 @@
 // GREEN_BOARD - Board is green and includes 2 vertical gyro daugter-boards.
 // RED_BOARD   - Board is red, and includes 2 vertical gyro daugter-boards.
 // UDB3_BOARD  - Board is red, and includes a single, flat, multi-gyro daugter-board.
-// UDB4_BOARD  - Board is red, has 8 inputs, 8 output and no gyro daughter-board.
-// AUAV1_BOARD - Nick Arsov's UDB3 clone, version one
 // See the MatrixPilot wiki for more details on different UDB boards.
-// If building for the UDB4, use the MatrixPilot-udb4.mcw project workspace. 
-#define BOARD_TYPE 							UDB3_BOARD
+// If building for UDB4, use the MatrixPilot-udb4.mcp project file.
+#define BOARD_TYPE 							UDB4_BOARD
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Select Clock Configuration (Set to CRYSTAL_CLOCK or FRC8X_CLOCK)
+// CRYSTAL_CLOCK is the 16 MHz crystal.  This is the speed used in the past, and may be
+// more compatible with other add-ons. The CRYSTAL_CLOCK supports a maximum baud rate of 19200 bps.
+// FRC8X_CLOCK runs the fast RC clock (7.3728 MHz) with 8X PLL multiplier, and supports much
+// faster baud rates.
+#define CLOCK_CONFIG 						FRC8X_CLOCK
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Use board orientation to change the mounting direction of the board.
-// Note: For UDB3 and older versions of UDB, Y arrow points to the front, GPS connector is on the front.
-//       For UDB4, X arrow points to the front, GPS connectors are on the front.
-// The following 6 orientations have the board parallel with the ground.
+// The following 4 orientations have the board parallel with the ground.
 // ORIENTATION_FORWARDS:  Component-side up,   GPS connector front
 // ORIENTATION_BACKWARDS: Component-side up,   GPS connector back
 // ORIENTATION_INVERTED:  Component-side down, GPS connector front
 // ORIENTATION_FLIPPED:   Component-side down, GPS connector back
-// ORIENTATION_YAWCW:     Component-side up,   GPS connector to the right
-// ORIENTATION_YAWCCW:    Component-side up,   GPS connector to the left
-// 
 // The following 2 orientations are "knife edge" mountings
 // ORIENTATION_ROLLCW: Rick's picture #9, board rolled 90 degrees clockwise,
 //		from point of view of the pilot
@@ -118,7 +122,7 @@
 // in the altitude controls, and will trim the throttle and pitch to maintain air speed.
 // Define DESIRED_SPEED to be the air speed that you want, in meters/second.
 #define SPEED_CONTROL						0
-#define DESIRED_SPEED						10.0 // meters/second
+#define DESIRED_SPEED						10.00 // meters/second
 
 // Inverted flight
 // Set these to 1 to enable stabilization of inverted flight in stabilized and/or waypoint modes.
@@ -138,8 +142,6 @@
 
 // Define MAG_YAW_DRIFT to be 1 to use magnetometer for yaw drift correction.
 // Otherwise, if set to 0 the GPS will be used.
-// If you select this option, you also need to set magnetometer options in
-// the magnetometerOptions.h file, including declination and magnetometer type.
 #define MAG_YAW_DRIFT 						0
 
 // Racing Mode
@@ -176,25 +178,24 @@
 // NUM_INPUTS: Set to 1-5 (or 1-8 when using PPM input)
 //   1-4 enables only the first 1-4 of the 4 standard input channels
 //   5 also enables E8 as the 5th input channel
-#define NUM_INPUTS							5
+#define NUM_INPUTS							4
 
 // Channel numbers for each input.
 // Use as is, or edit to match your setup.
 //   - If you're set up to use Rudder Navigation (like MatrixNav), then you may want to swap
 //     the aileron and rudder channels so that rudder is CHANNEL_1, and aileron is 5.
-#define THROTTLE_INPUT_CHANNEL				CHANNEL_3
-#define AILERON_INPUT_CHANNEL				CHANNEL_1
-#define ELEVATOR_INPUT_CHANNEL				CHANNEL_2
-#define RUDDER_INPUT_CHANNEL				CHANNEL_5
-#define MODE_SWITCH_INPUT_CHANNEL			CHANNEL_4
+#define THROTTLE_INPUT_CHANNEL				CHANNEL_UNUSED
+#define AILERON_INPUT_CHANNEL				CHANNEL_UNUSED
+#define ELEVATOR_INPUT_CHANNEL				CHANNEL_UNUSED
+#define RUDDER_INPUT_CHANNEL				CHANNEL_UNUSED
+#define MODE_SWITCH_INPUT_CHANNEL			CHANNEL_UNUSED
 #define CAMERA_PITCH_INPUT_CHANNEL			CHANNEL_UNUSED
 #define CAMERA_YAW_INPUT_CHANNEL			CHANNEL_UNUSED
-#define CAMERA_MODE_INPUT_CHANNEL			CHANNEL_UNUSED
 #define OSD_MODE_SWITCH_INPUT_CHANNEL		CHANNEL_UNUSED
-#define PASSTHROUGH_A_INPUT_CHANNEL			CHANNEL_UNUSED
-#define PASSTHROUGH_B_INPUT_CHANNEL			CHANNEL_UNUSED
-#define PASSTHROUGH_C_INPUT_CHANNEL			CHANNEL_UNUSED
-#define PASSTHROUGH_D_INPUT_CHANNEL			CHANNEL_UNUSED
+#define PASSTHROUGH_A_INPUT_CHANNEL			CHANNEL_1
+#define PASSTHROUGH_B_INPUT_CHANNEL			CHANNEL_2
+#define PASSTHROUGH_C_INPUT_CHANNEL			CHANNEL_3
+#define PASSTHROUGH_D_INPUT_CHANNEL			CHANNEL_4
 
 // NUM_OUTPUTS: Set to 3, 4, 5, or 6
 //   3 enables only the standard 3 output channels
@@ -215,18 +216,18 @@
 // connect THROTTLE_OUTPUT_CHANNEL to one of the built-in Outputs (1, 2, or 3) to make
 // sure your board gets power.
 // 
-#define THROTTLE_OUTPUT_CHANNEL				CHANNEL_3
-#define AILERON_OUTPUT_CHANNEL				CHANNEL_1
-#define ELEVATOR_OUTPUT_CHANNEL				CHANNEL_2
-#define RUDDER_OUTPUT_CHANNEL				CHANNEL_4
+#define THROTTLE_OUTPUT_CHANNEL				CHANNEL_UNUSED
+#define AILERON_OUTPUT_CHANNEL				CHANNEL_UNUSED
+#define ELEVATOR_OUTPUT_CHANNEL				CHANNEL_UNUSED
+#define RUDDER_OUTPUT_CHANNEL				CHANNEL_UNUSED
 #define AILERON_SECONDARY_OUTPUT_CHANNEL	CHANNEL_UNUSED
 #define CAMERA_PITCH_OUTPUT_CHANNEL			CHANNEL_UNUSED
 #define CAMERA_YAW_OUTPUT_CHANNEL			CHANNEL_UNUSED
 #define TRIGGER_OUTPUT_CHANNEL				CHANNEL_UNUSED
-#define PASSTHROUGH_A_OUTPUT_CHANNEL		CHANNEL_UNUSED
-#define PASSTHROUGH_B_OUTPUT_CHANNEL		CHANNEL_UNUSED
-#define PASSTHROUGH_C_OUTPUT_CHANNEL		CHANNEL_UNUSED
-#define PASSTHROUGH_D_OUTPUT_CHANNEL		CHANNEL_UNUSED
+#define PASSTHROUGH_A_OUTPUT_CHANNEL		CHANNEL_1
+#define PASSTHROUGH_B_OUTPUT_CHANNEL		CHANNEL_2
+#define PASSTHROUGH_C_OUTPUT_CHANNEL		CHANNEL_3
+#define PASSTHROUGH_D_OUTPUT_CHANNEL		CHANNEL_4
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -255,16 +256,6 @@
 #define MODE_SWITCH_THRESHOLD_LOW			2600
 #define MODE_SWITCH_THRESHOLD_HIGH			3400
 
-// Setting MODE_SWITCH_TWO_POSITION to 1,  allows a two state mode switch on the transmitter to be used
-// to create three flight modes. When switch is "Down" the plane always reverts to Manual. When "Up",
-// the plane moves to Stabilized". If the user is in stabilized ("Up"), and then the user toggles
-// the switch to Down, Up, Down, Up, then the plane moves to autonomous.
-// Each toggle must be achieved with a limited time period ( 1/2 a second ) and not faster than 1/40th of a second.
-// When in Autonomous, a move to "Down" puts the switch state  back to Manual. And a futher move to "Up", will put the
-// switch state back in stabilized. The important design concept is that Manual position is always Manual state immediately.
-// Stabilized position is Stabilized mode unless you try  hard to reach Autonomous mode.
-// Set MODE_SWITCH_TWO_POSITION	to 0 for a normal three position mode switch.	
-#define MODE_SWITCH_TWO_POSITION			0
 
 ////////////////////////////////////////////////////////////////////////////////
 // The Failsafe Channel is the RX channel that is monitored for loss of signal
@@ -279,7 +270,7 @@
 //
 // FAILSAFE_INPUT_MIN and _MAX define the range within which we consider the radio on.
 // Normal signals should fall within about 2000 - 4000.
-#define FAILSAFE_INPUT_CHANNEL				THROTTLE_INPUT_CHANNEL
+#define FAILSAFE_INPUT_CHANNEL				CHANNEL_3
 #define FAILSAFE_INPUT_MIN					1500
 #define FAILSAFE_INPUT_MAX					4500
 
@@ -310,27 +301,20 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Serial Output Format (Can be SERIAL_NONE, SERIAL_DEBUG, SERIAL_ARDUSTATION, SERIAL_UDB,
-// SERIAL_UDB_EXTRA,SERIAL_MAVLINK, SERIAL_CAM_TRACK, or SERIAL_OSD_REMZIBI)
+// SERIAL_UDB_EXTRA, SERIAL_CAM_TRACK, or SERIAL_OSD_REMZIBI)
 // This determines the format of the output sent out the spare serial port.
 // Note that SERIAL_OSD_REMZIBI only works with a ublox GPS.
 // SERIAL_UDB_EXTRA will add additional telemetry fields to those of SERIAL_UDB.
 // SERIAL_UDB_EXTRA can be used with the OpenLog without characters being dropped.
 // SERIAL_UDB_EXTRA may result in dropped characters if used with the XBEE wireless transmitter.
 // SERIAL_CAM_TRACK is used to output location data to a 2nd UDB, which will target its camera at this plane.
-// SERIAL_MAVLINK is a bi-directional binary format for use with QgroundControl, HKGCS or MAVProxy (Ground Control Stations.)
-// SERIAL_MAVLINK is only supported on the UDB4 to ensure that sufficient RAM is available.
-// Note that SERIAL_MAVLINK defaults to using a baud rate of 57600 baud (other formats default to 19200)
-
-#define SERIAL_OUTPUT_FORMAT 	SERIAL_NONE
-
-// MAVLink requires an aircraft Identifier (I.D) as it is deaigned to control multiple aircraft
-// Each aircraft in the sky will need a unique I.D. in the range from 0-255
-#define MAVLINK_SYSID	55
+#define SERIAL_OUTPUT_FORMAT				SERIAL_UDB_EXTRA
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // On Screen Display
 // USE_OSD enables the OSD system.  Customize the OSD Layout in the osd_layout.h file.
+// The OSD only works with CLOCK_CONFIG, above, set to FRC8X_CLOCK.
 #define USE_OSD								0
 
 // NUM_ANALOG_INPUTS: Set to 0, 1, or 2
@@ -444,14 +428,12 @@
 // YAWKP_RUDDER is the proportional feedback gain for rudder navigation
 // YAWKD_RUDDER is the yaw gyro feedback gain for the rudder in reponse to yaw rotation
 // ROLLKP_RUDDER is the feedback gain for the rudder in response to the current roll angle
-// ROLLKD_RUDDER is the feedback gain for the rudder in response to the rate of change roll angle
 // MANUAL_AILERON_RUDDER_MIX is the fraction of manual aileron control to mix into the rudder when
 // in stabilized or waypoint mode.  This mainly helps aileron-initiated turning while in stabilized.
 // RUDDER_BOOST is the additional gain multiplier for the manually commanded rudder deflection
 #define YAWKP_RUDDER						0.05
 #define YAWKD_RUDDER						0.05
 #define ROLLKP_RUDDER						0.06
-#define ROLLKD_RUDDER						0.05
 #define MANUAL_AILERON_RUDDER_MIX			0.00
 #define RUDDER_BOOST						1.00
 
@@ -483,30 +465,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Camera Stabilization and Targeting
 // 
-// There are three camera modes within MatrixPilot
-/// Canera Mode 1: No stabilisation for camera pitch or yaw
-//  Camera Mode 2: Stabilisation of camera pitch but not yaw.
-//  Camera Mode 3: Camera targetting. The camera is aimed at a GPS location.
-
-// Control of camera modes
-// If CAMERA_MODE_INPUT_CHANNEL is assigned to a channel in the channels section of
-// options.h then a three position switch can be used to select between the three camera
-// stabilization modes. The following min and max values should work for most transmitters.
-
-#define CAMERA_MODE_THRESHOLD_LOW			2600
-#define CAMERA_MODE_THRESHOLD_HIGH			3400
-
-// If you do not have a spare channel for CAMERA_MODE_INPUT_CHANNEL then,
-// If CAMERA_MODE_INPUT_CHANNEL is defined as CHANNEL_UNUSED :-
-//  In UDB Manual Mode the camera is fixed straight ahead. (Camera mode 1)
-//  In UDB Stabilized Mode, the camera stabilizes in the pitch axis but stabilizes a constant yaw
-//     relative to the plane's frame of reference. (Camera mode 2).
-//  In Waypoint Mode, the direction of the camera is driven from a flight camera plan in waypoints.h
-// In all three flight modes, if you set CAMERA_INPUT_CHANNEL then the transmitter camera controls
-// will be mixed into the camera stabilisation. This allows a pilot to override the camera stabilization dynamically
+// In Manual Mode the camera is fixed straight ahead.
+// In Stabilized Mode, the camera stabilizes in the pitch axis but stabilizes a constant yaw
+// relative to the plane's frame of reference.
+// In Waypoint Mode, the direction of the camera is driven from a flight camera plan in waypoints.h
+// In all three flight modes, if you set CAMERA_*_INPUT_CHANNEL then the transmitter camera controls
+// will override the camera stabilisation. This allows a pilot to override the camera stabilization dynamically
 // during flight and point the camera at a specific target of interest.
-
-// Setup and configuration of camera targetting at installation of camera servos:-
+// 
 // To save cpu cycles, you will need to pre-compute the tangent of the desired pitch of the camera
 // when in stabilized mode. This should be expressed in 2:14 format. 
 // Example: You require the camera to be pitched down by 15 degrees from the horizon in stabilized mode.
@@ -518,6 +484,7 @@
 #define CAM_TAN_PITCH_IN_STABILIZED_MODE   1433	// 1443 is 5 degrees of pitch. Example: 15 degrees is 4389
 #define CAM_YAW_IN_STABILIZED_MODE			  0 // in degrees relative to the plane's yaw axis.    Example: 0
 
+// Camera values to set at installation of camera servos
 // All number should be integers
 #define CAM_PITCH_SERVO_THROW			     95	// Camera lens rotation at maximum PWM change (2000 to 4000), in degrees.          
 #define CAM_PITCH_SERVO_MAX					 85	// Max pitch up that plane can tilt and keep camera level, in degrees.  
@@ -617,32 +584,3 @@
 
 // Set this to 1 to calculate and print out free stack space
 #define RECORD_FREE_STACK_SPACE 			0
-
-
-///////////////////////////////////////////////////////////////////////////////////
-// Vehicle and Pilot Identification
-
-// Once you are flying your plane and swapping flights and telemetry with other's across
-// the world, you may like to fill in some of the fields below. This will be embedded in your
-// telemetry, and used to make more interesting flights in Google Earth.
-// ID_VEHICLE_MODEL_NAME provides indication of what model of plane, quad, car etc you are using
-// ID_VEHICLE_REGISTRATION should be short (less than 12 continuous characters with no space
-// it will be used in Google Earth as the folder name containing your flights.
-// ID_LEAD_PILOT is your lead pilot flight name or alias e.g. "UAV Flight Director"
-// ID_DIY_DRONES_URL should be the URL of your member page on DIY Drones.
-// That will allow Google Earth viewers of your flights to click straight through to your latest discussions.
-// EXAMPLE:-
-//#define ID_VEHICLE_MODEL_NAME "Multiplex Twinstar 2"
-//#define ID_VEHICLE_REGISTRATION "TW2-PDH-UK"
-//#define ID_LEAD_PILOT "Pete Hollands"
-//#define ID_DIY_DRONES_URL "http://www.diydrones.com/profile/PeterHollands"
-#define ID_VEHICLE_MODEL_NAME "Not Defined"
-#define ID_VEHICLE_REGISTRATION "Not Defined"
-#define ID_LEAD_PILOT "Not Defined"
-#define ID_DIY_DRONES_URL "http://www.diydrones.com"
-
-////////////////////////////////////////////////////////////////////////////////
-// The following define is used to enable vertical initialization for VTOL
-// To enable vertical initialization, uncomment the line
-//#define INITIALIZE_VERTICAL
-

@@ -6,33 +6,22 @@
 
 #define GAINS_VARIABLE			0
 
-// Variable altitude and airspeed
-// BEWARE: This uses an alternative library for altitude control
-// Your aircraft will not behave the same way as when using non variable gains. 
-#define ALTITUDE_GAINS_VARIABLE 0
-// To use this option, you will need to add the following files to your project
-// airspeedCntrl.c/.h
-// altitudeCntrlVariable.c
-// airspeed_options.h
-
 // Aileron/Roll Control Gains
 // ROLLKP is the proportional gain, approximately 0.25
 // ROLLKD is the derivative (gyro) gain, approximately 0.125
 // YAWKP_AILERON is the proportional feedback gain for ailerons in response to yaw error
 // YAWKD_AILERON is the derivative feedback gain for ailerons in response to yaw rotation
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
-
-#if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || ( GAINS_VARIABLE == 1 ))
-   // MAVLINK, QGROUND CONTROL (Ground Control Station) can change these variables 
-	extern int rollkp;
-	extern int rollkd;
-	extern int yawkpail;
-	extern int yawkdail;
-#else
+#if(GAINS_VARIABLE == 0)
 	extern const int rollkp;
 	extern const int rollkd;
 	extern const int yawkpail;
 	extern const int yawkdail;
+#else
+	extern int rollkp;
+	extern int rollkd;
+	extern int yawkpail;
+	extern int yawkdail;
 #endif
 //#define AILERON_BOOST						1.0
 
@@ -42,16 +31,16 @@
 // RUDDER_ELEV_MIX is the degree of elevator adjustment for rudder and banking
 // AILERON_ELEV_MIX is the degree of elevator adjustment for aileron
 // ELEVATOR_BOOST is the additional gain multiplier for the manually commanded elevator deflection
-#if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || ( GAINS_VARIABLE == 1 ))
-	extern int pitchgain;
-	extern int pitchkd;
-	extern int rudderElevMixGain;
-	extern int rollElevMixGain;
-#else
+#if(GAINS_VARIABLE == 0)
 	extern const int pitchgain;
 	extern const int pitchkd;
 	extern const int rudderElevMixGain;
 	extern const int rollElevMixGain;
+#else
+	extern int pitchgain;
+	extern int pitchkd;
+	extern int rudderElevMixGain;
+	extern int rollElevMixGain;
 #endif
 //#define ELEVATOR_BOOST						0.5
 
@@ -63,20 +52,17 @@
 // YAWKP_RUDDER is the proportional feedback gain for rudder navigation
 // YAWKD_RUDDER is the yaw gyro feedback gain for the rudder in reponse to yaw rotation
 // ROLLKP_RUDDER is the feedback gain for the rudder in response to the current roll angle
-// ROLLKD_RUDDER is the feedback gain for the rudder in response to the rate of roll
 // MANUAL_AILERON_RUDDER_MIX is the fraction of manual aileron control to mix into the rudder when
 // in stabilized or waypoint mode.  This mainly helps aileron-initiated turning while in stabilized.
 // RUDDER_BOOST is the additional gain multiplier for the manually commanded rudder deflection
-#if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || ( GAINS_VARIABLE == 1 ))
-	extern int yawkprud;
-	extern int yawkdrud;
-	extern int rollkprud;
-	extern int rollkdrud;
-#else
-	extern const int yawkprud;
+#if(GAINS_VARIABLE == 0)
+	extern const int rollkprud;
 	extern const int yawkdrud;
 	extern const int rollkprud;
-	extern const int rollkdrud;
+#else
+	extern int rollkprud;
+	extern int yawkdrud;
+	extern int rollkprud;
 #endif
 //extern int MANUAL_AILERON_RUDDER_MIX			0.20
 //#define RUDDER_BOOST						1.0
@@ -94,21 +80,20 @@
 // HOVER_PITCH_TOWARDS_WP is the max angle in degrees to pitch the nose down towards the WP while navigating
 // HOVER_NAV_MAX_PITCH_RADIUS is the radius around a waypoint in meters, within which the HOVER_PITCH_TOWARDS_WP
 //                            value is proportionally scaled down.
-
-#if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || ( GAINS_VARIABLE == 1 ))
-	extern int hoverrollkp;
-	extern int hoverrollkd;
-	extern int hoverpitchgain;
-	extern int hoverpitchkd;
-	extern int hoveryawkp;
-	extern int hoveryawkd;
-#else
+#if(GAINS_VARIABLE == 0)
 	extern const int hoverrollkp;
 	extern const int hoverrollkd;
 	extern const int hoverpitchgain;
 	extern const int hoverpitchkd;
 	extern const int hoveryawkp;
 	extern const int hoveryawkd;
+#else
+	extern int hoverrollkp;
+	extern int hoverrollkd;
+	extern int hoverpitchgain;
+	extern int hoverpitchkd;
+	extern int hoveryawkp;
+	extern int hoveryawkd;
 #endif
 
 //#define HOVER_PITCH_OFFSET					0.0		// + leans towards top, - leans towards bottom

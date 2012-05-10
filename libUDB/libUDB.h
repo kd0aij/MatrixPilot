@@ -27,7 +27,6 @@
 #include "fixDeps.h"
 #include "libUDB_defines.h"
 #include "magnetometerOptions.h"
-#include "nv_memory_options.h"
 #include <dsp.h>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,22 +120,6 @@ int  udb_servo_pulsesat(long pw);
 // the UDB has booted up and the radio is on.
 void udb_servo_record_trims(void);
 
-// Functions only included with nv memory.
-#if(USE_NV_MEMORY == 1)
-// Call this funtion to skip doing radio trim calibration
-void udb_skip_radio_trim();
-void udb_skip_imu_calibration();
-
-typedef struct tagUDB_SKIP_FLAGS
-{
-	unsigned int skip_imu_cal		:1;
-	unsigned int skip_radio_trim	:1;
-	unsigned int unused				:6;
-} UDB_SKIP_FLAGS;
-
-extern UDB_SKIP_FLAGS udb_skip_flags;
-#endif
-
 // Implement this callback to prepare the pwOut values.
 // It is called at 40Hz (once every 25ms) at a low priority.
 void udb_servo_callback_prepare_outputs(void);			// Callback
@@ -189,6 +172,7 @@ extern fractional udb_magOffset[3];
 // Implement thiis callback to make use of the magetometer data.  This is called each
 // time the magnetometer reports new data.
 void udb_magnetometer_callback_data_available(void);	// Callback
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // LEDs
@@ -249,7 +233,7 @@ void osd_spi_erase_chars(unsigned char n) ;
 
 #define NUM_FLAG_ZERO_PADDED	1	// When num_digits > 0, left-pad with zeros instead of spaces
 #define NUM_FLAG_SIGNED			2	// Reserve space for a - sign to the left of the number
-void osd_spi_write_number(long val, char num_digits, char decimal_places, char num_flags, char header, char footer) ;
+void osd_spi_write_number(long val, char num_digits, char num_flags, char header, char footer) ;
 // num_digits == 0 means left aligned
 // header or footer == 0 means skip the header or footer char
 

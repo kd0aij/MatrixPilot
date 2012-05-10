@@ -20,9 +20,9 @@
 
 
 #include "defines.h"
-#include "mode_switch.h"
 
 union fbts_int flags ;
+union fbts_int old_rtl_flags ;
 int waggle = 0 ;
 int calib_timer = CALIB_PAUSE ;
 int standby_timer = STANDBY_PAUSE ;
@@ -53,9 +53,58 @@ void init_states(void)
 void udb_background_callback_periodic(void)
 {
 	//	Configure the GPS for binary if there is a request to do so.
-
-	//	Determine whether a flight mode switch is commanded.	
-	flight_mode_switch_check_set();
+	//	Determine whether the radio is on.
+	
+	if ( udb_flags._.radio_on )
+	{
+		//	Select manual, automatic, or come home, based on pulse width of the switch input channel as defined in options.h.
+		if ( udb_pwIn[MODE_SWITCH_INPUT_CHANNEL] > MODE_SWITCH_THRESHOLD_HIGH )
+		{
+			flags._.man_req = 0 ;
+			flags._.auto_req = 0 ;
+			flags._.home_req = 1 ;
+		}
+		else if ( udb_pwIn[MODE_SWITCH_INPUT_CHANNEL] > MODE_SWITCH_THRESHOLD_LOW )
+		{
+			flags._.man_req = 0 ;
+			flags._.auto_req = 1 ;
+			flags._.home_req = 0 ;
+		}
+		else
+		{
+			flags._.man_req = 1 ;
+			flags._.auto_req = 0 ;
+			flags._.home_req = 0 ;
+		}
+		
+		// With Failsafe Hold enabled: After losing RC signal, and then regaining it, you must manually
+		// change the mode switch position in order to exit RTL mode.
+		if (flags._.rtl_hold)
+		{
+			if (flags._.man_req  == old_rtl_flags._.man_req &&
+				flags._.auto_req == old_rtl_flags._.auto_req &&
+				flags._.home_req == old_rtl_flags._.home_req)
+			{
+				flags._.man_req = 0 ;
+				flags._.auto_req = 0 ;
+				flags._.home_req = 0 ;
+			}
+			else
+			{
+				old_rtl_flags.WW = flags.WW ;
+				flags._.rtl_hold = 0 ;
+			}
+		}
+		else {
+			old_rtl_flags.WW = flags.WW ;
+		}
+	}
+	else
+	{
+		flags._.man_req = 0 ;
+		flags._.auto_req = 0 ;
+		flags._.home_req = 1 ;
+	}
 	
 	//	Update the nav capable flag. If the GPS has a lock, gps_data_age will be small.
 	//	For now, nav_capable will always be 0 when the Airframe type is AIRFRAME_HELI.
@@ -97,16 +146,7 @@ void ent_acquiringS()
 	flags._.altitude_hold_pitch = 0 ;
 	
 	// almost ready to turn the control on, save the trims and sensor offsets
-#if (FIXED_TRIMPOINT != 1)	// Do not alter trims from preset when they are fixed
- #if(USE_NV_MEMORY == 1)
-	if(udb_skip_flags.skip_radio_trim == 0)
-	{
-		udb_servo_record_trims() ;
-	}
- #else
-		udb_servo_record_trims() ;
- #endif
-#endif
+	udb_servo_record_trims() ;
 	dcm_calibrate() ;
 	
 	waggle = WAGGLE_SIZE ;
@@ -221,11 +261,7 @@ void startS(void)
 
 void calibrateS(void)
 {
-#if (NORADIO == 1)
-	if ( 1 )
-#else
 	if ( udb_flags._.radio_on )
-#endif
 	{
 #if ( LED_RED_MAG_CHECK == 0 )
 		udb_led_toggle(LED_RED) ;
@@ -251,11 +287,7 @@ void acquiringS(void)
 	
 	if ( dcm_flags._.nav_capable && ( ( MAG_YAW_DRIFT == 0 ) || ( magMessage == 7 ) ) )
 	{
-#if (NORADIO == 1)
-		if ( 1 )
-#else
 		if ( udb_flags._.radio_on )
-#endif
 		{
 			if (standby_timer == NUM_WAGGLES+1)
 				waggle = WAGGLE_SIZE ;
@@ -293,9 +325,9 @@ void manualS(void)
 {
 	if ( udb_flags._.radio_on )
 	{
-		if ( flight_mode_switch_home() & dcm_flags._.nav_capable )
+		if ( flags._.home_req & dcm_flags._.nav_capable )
 			ent_waypointS() ;
-		else if ( flight_mode_switch_auto() )
+		else if ( flags._.auto_req )
 			ent_stabilizedS() ;
 	}
 	else
@@ -313,9 +345,9 @@ void stabilizedS(void)
 {
 	if ( udb_flags._.radio_on )
 	{
-		if ( flight_mode_switch_home() & dcm_flags._.nav_capable )
+		if ( flags._.home_req & dcm_flags._.nav_capable )
 			ent_waypointS() ;
-		else if ( flight_mode_switch_manual() )
+		else if ( flags._.man_req )
 			ent_manualS() ;
 	}
 	else
@@ -334,9 +366,9 @@ void waypointS(void)
 	
 	if ( udb_flags._.radio_on )
 	{
-		if ( flight_mode_switch_manual() )
+		if ( flags._.man_req )
 			ent_manualS() ;
-		else if ( flight_mode_switch_auto() )
+		else if ( flags._.auto_req )
 			ent_stabilizedS() ;
 	}
 	else
@@ -350,11 +382,11 @@ void returnS(void)
 {
 	if ( udb_flags._.radio_on )
 	{
-		if ( flight_mode_switch_manual() )
+		if ( flags._.man_req )
 			ent_manualS() ;
-		else if ( flight_mode_switch_auto() )
+		else if ( flags._.auto_req )
 			ent_stabilizedS() ;
-		else if ( flight_mode_switch_home() & dcm_flags._.nav_capable )
+		else if ( flags._.home_req & dcm_flags._.nav_capable )
 			ent_waypointS() ;
 	}
 	else

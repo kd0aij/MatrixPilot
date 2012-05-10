@@ -47,7 +47,7 @@ _FGS( CODE_PROT_OFF ) ;				// no protection
 _FICD( 0xC003 ) ;					// normal use of debugging port
 
 #elif (BOARD_TYPE == UDB4_BOARD)
-_FOSCSEL(FNOSC_PRIPLL) ;            // medium speed XTAL plus PLL
+_FOSCSEL(FNOSC_FRCPLL) ;			// fast RC plus PLL
 _FOSC(	FCKSM_CSECMD &
 		OSCIOFNC_ON &
 		POSCMD_NONE ) ;
@@ -82,35 +82,14 @@ unsigned char rc_signal_strength ;
 #endif
 
 
-// Functions only included with nv memory.
-#if(USE_NV_MEMORY == 1)
-UDB_SKIP_FLAGS udb_skip_flags = {0,0,0};
-
-void udb_skip_radio_trim()
-{
-	udb_skip_flags.skip_radio_trim = 1;
-}
-
-void udb_skip_imu_calibration()
-{
-	udb_skip_flags.skip_imu_cal = 1;
-}
-
-#endif
-
-
-//#if(USE_NV_MEMORY == 1)
-//if(udb_skip_flags.skip_radio_trim == 1)
-//if(udb_skip_flags.skip_imu_cal == 1)
-//#endif
-//
-
 void udb_init(void)
 {
 	defaultCorcon = CORCON ;
 	
 #if (BOARD_TYPE == UDB4_BOARD)
-	PLLFBDbits.PLLDIV = 30 ; // FOSC = 32 MHz (XT = 8.00MHz, N1=2, N2=4, M = 32)
+	CLKDIVbits.PLLPRE = 1 ;
+	PLLFBDbits.PLLDIV = 50 ; // FOSC = 32 MHz (FRC = 7.37MHz, N1=3, N2=4, M = 52)
+	udb_eeprom_init() ;
 #endif
 	
 	udb_flags.B = 0 ;
@@ -177,47 +156,21 @@ void udb_init_leds( void )
 	return ;
 }
 
-#ifdef INITIALIZE_VERTICAL // for VTOL, vertical initialization
+
 void udb_a2d_record_offsets(void)
 {
-#if(USE_NV_MEMORY == 1)
-	if(udb_skip_flags.skip_imu_cal == 1)
-		return;
-#endif
-
-	// almost ready to turn the control on, save the input offsets
-	UDB_XACCEL.offset = UDB_XACCEL.value ;
-	udb_xrate.offset = udb_xrate.value ;
-	UDB_YACCEL.offset = UDB_YACCEL.value - ( Y_GRAVITY_SIGN ((int)(2*GRAVITY)) ); // opposite direction
-	udb_yrate.offset = udb_yrate.value ;
-	UDB_ZACCEL.offset = UDB_ZACCEL.value ; 
-	udb_zrate.offset = udb_zrate.value ;
-#ifdef VREF
-	udb_vref.offset = udb_vref.value ;
-#endif
-	return ;
-}
-#else  // horizontal initialization
-void udb_a2d_record_offsets(void)
-{
-#if(USE_NV_MEMORY == 1)
-	if(udb_skip_flags.skip_imu_cal == 1)
-		return;
-#endif
-
 	// almost ready to turn the control on, save the input offsets
 	UDB_XACCEL.offset = UDB_XACCEL.value ;
 	udb_xrate.offset = udb_xrate.value ;
 	UDB_YACCEL.offset = UDB_YACCEL.value ;
 	udb_yrate.offset = udb_yrate.value ;
-	UDB_ZACCEL.offset = UDB_ZACCEL.value + ( Z_GRAVITY_SIGN ((int)(2*GRAVITY))) ; // same direction
-	udb_zrate.offset = udb_zrate.value ;									
+	UDB_ZACCEL.offset = UDB_ZACCEL.value GRAVITY_SIGN ((int)(2*GRAVITY)) ;  // GRAVITY is measured in A-D/2 units
+	udb_zrate.offset = udb_zrate.value ;									// The sign is for inverted boards
 #ifdef VREF
 	udb_vref.offset = udb_vref.value ;
 #endif
 	return ;
 }
-#endif
 
 
 void udb_servo_record_trims(void)
@@ -244,7 +197,7 @@ void calculate_analog_sensor_values( void )
 #if (ANALOG_CURRENT_INPUT_CHANNEL != CHANNEL_UNUSED)
 	// Shift up from [-2^15 , 2^15-1] to [0 , 2^16-1]
 	// Convert to current in tenths of Amps
-	battery_current.WW = (udb_analogInputs[ANALOG_CURRENT_INPUT_CHANNEL-1].value + (long)32768) * (MAX_CURRENT) + (((long)(CURRENT_SENSOR_OFFSET)) << 16) ;
+	battery_current.WW = (udb_analogInputs[ANALOG_CURRENT_INPUT_CHANNEL-1].value + 32768) * MAX_CURRENT ;
 	
 	// mAh = mA / 144000 (increment per 40Hz tick is /40*60*60)
 	// 90000/144000 == 900/1440
@@ -254,12 +207,12 @@ void calculate_analog_sensor_values( void )
 #if (ANALOG_VOLTAGE_INPUT_CHANNEL != CHANNEL_UNUSED)
 	// Shift up from [-2^15 , 2^15-1] to [0 , 2^16-1]
 	// Convert to voltage in tenths of Volts
-	battery_voltage.WW = (udb_analogInputs[ANALOG_VOLTAGE_INPUT_CHANNEL-1].value + (long)32768) * (MAX_VOLTAGE) + (((long)(VOLTAGE_SENSOR_OFFSET)) << 16) ;
+	battery_voltage.WW = (udb_analogInputs[ANALOG_VOLTAGE_INPUT_CHANNEL-1].value + 32768) * MAX_VOLTAGE ;
 #endif
 
 #if (ANALOG_RSSI_INPUT_CHANNEL != CHANNEL_UNUSED)
 	union longww rssi_accum ;
-	rssi_accum.WW = (((udb_analogInputs[ANALOG_RSSI_INPUT_CHANNEL-1].value + 32768) - (MIN_RSSI)) * (10000 / (RSSI_RANGE))) ;
+	rssi_accum.WW = (((udb_analogInputs[ANALOG_RSSI_INPUT_CHANNEL-1].value + 32768) - MIN_RSSI) * (10000 / RSSI_RANGE)) ;
 	if (rssi_accum._.W1 < 0)
 		rc_signal_strength = 0 ;
 	else if (rssi_accum._.W1 > 100)

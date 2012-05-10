@@ -43,7 +43,7 @@ fractional ggain[] =  { GGAIN , GGAIN , GGAIN } ;
 unsigned int spin_rate = 0 ;
 fractional spin_axis[] = { 0 , 0 , RMAX } ;
 
-#if ( BOARD_TYPE == UDB3_BOARD || BOARD_TYPE == AUAV1_BOARD || BOARD_TYPE == UDB4_BOARD )
+#if ( BOARD_TYPE == UDB3_BOARD )
 //Paul's gains corrected for GGAIN
 #define KPROLLPITCH 256*5
 #define KIROLLPITCH 256
@@ -64,15 +64,8 @@ fractional spin_axis[] = { 0 , 0 , RMAX } ;
 //	The columns of rmat are the axis vectors of the plane,
 //	as measured in the earth reference frame.
 //	rmat is initialized to the identity matrix in 2.14 fractional format
-
-#ifdef INITIALIZE_VERTICAL  // for VTOL vertical initialization
-fractional rmat[] = { RMAX , 0 , 0 , 0 , 0 , RMAX , 0 , -RMAX , 0 } ;
-fractional rmatDelayCompensated[] =  { RMAX , 0 , 0 , 0 , 0 , RMAX , 0 , -RMAX , 0 } ;
-
-#else // the usual case, horizontal initialization
 fractional rmat[] = { RMAX , 0 , 0 , 0 , RMAX , 0 , 0 , 0 , RMAX } ;
 fractional rmatDelayCompensated[] = { RMAX , 0 , 0 , 0 , RMAX , 0 , 0 , 0 , RMAX } ;
-#endif
 
 //	rup is the rotational update matrix.
 //	At each time step, the new rmat is equal to the old one, multiplied by rup.
@@ -98,11 +91,7 @@ union longww gyroCorrectionIntegral[] =  { { 0 } , { 0 } ,  { 0 } } ;
 fractional omegaAccum[] = { 0 , 0 , 0 } ;
 
 //	gravity, as measured in plane coordinate system
-#ifdef INITIALIZE_VERTICAL // VTOL vertical initialization
-fractional gplane[] = { 0 , -GRAVITY , 0 } ;
-#else  // horizontal initialization 
 fractional gplane[] = { 0 , 0 , GRAVITY } ;
-#endif
 
 //	horizontal velocity over ground, as measured by GPS (Vz = 0 )
 fractional dirovergndHGPS[] = { 0 , RMAX , 0 } ;
@@ -124,24 +113,17 @@ fractional errorYawplane[]  = { 0 , 0 , 0 } ;
 //	measure of error in orthogonality, used for debugging purposes:
 fractional error = 0 ;
 
-#if(MAG_YAW_DRIFT == 1)
 fractional declinationVector[2] ;
-#endif
 
-#if(DECLINATIONANGLE_VARIABLE == 1)
-union intbb dcm_declination_angle;
-#endif
 
 void dcm_init_rmat( void )
 {
-#if(MAG_YAW_DRIFT == 1)
- #if (DECLINATIONANGLE_VARIABLE == 1)
-	dcm_declination_angle.BB = DECLINATIONANGLE;
- #endif
-	declinationVector[0] = cosine( (signed char) (DECLINATIONANGLE >> 8) ) ;
-	declinationVector[1] = sine( (signed char) (DECLINATIONANGLE >> 8) ) ;
+#if ( MAG_YAW_DRIFT == 1 )
+	declinationVector[0] = cosine(DECLINATIONANGLE) ;
+	declinationVector[1] = sine(DECLINATIONANGLE) ;
 #endif
 }
+
 
 //	Implement the cross product. *dest = *src1X*src2 ;
 void VectorCross( fractional * dest , fractional * src1 , fractional * src2 )
@@ -238,8 +220,6 @@ int omegaSOG ( int omega , unsigned int speed  )
 	}
 }
 
-//	Lets leave it like this for a while, just in case we need to revert roll_pitch_drift.
-/*
 void adj_accel()
 {
 	// total (3D) airspeed in cm/sec is used to adjust for acceleration
@@ -249,7 +229,47 @@ void adj_accel()
 	
 	return ;
 }
-*/
+
+fractional theta[3] ;
+
+void MatrixRotate( fractional matrix[] , fractional angle[] )
+{
+	fractional rup[9] ;
+//	fractional theta[3] ;
+	fractional rbuff[9] ;
+	unsigned long thetaSquare ;
+	unsigned nonlinearAdjust ;
+	// diagonal elements of the update matrix:
+	rup[0] = rup[4] = rup[8]= RMAX ;
+
+	// compute the square of rotation
+
+	thetaSquare = 	__builtin_mulss ( angle[0] , angle[0] ) +
+					__builtin_mulss ( angle[1] , angle[1] ) +
+					__builtin_mulss ( angle[2] , angle[2] ) ;
+
+	// adjust gain by rotation_squared divided by 3
+
+	nonlinearAdjust = RMAX + ((unsigned int ) ( thetaSquare >>14 ))/3 ;	
+
+	angle[0] = __builtin_mulsu ( angle[0] , nonlinearAdjust )>>14 ;
+	angle[1] = __builtin_mulsu ( angle[1] , nonlinearAdjust )>>14 ;
+	angle[2] = __builtin_mulsu ( angle[2] , nonlinearAdjust )>>14 ;
+
+	//	construct the off-diagonal elements of the update matrix:
+	rup[1] = -angle[2] ;
+	rup[2] =  angle[1] ;
+	rup[3] =  angle[2] ;
+	rup[5] = -angle[0] ;
+	rup[6] = -angle[1] ;
+	rup[7] =  angle[0] ;
+
+	//	matrix multiply the rmatrix by the update matrix
+	MatrixMultiply( 3 , 3 , 3 , rbuff , matrix , rup ) ;
+	//	multiply by 2 and copy back from rbuff to rmat:
+	MatrixAdd( 3 , 3 , matrix , rbuff , rbuff ) ; 
+	return ;
+}
 
 //	The update algorithm!!
 void rupdate(void)
@@ -257,50 +277,18 @@ void rupdate(void)
 //	on the direction cosine matrix, based on the gyro vector and correction.
 //	It uses vector and matrix routines furnished by Microchip.
 {
-	fractional rup[9] ;
-	fractional theta[3] ;
-	fractional rbuff[9] ;
-	unsigned long thetaSquare ;
-	unsigned nonlinearAdjust ;
+
 	
 	VectorAdd( 3 , omegaAccum , omegagyro , omegacorrI ) ;
 	VectorAdd( 3 , omega , omegaAccum , omegacorrP ) ;
 	//	scale by the integration factors:
 	VectorMultiply( 3 , theta , omega , ggain ) ; // Scalegain of 2 
-	// diagonal elements of the update matrix:
-	rup[0] = rup[4] = rup[8]= RMAX ;
-
-	// compute the square of rotation
-
-	thetaSquare = 	__builtin_mulss ( theta[0] , theta[0] ) +
-					__builtin_mulss ( theta[1] , theta[1] ) +
-					__builtin_mulss ( theta[2] , theta[2] ) ;
-
-	// adjust gain by rotation_squared divided by 3
-
-	nonlinearAdjust = RMAX + ((unsigned int ) ( thetaSquare >>14 ))/3 ;	
-
-	theta[0] = __builtin_mulsu ( theta[0] , nonlinearAdjust )>>14 ;
-	theta[1] = __builtin_mulsu ( theta[1] , nonlinearAdjust )>>14 ;
-	theta[2] = __builtin_mulsu ( theta[2] , nonlinearAdjust )>>14 ;
-
-	//	construct the off-diagonal elements of the update matrix:
-	rup[1] = -theta[2] ;
-	rup[2] =  theta[1] ;
-	rup[3] =  theta[2] ;
-	rup[5] = -theta[0] ;
-	rup[6] = -theta[1] ;
-	rup[7] =  theta[0] ;
-
-	//	matrix multiply the rmatrix by the update matrix
-	MatrixMultiply( 3 , 3 , 3 , rbuff , rmat , rup ) ;
-	//	multiply by 2 and copy back from rbuff to rmat:
-	MatrixAdd( 3 , 3 , rmat , rbuff , rbuff ) ; 
+	MatrixRotate( rmat , theta ) ;
 	return ;
 }
 
 //	normalization algorithm:
-void normalize(void)
+void matrix_normalize(fractional matrix[])
 //	This is the routine that maintains the orthogonality of the
 //	direction cosine matrix, which is expressed by the identity
 //	relationship that the cosine matrix multiplied by its
@@ -310,16 +298,35 @@ void normalize(void)
 	fractional norm ; // actual magnitude
 	fractional renorm ;	// renormalization factor
 	fractional rbuff[9] ;
-	//	compute -1/2 of the dot product between rows 1 and 2
-	error =  - VectorDotProduct( 3 , &rmat[0] , &rmat[3] ) ; // note, 1/2 is built into 2.14
-	//	scale rows 1 and 2 by the error
-	VectorScale( 3 , &rbuff[0] , &rmat[3] , error ) ;
-	VectorScale( 3 , &rbuff[3] , &rmat[0] , error ) ;
-	//	update the first 2 rows to make them closer to orthogonal:
-	VectorAdd( 3 , &rbuff[0] , &rbuff[0] , &rmat[0] ) ;
-	VectorAdd( 3 , &rbuff[3] , &rbuff[3] , &rmat[3] ) ;
-	//	use the cross product of the first 2 rows to get the 3rd row
-	VectorCross( &rbuff[6] , &rbuff[0] , &rbuff[3] ) ;
+	fractional vbuff[3] ;
+
+	//	compute minus twice the dot product between rows 1 and 3
+	error = (( - VectorDotProduct( 3 , &matrix[0] , &matrix[6] ))<<2) ;
+	//	scale row 1 by the error (there is a 1/2 built into the scaling)
+	VectorScale( 3 , &rbuff[0] , &matrix[6] , error ) ;
+
+	//	compute minus twice the dot product between rows 2 and 3
+	error = (( - VectorDotProduct( 3 , &matrix[3] , &matrix[6] ))<<2) ;
+	//	scale row 1 by the error (there is a 1/2 built into the scaling)
+	VectorScale( 3 , &rbuff[3] , &matrix[6] , error ) ;
+
+	//	compute minus the dot product between rows 1 and 2
+	error = (( - VectorDotProduct( 3 , &matrix[0] , &matrix[3] ))<<1) ;
+
+	//	scale row 2 by 1/2 of the error
+	VectorScale( 3 , vbuff , &matrix[3] , error ) ;
+	//	adjust row 1
+	VectorAdd( 3 , &rbuff[0] , vbuff , &rbuff[0]) ;
+
+	//  scale row 1 by 1/2 of the error
+	VectorScale( 3 , vbuff , &matrix[0] , error ) ;
+	//	adjust row 2
+	VectorAdd( 3 , &rbuff[3] , vbuff , &rbuff[3]) ;
+
+	//	update the rows to make them closer to orthogonal:
+	VectorAdd( 3 , &rbuff[0] , &rbuff[0] , &matrix[0] ) ;
+	VectorAdd( 3 , &rbuff[3] , &rbuff[3] , &matrix[3] ) ;
+	VectorCopy( 3 , &rbuff[6] , &matrix[6] ) ;
 
 
 	//	Use a Taylor's expansion for 1/sqrt(X*X) to avoid division in the renormalization
@@ -327,110 +334,24 @@ void normalize(void)
 	norm = VectorPower( 3 , &rbuff[0] ) ; // Scalegain of 0.5
 	renorm = RMAX15 - norm ;
 	VectorScale( 3 , &rbuff[0] , &rbuff[0] , renorm ) ;
-	VectorAdd( 3 , &rmat[0] , &rbuff[0] , &rbuff[0] ) ;
+	VectorAdd( 3 , &matrix[0] , &rbuff[0] , &rbuff[0] ) ;
 	//	rescale row2
 	norm = VectorPower( 3 , &rbuff[3] ) ;
 	renorm = RMAX15 - norm ;
 	VectorScale( 3 , &rbuff[3] , &rbuff[3] , renorm ) ;
-	VectorAdd( 3 , &rmat[3] , &rbuff[3] , &rbuff[3] ) ;
+	VectorAdd( 3 , &matrix[3] , &rbuff[3] , &rbuff[3] ) ;
 	//	rescale row3
 	norm = VectorPower( 3 , &rbuff[6] ) ;
 	renorm = RMAX15 - norm ;
 	VectorScale( 3 , &rbuff[6] , &rbuff[6] , renorm ) ;
-	VectorAdd( 3 , &rmat[6] , &rbuff[6] , &rbuff[6] ) ;
+	VectorAdd( 3 , &matrix[6] , &rbuff[6] , &rbuff[6] ) ;
 	return ;
 }
 
-//	Lets leave this for a while in case we need to revert roll_pitch_drift
-/*
+
 void roll_pitch_drift()
 {
 	VectorCross( errorRP , gplane , &rmat[6] ) ;
-	return ;
-}
-*/
-
-long int accelerometer_earth_integral[3] = { 0 , 0 , 0 } ;
-int GPS_velocity_previous[3] = { 0 , 0 , 0 } ;
-unsigned int accelerometer_samples = 0 ;
-#define MAX_ACCEL_SAMPLES 45
-#define ACCEL_SAMPLES_PER_SEC 40
-
-void roll_pitch_drift()
-{
-
-	int accelerometer_earth[3] ;
-	int GPS_acceleration[3] ;
-	int accelerometer_reference[3] ;
-	int errorRP_earth[3] ;
-
-//	integrate the accelerometer signals in earth frame of reference
-
-	accelerometer_earth_integral[0] +=  (VectorDotProduct( 3 , &rmat[0] , gplane )<<1);
-	accelerometer_earth_integral[1] +=  (VectorDotProduct( 3 , &rmat[3] , gplane )<<1);
-	accelerometer_earth_integral[2] +=  (VectorDotProduct( 3 , &rmat[6] , gplane )<<1);
-	accelerometer_samples++;
-
-//	if there is GPS information available, or if GPS is offline and there are enough samples, compute the roll-pitch correction
-	if ( ( dcm_flags._.rollpitch_req == 1 ) || ( accelerometer_samples > MAX_ACCEL_SAMPLES ) )
-	{
-		if ( accelerometer_samples > 0 )
-		{
-			// compute the average of the integral
-			accelerometer_earth[0] = __builtin_divsd( accelerometer_earth_integral[0] , accelerometer_samples ) ;
-			accelerometer_earth[1] = __builtin_divsd( accelerometer_earth_integral[1] , accelerometer_samples ) ;
-			accelerometer_earth[2] = __builtin_divsd( accelerometer_earth_integral[2] , accelerometer_samples ) ;
-		}
-		else
-		{
-			accelerometer_earth[0] = accelerometer_earth[1] = 0 ;
-			accelerometer_earth[2] = GRAVITY ;
-		}
-
-		if ( (HILSIM==1) || (!gps_nav_valid() ))
-		{
-			// cannot do acceleration compensation, assume no acceleration 
-			accelerometer_reference[0] = accelerometer_reference[1] = 0 ;
-			accelerometer_reference[2] = RMAX ;
-		}
-		else
-		{
-			if ( dcm_flags._.rollpitch_req == 1 )
-			{
-				GPS_acceleration[0] = __builtin_divsd( __builtin_mulsu(( GPSvelocity.x - GPS_velocity_previous[0] ) , ACCEL_SAMPLES_PER_SEC ) , accelerometer_samples ) ;
-				GPS_acceleration[1] = __builtin_divsd( __builtin_mulsu(( GPSvelocity.y - GPS_velocity_previous[1] ) , ACCEL_SAMPLES_PER_SEC ) , accelerometer_samples ) ;
-				GPS_acceleration[2] = __builtin_divsd( __builtin_mulsu(( GPSvelocity.z - GPS_velocity_previous[2] ) , ACCEL_SAMPLES_PER_SEC ) , accelerometer_samples ) ;
-
-				GPS_velocity_previous[0] = GPSvelocity.x ;
-				GPS_velocity_previous[1] = GPSvelocity.y ;
-				GPS_velocity_previous[2] = GPSvelocity.z ;
-			}
-			else
-			{
-				GPS_acceleration[0] = GPS_acceleration[1] = GPS_acceleration[2] = 0 ;
-			}
-
-			// acceleration_reference = normalize ( gravity_earth - 40* delta_GPS_velocity/samples )
-
-			accelerometer_reference[0] = GPS_acceleration[0] ; // GPS x is opposite sign to DCM x
-			accelerometer_reference[1] = - GPS_acceleration[1] ; // GPS y is same sign as DCM y
-			accelerometer_reference[2] = 981 + GPS_acceleration[2] ; // gravity is 981 centimeters/sec/sec, z sign is opposite
-			
-			vector3_normalize( accelerometer_reference , accelerometer_reference ) ;
-		}
-
-		//	error_earth = accelerometer_earth cross accelerometer_reference, set error_earth[2] = 0 ;
-		VectorCross( errorRP_earth , accelerometer_earth , accelerometer_reference ) ;
-		errorRP_earth[2] = 0 ;
-		
-		//	error_body = Rtranspose * error_earth
-
-		//	*** Note: this accomplishes multiplication rmat transpose times errorRP_earth!!
-		MatrixMultiply( 1 , 3 , 3 , errorRP , errorRP_earth , rmat ) ;
-		accelerometer_earth_integral[0] = accelerometer_earth_integral[1] = accelerometer_earth_integral[2] = 0 ;
-		accelerometer_samples = 0 ;
-		dcm_flags._.rollpitch_req = 0 ;
-	}	
 	return ;
 }
 
@@ -463,37 +384,17 @@ void yaw_drift()
 #if (MAG_YAW_DRIFT == 1)
 
 fractional magFieldEarth[3] ;
+
 extern fractional udb_magFieldBody[3] ;
 extern fractional udb_magOffset[3] ;
-fractional rmatPrevious[9] ;
-fractional magFieldEarthNormalizedPrevious[3] ;
-fractional magAlignment[4] = { 0 , 0 , 0 , RMAX } ;
-fractional magFieldBodyMagnitudePrevious ;
+
+fractional magFieldEarthPrevious[3] ;
 fractional magFieldBodyPrevious[3] ;
 
-#ifdef INITIALIZE_VERTICAL // vertical initialization for VTOL
-void align_rmat_to_mag(void)
-{
-	unsigned char theta ;
-	struct relative2D initialBodyField ;
-	int costheta ;
-	int sintheta ;
-	initialBodyField.x = udb_magFieldBody[0] ;
-	initialBodyField.y = udb_magFieldBody[2] ;
-#if(DECLINATIONANGLE_VARIABLE == 1)
-	theta = rect_to_polar( &initialBodyField ) -64 - (dcm_declination_angle._.B1) ;	
-#else
-	theta = rect_to_polar( &initialBodyField ) -64 - (DECLINATIONANGLE >> 8) ;
-#endif
-	costheta = cosine(theta) ;
-	sintheta = sine(theta) ;
-	rmat[0] = rmat[5] = costheta ;
-	rmat[2] = sintheta ;
-	rmat[3] = - sintheta ;
-	return ;
-}
+fractional rmatPrevious[9] ;
 
-#else // horizontal initialization for usual cases
+//int offsetDelta[3] ;
+
 void align_rmat_to_mag(void)
 {
 	unsigned char theta ;
@@ -502,110 +403,12 @@ void align_rmat_to_mag(void)
 	int sintheta ;
 	initialBodyField.x = udb_magFieldBody[0] ;
 	initialBodyField.y = udb_magFieldBody[1] ;
-#if(DECLINATIONANGLE_VARIABLE == 1)
-	theta = rect_to_polar( &initialBodyField ) -64 - (dcm_declination_angle._.B1) ;
-#else
-	theta = rect_to_polar( &initialBodyField ) -64 - (DECLINATIONANGLE >> 8) ;
-#endif
+	theta = rect_to_polar( &initialBodyField ) -64 - DECLINATIONANGLE ;
 	costheta = cosine(theta) ;
 	sintheta = sine(theta) ;
 	rmat[0] = rmat[4] = costheta ;
 	rmat[1] = sintheta ;
 	rmat[3] = - sintheta ;
-	return ;
-}
-#endif
-
-void quaternion_adjust( fractional quaternion[] , fractional direction[] )
-{
-//	performs an adjustment to a quaternion representation of re-alignement.
-//	the cross product is left out, theory and test both show it should not be used.
-	fractional delta_cos ;
-	fractional vector_buffer[3] ;
-	fractional increment[3] ;
-	unsigned long int magnitudesqr ;
-	unsigned magnitude ;
-	increment[0] = direction[0]>>3 ;
-	increment[1] = direction[1]>>3 ;
-	increment[2] = direction[2]>>3 ;
-	// change is cosine is 1/2 of the dot product of first 3 elements of quaternion
-	// with the increment. The 1/2 is built into the dot product.
-	delta_cos = - VectorDotProduct( 3 , quaternion , increment ) ;
-	// the change in the first 3 elements is 1/2 of the 4 element times the increment.
-	// There is a 1/2 built into the VectorScale 
-	VectorScale( 3 , vector_buffer , increment , quaternion[3] ) ; 
-	// Update the first three components
-	VectorAdd( 3 , quaternion , quaternion , vector_buffer ) ;
-	// Update the 4th component
-	quaternion[3] += delta_cos ;
-	// Renormalize
-	magnitudesqr = __builtin_mulss( quaternion[0] , quaternion[0] )
-			+ __builtin_mulss( quaternion[1] , quaternion[1] )
-			+ __builtin_mulss( quaternion[2] , quaternion[2] )
-			+ __builtin_mulss( quaternion[3] , quaternion[3] ) ;
-	magnitude = sqrt_long( magnitudesqr ) ;
-
-	quaternion[0] = __builtin_divsd( __builtin_mulsu ( quaternion[0] , RMAX ) , magnitude ) ;
-	quaternion[1] = __builtin_divsd( __builtin_mulsu ( quaternion[1] , RMAX ) , magnitude ) ;
-	quaternion[2] = __builtin_divsd( __builtin_mulsu ( quaternion[2] , RMAX ) , magnitude ) ;
-	quaternion[3] = __builtin_divsd( __builtin_mulsu ( quaternion[3] , RMAX ) , magnitude ) ;
-
-	return ;
-}
-
-void RotVector2RotMat( fractional rotation_matrix[] , fractional rotation_vector[] )
-{
-//	rotation vector represents a rotation in vector form
-//	around an axis equal to the normalized value of the vector.
-//	It is assumed that rotation_vector already includes a factor of sin(alpha/2)
-//  maximum rotation is plus minus 180 degrees.
-	fractional cos_alpha ;
-	fractional cos_half_alpha ;
-	fractional cos_half_alpha_rotation_vector[3] ;
-	union longww sin_half_alpha_sqr = { 0 } ;
-	int matrix_index ;
-
-	cos_half_alpha = rotation_vector[3] ;
-
-//	compute the square of sine of half alpha
-	for ( matrix_index = 0 ; matrix_index < 3 ; matrix_index++ )
-	{
-		sin_half_alpha_sqr.WW += __builtin_mulss( rotation_vector[matrix_index] , rotation_vector[matrix_index] );
-	}
-	if ( sin_half_alpha_sqr.WW > ( (long) RMAX*RMAX - 1))
-	{
-		sin_half_alpha_sqr.WW = (long) RMAX*RMAX - 1 ;
-	}
-
-//	compute cos_alpha
-	sin_half_alpha_sqr.WW *= 8 ;
-	cos_alpha = RMAX - sin_half_alpha_sqr._.W1 ;
-
-//	scale rotation_vector by 2*cos_half_alpha
-	VectorScale ( 3 , cos_half_alpha_rotation_vector ,  rotation_vector , cos_half_alpha ) ;
-	for ( matrix_index = 0 ; matrix_index < 3 ; matrix_index++ )
-	{
-		cos_half_alpha_rotation_vector[matrix_index] *= 4 ;
-	}
-
-//	compute 2 times rotation_vector times its transpose
-	MatrixMultiply( 3 , 1 , 3 , rotation_matrix , rotation_vector , rotation_vector ) ;
-	for ( matrix_index = 0 ; matrix_index < 9 ; matrix_index++ )
-	{
-		rotation_matrix[matrix_index] *= 4 ;
-	}
-
-	rotation_matrix[0] += cos_alpha ;
-	rotation_matrix[4] += cos_alpha ;
-	rotation_matrix[8] += cos_alpha ;
-
-	rotation_matrix[1] -= cos_half_alpha_rotation_vector[2] ;
-	rotation_matrix[2] += cos_half_alpha_rotation_vector[1] ;
-	rotation_matrix[3] += cos_half_alpha_rotation_vector[2] ;
-	rotation_matrix[5] -= cos_half_alpha_rotation_vector[0] ;
-	rotation_matrix[6] -= cos_half_alpha_rotation_vector[1] ;
-	rotation_matrix[7] += cos_half_alpha_rotation_vector[0] ;
-
 	return ;
 }
 
@@ -617,18 +420,9 @@ int mag_latency_counter = 10 - MAG_LATENCY_COUNT ;
 void mag_drift()
 {
 	int mag_error ;
-	fractional magFieldEarthNormalized[3];
-	fractional magFieldEarthHorzNorm[2] ;
-	fractional magAlignmentError[3] ;
-	fractional rmat2Transpose[9] ;
-	fractional R2TR1RotationVector[3] ;
-	fractional R2TAlignmentErrorR1[3] ;
-	fractional rmatBufferA[9] ;
-	fractional rmatBufferB[9] ;
-	fractional magAlignmentAdjustment[3] ;
-	fractional vectorBuffer[3] ;
-	fractional magFieldBodyMagnitude ;
-	fractional offsetEstimate[3] ;
+	int vector_index ;
+	fractional rmatTransposeMagField[3] ;
+	fractional offsetSum[3] ;
 
 	// the following compensates for magnetometer drift by adjusting the timing
 	// of when rmat is read
@@ -641,22 +435,6 @@ void mag_drift()
 	
 	if ( dcm_flags._.mag_drift_req )
 	{
-
-//		Compute magnetic offsets
-		magFieldBodyMagnitude =	vector3_mag( udb_magFieldBody[0], udb_magFieldBody[1], udb_magFieldBody[2] ) ;
-		VectorSubtract( 3, vectorBuffer , udb_magFieldBody , magFieldBodyPrevious ) ;
-		vector3_normalize( vectorBuffer , vectorBuffer ) ;
-		VectorScale( 3 , offsetEstimate , vectorBuffer , magFieldBodyMagnitude - magFieldBodyMagnitudePrevious ) ;
-		VectorCopy ( 3 , magFieldBodyPrevious , udb_magFieldBody ) ;
-		magFieldBodyMagnitudePrevious = magFieldBodyMagnitude ;
-
-//		Compute and apply the magnetometer alignment adjustment in the body frame
-		RotVector2RotMat( rmatBufferA , magAlignment ) ;
-		vectorBuffer[0] = VectorDotProduct( 3 , &rmatBufferA[0] , udb_magFieldBody ) << 1 ; 
-		vectorBuffer[1] = VectorDotProduct( 3 , &rmatBufferA[3] , udb_magFieldBody ) << 1 ; 
-		vectorBuffer[2] = VectorDotProduct( 3 , &rmatBufferA[6] , udb_magFieldBody ) << 1 ; 
-		VectorCopy( 3 , udb_magFieldBody , vectorBuffer ) ;
-
 		if ( dcm_flags._.first_mag_reading == 1 )
 		{
 			align_rmat_to_mag() ;
@@ -665,78 +443,52 @@ void mag_drift()
 
 		mag_latency_counter = 10 - MAG_LATENCY_COUNT ; // setup for the next reading
 
-//		Compute the mag field in the earth frame
-
 		magFieldEarth[0] = VectorDotProduct( 3 , &rmatDelayCompensated[0] , udb_magFieldBody )<<1 ;
 		magFieldEarth[1] = VectorDotProduct( 3 , &rmatDelayCompensated[3] , udb_magFieldBody )<<1 ;
 		magFieldEarth[2] = VectorDotProduct( 3 , &rmatDelayCompensated[6] , udb_magFieldBody )<<1 ;
 
-//		Normalize the magnetic vector to RMAT
-
-		vector3_normalize ( magFieldEarthNormalized , magFieldEarth ) ;
-		vector2_normalize ( magFieldEarthHorzNorm , magFieldEarth ) ;
-
-//		Use the magnetometer to detect yaw drift
-
-#if(DECLINATIONANGLE_VARIABLE == 1)
-		declinationVector[0] = cosine(dcm_declination_angle._.B1) ;
-		declinationVector[1] = sine(dcm_declination_angle._.B1) ;
-#endif		
-		mag_error = VectorDotProduct( 2 , magFieldEarthHorzNorm , declinationVector ) ;
+		mag_error = 100*VectorDotProduct( 2 , magFieldEarth , declinationVector ) ; // Dotgain = 1/2
 		VectorScale( 3 , errorYawplane , &rmat[6] , mag_error ) ; // Scalegain = 1/2
 
-//		Do the computations needed to compensate for magnetometer misalignment
+		VectorAdd( 3 , offsetSum , udb_magFieldBody , magFieldBodyPrevious ) ;
+		for ( vector_index = 0 ; vector_index < 3 ; vector_index++ )
+		{
+			offsetSum[vector_index] >>= 1 ;
+		}
 
-//		Determine the apparent shift in the earth's magnetic field:
-		VectorCross( magAlignmentError, magFieldEarthNormalizedPrevious , magFieldEarthNormalized ) ;
+		MatrixMultiply( 1 , 3 , 3 , rmatTransposeMagField , magFieldEarthPrevious , rmatDelayCompensated ) ;
+		VectorSubtract( 3 , offsetSum , offsetSum , rmatTransposeMagField ) ;
 
-//		Compute R2 transpose
-		MatrixTranspose( 3 , 3 , rmat2Transpose , rmatDelayCompensated ) ;
+		MatrixMultiply( 1 , 3 , 3 , rmatTransposeMagField , magFieldEarth , rmatPrevious ) ;
+		VectorSubtract( 3 , offsetSum , offsetSum , rmatTransposeMagField ) ;
 
-//		Compute 1/2 of R2tranpose times R1
-		MatrixMultiply( 3 , 3 , 3 , rmatBufferA , rmat2Transpose , rmatPrevious ) ;
+		for ( vector_index = 0 ; vector_index < 3 ; vector_index++ )
+		{
+			int adjustment ;
+			adjustment = offsetSum[vector_index] ;
+			if ( abs( adjustment ) < 8 )
+//			if ( abs( adjustment ) < 20 )
+			{
+				offsetSum[vector_index] = 0 ;
+				adjustment = 0 ;
+			}
+//			offsetDelta[vector_index] = adjustment ;
+		}
 
-//		Convert to a rotation vector, take advantage of 1/2 from the previous step
-		R2TR1RotationVector[0] = rmatBufferA[7] - rmatBufferA[5] ;
-		R2TR1RotationVector[1] = rmatBufferA[2] - rmatBufferA[6] ;
-		R2TR1RotationVector[2] = rmatBufferA[3] - rmatBufferA[1] ;
-
-//		Compute 1/4 of RT2*Matrix(error-vector)*R1
-		rmatBufferA[0] = rmatBufferA[4] = rmatBufferA[8]=0 ;
-		rmatBufferA[7] =  magAlignmentError[0] ;
-		rmatBufferA[5] = -magAlignmentError[0] ;
-		rmatBufferA[2] =  magAlignmentError[1] ;
-		rmatBufferA[6] = -magAlignmentError[1] ;
-		rmatBufferA[3] =  magAlignmentError[2] ;
-		rmatBufferA[1] = -magAlignmentError[2] ;
-		MatrixMultiply( 3 , 3 , 3 , rmatBufferB , rmatBufferA , rmatDelayCompensated ) ;
-		MatrixMultiply( 3 , 3 , 3 , rmatBufferA , rmat2Transpose , rmatBufferB ) ;
-
-//		taking advantage of factor of 1/4 in the two matrix multiplies, compute
-//		1/2 of the vector representation of the rotation
-		R2TAlignmentErrorR1[0] = ( rmatBufferA[7] - rmatBufferA[5] ) ;
-		R2TAlignmentErrorR1[1] = ( rmatBufferA[2] - rmatBufferA[6] ) ;
-		R2TAlignmentErrorR1[2] = ( rmatBufferA[3] - rmatBufferA[1] ) ;
-
-//		compute the negative of estimate of the residual misalignment
-		VectorCross( magAlignmentAdjustment  , R2TAlignmentErrorR1 , R2TR1RotationVector ) ;
-		
 		if ( dcm_flags._.first_mag_reading == 0 )
 		{
-
-			udb_magOffset[0] = udb_magOffset[0] + ( ( offsetEstimate[0] + 2 ) >> 2 ) ;
-			udb_magOffset[1] = udb_magOffset[1] + ( ( offsetEstimate[1] + 2 ) >> 2 ) ;
-			udb_magOffset[2] = udb_magOffset[2] + ( ( offsetEstimate[2] + 2 ) >> 2 ) ;
-
-			quaternion_adjust ( magAlignment , magAlignmentAdjustment ) ;
-
+//			VectorAdd ( 3 , udb_magOffset , udb_magOffset , offsetSum ) ;
+			udb_magOffset[0] = udb_magOffset[0] + ( ( offsetSum[0] + 2 ) >> 3 ) ;
+			udb_magOffset[1] = udb_magOffset[1] + ( ( offsetSum[1] + 2 ) >> 3 ) ;
+			udb_magOffset[2] = udb_magOffset[2] + ( ( offsetSum[2] + 2 ) >> 3 ) ;
 		}
 		else
 		{
 			dcm_flags._.first_mag_reading = 0 ;
 		}
 
-		VectorCopy ( 3 , magFieldEarthNormalizedPrevious , magFieldEarthNormalized ) ;
+		VectorCopy ( 3 , magFieldEarthPrevious , magFieldEarth ) ;
+		VectorCopy ( 3 , magFieldBodyPrevious , udb_magFieldBody ) ;
 		VectorCopy ( 9 , rmatPrevious , rmatDelayCompensated ) ;
 
 		dcm_flags._.mag_drift_req = 0 ;
@@ -882,14 +634,11 @@ void dcm_run_imu_step(void)
 //	and send it to the servos.
 {
 	dead_reckon() ;
-//	Lets leave this for a while in case we need to revert roll_pitch_drift
-/*	WJP - accel comp
 #if ( HILSIM != 1 )
 	adj_accel() ;
 #endif
-*/
 	rupdate() ;
-	normalize() ;
+	matrix_normalize(rmat) ;
 	roll_pitch_drift() ;
 #if (MAG_YAW_DRIFT == 1)
 	if ( magMessage == 7  )

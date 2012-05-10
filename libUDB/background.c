@@ -21,23 +21,6 @@
 
 #include "libUDB_internal.h"
 
-#if(USE_I2C1_DRIVER == 1)
-#include "I2C.h"
-#include "events.h"
-#endif
-
-// Include the NV memory services if required
-#if(USE_NV_MEMORY == 1)
-#include "NV_memory.h"
-#include "data_storage.h"
-#include "data_services.h"
-#endif
-
-// Include flexifunction mixers if required
-#if (USE_FLEXIFUNCTION_MIXING == 1)
-#include "../libflexifunctions/flexifunctionservices.h"
-#endif
-
 #if (BOARD_IS_CLASSIC_UDB == 1)
 #if ( CLOCK_CONFIG == CRYSTAL_CLOCK )
 #define CPU_LOAD_PERCENT	16*400   // = (100 / (8192 * 2)) * (256**2)
@@ -83,22 +66,7 @@ void udb_run_init_step( void ) ;
 void udb_init_clock(void)	/* initialize timers */
 {
 	TRISF = 0b1111111111101100 ;
-
-
-#if(USE_I2C1_DRIVER == 1)
-	init_events();
-	I2C1_init();
-#endif
-
-#if(USE_NV_MEMORY == 1)
-	nv_memory_init();
-	data_storage_init();
-	data_services_init();
-#endif
-
-#if (USE_FLEXIFUNCTION_MIXING == 1)
-	flexiFunctionServiceInit();
-#endif
+	
 	
 	// Initialize timer1, used as the 40Hz heartbeat of libUDB.
 	TMR1 = 0 ;
@@ -264,8 +232,8 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _PWMInterrupt(void)
 			if (udb_flags._.radio_on == 1) {
 				udb_flags._.radio_on = 0 ;
 				udb_callback_radio_did_turn_off() ;
+				LED_GREEN = LED_OFF ;
 			}
-			LED_GREEN = LED_OFF ;
 		}
 		else
 		{
@@ -287,21 +255,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _PWMInterrupt(void)
 	udb_flags._.a2d_read = 1 ; // signal the A/D to start the next summation
 	
 	udb_servo_callback_prepare_outputs() ;
-
-#if(USE_I2C1_DRIVER == 1)
-	I2C1_trigger_service();
-#endif
 	
-#if (USE_NV_MEMORY == 1)
-	nv_memory_service_trigger();
-	storage_service_trigger();
-	data_services_trigger();
-#endif	
-
-#if (USE_FLEXIFUNCTION_MIXING == 1)
-	flexiFunctionServiceTrigger();
-#endif
-
 	interrupt_restore_corcon ;
 	return ;
 }
