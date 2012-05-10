@@ -36,6 +36,7 @@
 // If building for UDB4, use the RollPitchYaw-udb4.mcp project file.
 #define BOARD_TYPE 							UDB3_BOARD
 
+#define CLOCK_CONFIG						CRYSTAL_CLOCK
 
 ////////////////////////////////////////////////////////////////////////////////
 // Configure Input and Output Channels

@@ -49,8 +49,7 @@ It will give you details of what has been loaded from the setup file.
 
 **************************************************************************************/
 
-#define	FIXED_SERVO_CHANNELS	8
-#define	MAX_VARIABLE_CHANNELS	32
+#define	SERVO_CHANNELS	8
 
 #define EngineString	"Engine"
 #define ControlString	"Control"

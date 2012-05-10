@@ -34,18 +34,16 @@ union longww { long  WW ; struct ww _ ; } ;
 
 
 // Build for the specific board type
-#define RED_BOARD		1	// red board with vertical LISY gyros, no longer in production
-#define GREEN_BOARD		2	// green board with Analog Devices 75 degree/second gyros, no longer in production
-#define UDB3_BOARD		3	// red board with daughter boards 500 degree/second Invensense gyros
+#define RED_BOARD		1
+#define GREEN_BOARD		2
+#define UDB3_BOARD		3	// Test board for Inversense Gyros
 #define RUSTYS_BOARD	4	// Red board with Rusty's IXZ-500_RAD2a patch board
-#define UDB4_BOARD		5	// board with dsPIC33 and integrally mounted 500 degree/second Invensense gyros
+#define UDB4_BOARD		5
 #define CAN_INTERFACE	6
-#define AUAV1_BOARD		7	// Nick Arsov's UDB3 clone, first version
 
 // Clock configurations
 #define CRYSTAL_CLOCK	1
 #define FRC8X_CLOCK		2
-#define UDB4_CLOCK		3
 
 
 // Include the necessary files for the current board type
@@ -57,13 +55,9 @@ union longww { long  WW ; struct ww _ ; } ;
 #include "p30f4011.h"
 #include "ConfigGreen.h"
 
-#elif (BOARD_TYPE == UDB3_BOARD )
+#elif (BOARD_TYPE == UDB3_BOARD)
 #include "p30f4011.h"
 #include "ConfigIXZ500.h"
-
-#elif (BOARD_TYPE == AUAV1_BOARD )
-#include "p30f4011.h"
-#include "ConfigARSOVUAV1.h"
 
 #elif (BOARD_TYPE == RUSTYS_BOARD)
 #include "p30f4011.h"
@@ -102,33 +96,14 @@ union longww { long  WW ; struct ww _ ; } ;
 #define ORIENTATION_FLIPPED			3
 #define ORIENTATION_ROLLCW			4
 #define ORIENTATION_ROLLCW180		5
-#define ORIENTATION_YAWCW			6
-#define ORIENTATION_YAWCCW			7
 
 #include "boardRotation_defines.h"
 
-#if (BOARD_TYPE == GREEN_BOARD || BOARD_TYPE == RED_BOARD || BOARD_TYPE == UDB3_BOARD || BOARD_TYPE == RUSTYS_BOARD || BOARD_TYPE == AUAV1_BOARD )
+
+#if (BOARD_TYPE == GREEN_BOARD || BOARD_TYPE == RED_BOARD || BOARD_TYPE == UDB3_BOARD || BOARD_TYPE == RUSTYS_BOARD)
 
 #define BOARD_IS_CLASSIC_UDB		1
 #define CLK_PHASES	4
-
-#ifdef CLOCK_CONFIG
-#if ( CLOCK_CONFIG == CRYSTAL_CLOCK )
-#error "CLOCK_CONFIG is now preset to FRC8X_CLOCK, and is no longer configurable in options.h. \
-If you know what you're doing and still want to edit it, you can do so in libUDB_defines.h. \
-Otherwise, please remove the CLOCK_CONFIG line from your options.h file."
-#endif
-#undef CLOCK_CONFIG
-#endif
-
-// Select Clock Configuration (Set to CRYSTAL_CLOCK or FRC8X_CLOCK)
-// CRYSTAL_CLOCK is the 16 MHz crystal.  This is the speed used in the past, and may be
-// more compatible with other add-ons. The CRYSTAL_CLOCK supports a maximum baud rate of 19200 bps.
-// FRC8X_CLOCK runs the fast RC clock (7.3728 MHz) with 8X PLL multiplier, and supports much
-// faster baud rates.  CRYSTAL_CLOCK is deprecated, but can still be tested by developers by changing
-// its value here:
-#define CLOCK_CONFIG 						FRC8X_CLOCK
-
 
 #if ( CLOCK_CONFIG == CRYSTAL_CLOCK )
 #define FREQOSC		16000000
@@ -138,9 +113,8 @@ Otherwise, please remove the CLOCK_CONFIG line from your options.h file."
 
 #else
 #define BOARD_IS_CLASSIC_UDB		0
-#define FREQOSC 					32000000
-#define CLK_PHASES					2
-#define CLOCK_CONFIG 				UDB4_CLOCK
+#define FREQOSC 	32000000
+#define CLK_PHASES	2
 #endif
 
 
@@ -183,10 +157,11 @@ struct ADchannel {
 
 
 struct udb_flag_bits {
-			unsigned int unused					  	    : 6 ;
-			unsigned int a2d_read						: 1 ;
-			unsigned int radio_on						: 1 ;
+			unsigned int unused					: 6 ;
+			unsigned int a2d_read				: 1 ;
+			unsigned int radio_on				: 1 ;
 			} ;
+
 
 // Baud Rate Generator -- See section 19.3.1 of datasheet.
 // Fcy = FREQOSC / CLK_PHASES
@@ -195,9 +170,9 @@ struct udb_flag_bits {
 // UXBRG = 103
 
 #if ( BOARD_IS_CLASSIC_UDB == 1 )
-#define UDB_BAUD(x) ((int)((FREQOSC / CLK_PHASES) / ((long)16 * x) - 1))
+#define UDB_BAUD(x)		((int)((FREQOSC / CLK_PHASES) / ((long)16 * x) - 1))
 #else
-#define UDB_BAUD(x) ((int)((FREQOSC / CLK_PHASES) / ((long)4 * x) - 1))
+#define UDB_BAUD(x)		((int)((FREQOSC / CLK_PHASES) / ((long)4 * x) - 1))
 #endif
 
 // LED states
@@ -216,13 +191,6 @@ struct udb_flag_bits {
 #define CHANNEL_7		7
 #define CHANNEL_8		8
 #define CHANNEL_9		9
-#define CHANNEL_10		10
-#define CHANNEL_11		11
-#define CHANNEL_12		12
-#define CHANNEL_13		13
-#define CHANNEL_14		14
-#define CHANNEL_15		15
-#define CHANNEL_16		16
 
 
 // Constants
@@ -234,12 +202,9 @@ struct udb_flag_bits {
 #define SERVOMAX SERVOCENTER + SERVORANGE
 #define SERVOMIN SERVOCENTER - SERVORANGE
 
-#define MAX_CURRENT 			900	// 90.0 Amps max for the sensor from SparkFun (in tenths of Amps)
-#define CURRENT_SENSOR_OFFSET	10	// Add 1.0 Amp to whatever value we sense
+#define MAX_CURRENT 900		// 90.0 Amps max for the sensor from SparkFun (in tenths of Amps)
+#define MAX_VOLTAGE 500		// 50.0 Volts max for the sensor from SparkFun (in tenths of Volts)
 
-#define MAX_VOLTAGE				543	// 54.3 Volts max for the sensor from SparkFun (in tenths of Volts)
-#define VOLTAGE_SENSOR_OFFSET	0	// Add 0.0 Volts to whatever value we sense
-	
 extern int magMessage ;
 extern int vref_adj ;
 
