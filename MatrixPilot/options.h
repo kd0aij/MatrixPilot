@@ -40,7 +40,7 @@
 // AUAV1_BOARD - Nick Arsov's UDB3 clone, version one
 // See the MatrixPilot wiki for more details on different UDB boards.
 // If building for the UDB4, use the MatrixPilot-udb4.mcw project workspace. 
-#define BOARD_TYPE 							UDB3_BOARD
+#define BOARD_TYPE 							UDB4_BOARD
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -153,7 +153,7 @@
 // receiver. (Totally autonomous.)  This is just meant for simulation and debugging.  It is not
 // recommended that you actually use this option, since you'd have no manual control to fall
 // back on if things go wrong.  It may not even be legal in your area.
-#define NORADIO								0
+#define NORADIO								1
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -321,7 +321,7 @@
 // SERIAL_MAVLINK is only supported on the UDB4 to ensure that sufficient RAM is available.
 // Note that SERIAL_MAVLINK defaults to using a baud rate of 57600 baud (other formats default to 19200)
 
-#define SERIAL_OUTPUT_FORMAT 	SERIAL_NONE
+#define SERIAL_OUTPUT_FORMAT 	SERIAL_UDB_EXTRA
 
 // MAVLink requires an aircraft Identifier (I.D) as it is deaigned to control multiple aircraft
 // Each aircraft in the sky will need a unique I.D. in the range from 0-255
@@ -593,8 +593,8 @@
 // HILSIM_BAUD is the serial speed for communications with the X-Plane plugin.  Default is
 // 19200, but 230400 is a good speedy option.  Make sure the X-Plane plugin's Setup file has
 // its speed set to match.
-#define HILSIM 								0
-#define HILSIM_BAUD							19200
+#define HILSIM 								1
+#define HILSIM_BAUD							57600
 
 
 ////////////////////////////////////////////////////////////////////////////////
