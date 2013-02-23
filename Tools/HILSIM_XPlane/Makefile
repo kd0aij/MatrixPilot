@@ -1,15 +1,13 @@
-PP       = g++
-CC 	 = gcc
-CFLAGS   = -pipe -Wall -W -O2 -DLIN=1 -fPIC
+CC       = g++
+CFLAGS   = -pipe -Wall -W -O2 -DLIN=1
 INCPATH  = -Iinclude 
 #LFLAGS   = -shared -Wl,-rpath  -Llib/XPLM.lib
-LFLAGS   =  -shared -Llib/XPLM.lib
-XFLAGS  = -DLIN -m32
+LFLAGS   =  -shared -Wl  -Llib/XPLM.lib
 RM_FILE  = rm -f
 
 OBJECTS_DIR = ./
 
-TARGET   = HILSIM_Linux.xpl
+TARGET   = HILSIM_ubuntu_12.04.xpl
 
 SOURCES = HILSIM.cpp SerialIO.cpp UDBSocketUnix.c Setup.cpp stdafx.cpp utility.cpp
 
@@ -20,7 +18,7 @@ first: all
 .SUFFIXES: .c .o .cpp .cc .cxx .C
 
 .cpp.o:
-	$(PP) -c $(CFLAGS) $(INCPATH) -o $@ $<
+	$(CC) -c $(CFLAGS) $(INCPATH) -o $@ $<
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(INCPATH) -o $@ $<
@@ -28,11 +26,10 @@ first: all
 all: Makefile $(TARGET)
 
 $(TARGET):  $(UICDECLS) $(OBJECTS) $(OBJMOC)  
-	$(CC) $(XFLAGS) $(INCPATH) -o $(TARGET) $(SOURCES) $(LFLAGS)
+	$(CC) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 clean:
 	-$(RM_FILE) $(OBJECTS)
 	-$(RM_FILE) *~ core *.core
 
-install: 
-	cp HILSIM_Linux.xpl  ~/'X-Plane 9 Demo'/Resources/plugins/HILSIM_Linux.xpl
+
