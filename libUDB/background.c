@@ -23,8 +23,6 @@
 
 #if(USE_I2C1_DRIVER == 1)
 #include "I2C.h"
-#endif
-#if(BOARD_TYPE == UDB4_BOARD)
 #include "events.h"
 #endif
 
@@ -56,10 +54,10 @@
 //      (16 * 256 ) Number of cycles for ( see PR5 below ) before timer interrupts
 #endif
 
-uint16_t cpu_timer = 0 ;
-uint16_t _cpu_timer = 0 ;
+unsigned int cpu_timer = 0 ;
+unsigned int _cpu_timer = 0 ;
 
-uint16_t udb_heartbeat_counter = 0 ;
+unsigned int udb_heartbeat_counter = 0 ;
 #define HEARTBEAT_MAX	57600		// Evenly divisible by many common values: 2^8 * 3^2 * 5^2
 
 #define MAX_NOISE_RATE 5 // up to 5 PWM "glitches" per second are allowed
@@ -92,10 +90,9 @@ void udb_init_clock(void)	/* initialize timers */
 {
 	TRISF = 0b1111111111101100 ;
 
-#if(BOARD_TYPE == UDB4_BOARD)
-	init_events();
-#endif
+
 #if(USE_I2C1_DRIVER == 1)
+	init_events();
 	I2C1_init();
 #endif
 
@@ -232,9 +229,9 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _T3Interrupt(void)
 }
 
 
-uint8_t udb_cpu_load(void)
+unsigned char udb_cpu_load(void)
 {
-	return (uint8_t)(__builtin_muluu(cpu_timer, CPU_LOAD_PERCENT) >> 16) ;
+	return (unsigned char)(__builtin_muluu(cpu_timer, CPU_LOAD_PERCENT) >> 16) ;
 }
 
 

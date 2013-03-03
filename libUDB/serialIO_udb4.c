@@ -78,14 +78,14 @@ void udb_init_GPS(void)
 }
 
 
-void udb_gps_set_rate(int32_t rate)
+void udb_gps_set_rate(long rate)
 {
 	U1BRG = UDB_BAUD(rate) ;
 	return ;
 }
 
 
-boolean udb_gps_check_rate(int32_t rate)
+boolean udb_gps_check_rate(long rate)
 {
 	return ( U1BRG == UDB_BAUD(rate) ) ;
 }
@@ -100,16 +100,16 @@ void udb_gps_start_sending_data(void)
 
 void __attribute__((__interrupt__,__no_auto_psv__)) _U1TXInterrupt(void)
 {
-	_U1TXIF = 0 ; // clear the interrupt
 	indicate_loading_inter ;
 	interrupt_save_set_corcon ;
-	 
 	
-	int16_t txchar = udb_gps_callback_get_byte_to_send() ;
+	_U1TXIF = 0 ; // clear the interrupt 
+	
+	int txchar = udb_gps_callback_get_byte_to_send() ;
 	
 	if ( txchar != -1 )
 	{
-		U1TXREG = (uint8_t)txchar ;
+		U1TXREG = (unsigned char)txchar ;
 	}
 	
 	interrupt_restore_corcon ;
@@ -119,17 +119,18 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _U1TXInterrupt(void)
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(void)
 {
-	_U1RXIF = 0 ; // clear the interrupt
 	indicate_loading_inter ;
 	interrupt_save_set_corcon ;
 	
 	while ( U1STAbits.URXDA )
 	{
-		uint8_t rxchar = U1RXREG ;
+		unsigned char rxchar = U1RXREG ;
 		udb_gps_callback_received_byte(rxchar) ;
 	}
 
 	U1STAbits.OERR = 0 ;
+	
+	_U1RXIF = 0 ; // clear the interrupt
 	
 	interrupt_restore_corcon ;
 	return ;
@@ -193,14 +194,14 @@ void udb_init_USART(void)
 }
 
 
-void udb_serial_set_rate(int32_t rate)
+void udb_serial_set_rate(long rate)
 {
 	U2BRG = UDB_BAUD(rate) ;
 	return ;
 }
 
 
-boolean udb_serial_check_rate(int32_t rate)
+boolean udb_serial_check_rate(long rate)
 {
 	return ( U2BRG == UDB_BAUD(rate) ) ;
 }
@@ -215,15 +216,16 @@ void udb_serial_start_sending_data(void)
 
 void __attribute__((__interrupt__,__no_auto_psv__)) _U2TXInterrupt(void)
 {
-	_U2TXIF = 0 ; // clear the interrupt
 	indicate_loading_inter ;
-	interrupt_save_set_corcon ; 
+	interrupt_save_set_corcon ;
 	
-	int16_t txchar = udb_serial_callback_get_byte_to_send() ;
+	_U2TXIF = 0 ; // clear the interrupt 
+	
+	int txchar = udb_serial_callback_get_byte_to_send() ;
 	
 	if ( txchar != -1 )
 	{
-		U2TXREG = (uint8_t)txchar ;
+		U2TXREG = (unsigned char)txchar ;
 	}
 	
 	interrupt_restore_corcon ;
@@ -233,17 +235,18 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _U2TXInterrupt(void)
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _U2RXInterrupt(void)
 {
-	_U2RXIF = 0 ; // clear the interrupt
 	indicate_loading_inter ;
 	interrupt_save_set_corcon ;
 	
 	while ( U2STAbits.URXDA )
 	{
-		uint8_t rxchar = U2RXREG ;
+		unsigned char rxchar = U2RXREG ;
 		udb_serial_callback_received_byte(rxchar) ;
 	}
 
 	U2STAbits.OERR = 0 ;
+	
+	_U2RXIF = 0 ; // clear the interrupt
 	
 	interrupt_restore_corcon ;
 	return ;
