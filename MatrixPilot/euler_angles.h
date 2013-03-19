@@ -24,7 +24,6 @@
 #ifndef EULER_ANGLES_H
 #define	EULER_ANGLES_H
 
-
 /**
  * Returns the aircraft heading angle (a.k.a., yaw angle) in degrees relative
  * to geographic north.

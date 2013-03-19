@@ -20,14 +20,15 @@
 
 #include "libUDB_internal.h"
 
-#if (BOARD_TYPE == UDB4_BOARD)
+//FIXME: add AUAV3 support
+#if (BOARD_TYPE == UDB4_BOARD||BOARD_TYPE == UDB5_BOARD)
 
 // These variables are not optional.  They are needed for telemetry
 int16_t udb_magOffset[3] = { 0 , 0 , 0 } ;  // magnetic offset in the body frame of reference
 int16_t magGain[3] = { RMAX , RMAX , RMAX } ; // magnetometer calibration gains
 int16_t rawMagCalib[3] = { 0 , 0 , 0 } ;
 
-#if (MAG_YAW_DRIFT == 1)
+#if ( MAG_YAW_DRIFT == 1)
 
 const uint8_t enableMagRead[] =        { 0x3C , 0x00 , 0x10 , 0x20 , 0x00 } ;
 const uint8_t enableMagCalibration[] = { 0x3C , 0x00 , 0x11 , 0x20 , 0x01 } ;

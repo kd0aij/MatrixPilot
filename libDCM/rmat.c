@@ -35,15 +35,16 @@
 //	Multiplication produces results scaled by 1/2.
 
 
-#define RMAX15 24576//0b0110000000000000	//	1.5 in 2.14 format
+#define RMAX15 0b0110000000000000	//	1.5 in 2.14 format
 
-#define GGAIN SCALEGYRO*6*(RMAX*0.025)		//	integration multiplier for gyros
+#define GGAIN SCALEGYRO*6*(RMAX*0.025)		//	integration multiplier for gyros at 40 Hz
+//#define GGAIN SCALEGYRO*1.2*(RMAX*0.025)		//	integration multiplier for gyros at 200 Hz
 fractional ggain[] =  { GGAIN , GGAIN , GGAIN } ;
 
 uint16_t spin_rate = 0 ;
 fractional spin_axis[] = { 0 , 0 , RMAX } ;
 
-#if ( BOARD_TYPE == UDB3_BOARD || BOARD_TYPE == AUAV1_BOARD || BOARD_TYPE == UDB4_BOARD )
+#if ( BOARD_TYPE == UDB3_BOARD || BOARD_TYPE == AUAV1_BOARD || BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD)
 //Paul's gains corrected for GGAIN
 #define KPROLLPITCH 256*5
 #define KIROLLPITCH 256
@@ -124,7 +125,7 @@ fractional errorYawplane[]  = { 0 , 0 , 0 } ;
 //	measure of error in orthogonality, used for debugging purposes:
 fractional error = 0 ;
 
-#if (MAG_YAW_DRIFT == 1)
+#if(MAG_YAW_DRIFT == 1)
 fractional declinationVector[2] ;
 #endif
 
@@ -134,7 +135,7 @@ union intbb dcm_declination_angle;
 
 void dcm_init_rmat( void )
 {
-#if (MAG_YAW_DRIFT == 1)
+#if(MAG_YAW_DRIFT == 1)
  #if (DECLINATIONANGLE_VARIABLE == 1)
 	dcm_declination_angle.BB = DECLINATIONANGLE;
  #endif
@@ -427,8 +428,7 @@ void roll_pitch_drift()
 		//	error_body = Rtranspose * error_earth
 
 		//	*** Note: this accomplishes multiplication rmat transpose times errorRP_earth!!
-		MatrixMultiply( 1 , 3 , 3 , errorRP , errorRP_earth , rmat ) ;
-
+		MatrixMultiply( 1 , 3 , 3 , errorRP , errorRP_earth , rmat ) ;
 		accelerometer_earth_integral[0] = accelerometer_earth_integral[1] = accelerometer_earth_integral[2] = 0 ;
 		accelerometer_samples = 0 ;
 		dcm_flags._.rollpitch_req = 0 ;

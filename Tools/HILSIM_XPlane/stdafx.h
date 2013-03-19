@@ -42,7 +42,6 @@
 #include <string.h>
 #include <math.h>
 
-
 #include "utility.h"
 #include "Setup.h"
 #include "SerialIO.h"

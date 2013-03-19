@@ -21,7 +21,7 @@
 
 #include "libUDB_internal.h"
 
-#if (BOARD_TYPE == UDB4_BOARD)
+#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD || BOARD_TYPE == AUAV3_BOARD)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -102,8 +102,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _U1TXInterrupt(void)
 {
 	_U1TXIF = 0 ; // clear the interrupt
 	indicate_loading_inter ;
-	interrupt_save_set_corcon ;
-	 
+	interrupt_save_set_corcon ;	
 	
 	int16_t txchar = udb_gps_callback_get_byte_to_send() ;
 	
@@ -129,8 +128,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(void)
 		udb_gps_callback_received_byte(rxchar) ;
 	}
 
-	U1STAbits.OERR = 0 ;
-	
+	U1STAbits.OERR = 0 ;		
 	interrupt_restore_corcon ;
 	return ;
 }
@@ -217,7 +215,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _U2TXInterrupt(void)
 {
 	_U2TXIF = 0 ; // clear the interrupt
 	indicate_loading_inter ;
-	interrupt_save_set_corcon ; 
+	interrupt_save_set_corcon ;	
 	
 	int16_t txchar = udb_serial_callback_get_byte_to_send() ;
 	
@@ -243,8 +241,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U2RXInterrupt(void)
 		udb_serial_callback_received_byte(rxchar) ;
 	}
 
-	U2STAbits.OERR = 0 ;
-	
+	U2STAbits.OERR = 0 ;		
 	interrupt_restore_corcon ;
 	return ;
 }

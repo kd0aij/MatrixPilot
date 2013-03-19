@@ -56,6 +56,8 @@ char serial_buffer[SERIAL_BUFFER_SIZE] ;
 int16_t sb_index = 0 ;
 int16_t end_index = 0 ;
 
+
+
 void init_serial()
 {
 #if ( SERIAL_OUTPUT_FORMAT == SERIAL_OSD_REMZIBI )
@@ -79,7 +81,7 @@ void init_serial()
 // Receive Serial Commands
 //
 
-void udb_serial_callback_received_byte(uint8_t rxchar)
+void udb_serial_callback_received_byte(char rxchar)
 {
 	(* sio_parse) ( rxchar ) ; // parse the input byte
 	return ;
@@ -476,9 +478,18 @@ void serial_output_8hz( void )
 	{
 		// The first lines of telemetry contain info about the compile-time settings from the options.h file
 		case 8:
+			if ( _SWR == 0 )
+			{
+				// if there was not a software reset (trap error) clear the trap data
+				trap_flags = trap_source = osc_fail_count = 0 ;
+			}
 			serial_output("\r\nF14:WIND_EST=%i:GPS_TYPE=%i:DR=%i:BOARD_TYPE=%i:AIRFRAME=%i:RCON=0x%X:TRAP_FLAGS=0x%X:TRAP_SOURCE=0x%lX:ALARMS=%i:"  \
 							"CLOCK=%i:FP=%d:\r\n",
 				WIND_ESTIMATION, GPS_TYPE, DEADRECKONING, BOARD_TYPE, AIRFRAME_TYPE, udb_get_reset_flags() , trap_flags , trap_source , osc_fail_count, CLOCK_CONFIG, FLIGHT_PLAN_TYPE ) ;
+				RCON = 0 ;
+				trap_flags = 0 ;
+				trap_source = 0 ;
+				osc_fail_count = 0 ;
 			break ;
 		case 7:
 			serial_output("F15:IDA=");

@@ -20,17 +20,16 @@
 
 
 #include "defines.h"
-#include "stdlib.h"
 
 #if (FLIGHT_PLAN_TYPE == FP_LOGO)
 
 
 struct logoInstructionDef {
-	unsigned int cmd		:  6 ;
-	unsigned int do_fly		:  1 ;
-	unsigned int use_param	:  1 ;
-	unsigned int subcmd		:  8 ;
-	int arg		: 16 ;
+	uint16_t cmd		:  6 ;
+	uint16_t do_fly		:  1 ;
+	uint16_t use_param	:  1 ;
+	uint16_t subcmd		:  8 ;
+	int16_t arg					: 16 ;
 } ;
 
 #define PLANE				0
@@ -263,7 +262,7 @@ int8_t interruptStackBase = 0 ;	// stack depth when entering interrupt (clear in
 struct logoStackFrame {
 	uint16_t frameType				:  2 ;
 	int16_t returnInstructionIndex	: 14 ;	// instructionIndex before the first instruction of the subroutine (a TO or REPEAT line, or -1 for MAIN)
-	int16_t arg						: 16 ;
+	int16_t arg								: 16 ;
 } ;
 struct logoStackFrame logoStack[LOGO_STACK_DEPTH] ;
 int16_t logoStackIndex = 0 ;

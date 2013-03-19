@@ -161,6 +161,8 @@ extern struct ADchannel udb_xaccel, udb_yaccel, udb_zaccel;	// x, y, and z accel
 extern struct ADchannel udb_xrate, udb_yrate, udb_zrate;	// x, y, and z gyro channels
 extern struct ADchannel udb_vref;							// reference voltage
 extern struct ADchannel udb_analogInputs[];
+extern struct ADchannel udb_vcc;
+extern struct ADchannel udb_5v ;
 
 #if (ANALOG_CURRENT_INPUT_CHANNEL != CHANNEL_UNUSED)
 extern union longww battery_current;	// battery_current._.W1 is in tenths of Amps
@@ -217,7 +219,7 @@ void udb_gps_start_sending_data(void);
 int16_t udb_gps_callback_get_byte_to_send(void);		// Callback
 
 // Implement this callback to handle receiving a byte from the GPS
-void udb_gps_callback_received_byte(uint8_t rxchar);		// Callback
+void udb_gps_callback_received_byte(char rxchar);		// Callback
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +238,7 @@ void udb_serial_start_sending_data(void);
 int16_t udb_serial_callback_get_byte_to_send(void);		// Callback
 
 // Implement this callback to handle receiving a byte from the serial port
-void udb_serial_callback_received_byte(uint8_t rxchar);	// Callback
+void udb_serial_callback_received_byte(char rxchar);	// Callback
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -261,7 +263,7 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// EEPROM (Supported on UDB4 only)
+// EEPROM (Supported on UDB4 and UDB5 only)
 
 // Write 1 byte to eeprom at address, or read 1 byte from address in eeprom into data
 void eeprom_ByteWrite(uint16_t address, uint8_t data);

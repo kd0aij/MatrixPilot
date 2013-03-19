@@ -24,7 +24,7 @@
 #if(USE_I2C1_DRIVER == 1)
 #include "I2C.h"
 #endif
-#if(BOARD_TYPE == UDB4_BOARD)
+#if((USE_I2C1_DRIVER == 1) || (SERIAL_FORMAT == SERIAL_MAVLINK) )
 #include "events.h"
 #endif
 
@@ -47,7 +47,7 @@
 #define CPU_LOAD_PERCENT	16*109   // = ((100 / (8192 * 2)) * (256**2))/3.6864
 #endif
 
-#elif (BOARD_TYPE == UDB4_BOARD)
+#elif (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD || BOARD_TYPE == AUAV3_BOARD)
 #define CPU_LOAD_PERCENT	1677     // = (( 65536 * 100  ) / ( (32000000 / 2) / (16 * 256) )
 //      65536 to move result into upper 16 bits of 32 bit word
 //      100 to make a percentage
@@ -67,7 +67,7 @@ uint16_t udb_heartbeat_counter = 0 ;
 void udb_run_init_step( void ) ;
 
 
-#if ( BOARD_TYPE == UDB4_BOARD )
+#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD || BOARD_TYPE == AUAV3_BOARD)
 #define _TTRIGGERIP _T7IP
 #define _TTRIGGERIF _T7IF
 #define _TTRIGGERIE _T7IE
@@ -77,7 +77,7 @@ void udb_run_init_step( void ) ;
 #define _TTRIGGERIE _T3IE
 #endif
 
-#if ( BOARD_TYPE == UDB4_BOARD )
+#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD || BOARD_TYPE == AUAV3_BOARD)
 #define _THEARTBEATIP _T6IP
 #define _THEARTBEATIF _T6IF
 #define _THEARTBEATIE _T6IE
@@ -92,8 +92,10 @@ void udb_init_clock(void)	/* initialize timers */
 {
 	TRISF = 0b1111111111101100 ;
 
-#if(BOARD_TYPE == UDB4_BOARD)
-	init_events();
+#ifdef SERIAL_FORMAT
+	#if((USE_I2C1_DRIVER == 1) || (SERIAL_FORMAT == SERIAL_MAVLINK))
+		init_events();
+	#endif
 #endif
 #if(USE_I2C1_DRIVER == 1)
 	I2C1_init();
@@ -111,7 +113,7 @@ void udb_init_clock(void)	/* initialize timers */
 	
 	// Initialize timer1, used as the 40Hz heartbeat of libUDB.
 	TMR1 = 0 ;
-#if (BOARD_TYPE == UDB4_BOARD)
+#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD || BOARD_TYPE == AUAV3_BOARD)
 	PR1 = 50000 ;			// 25 millisecond period at 16 Mz clock, tmr prescale = 8
 	T1CONbits.TCKPS = 1;	// prescaler = 8
 #elif ( CLOCK_CONFIG == CRYSTAL_CLOCK )
@@ -155,7 +157,7 @@ void udb_init_clock(void)	/* initialize timers */
 	// start all the 40Hz processing at a lower priority.
 	_THEARTBEATIF = 0 ;					// clear the PWM interrupt
 	_THEARTBEATIP = 3 ;					// priority 3
-#if (BOARD_TYPE != UDB4_BOARD)
+#if ((BOARD_TYPE != UDB4_BOARD) && (BOARD_TYPE != UDB5_BOARD) && (BOARD_TYPE != AUAV3_BOARD))
 	_PEN1L = _PEN2L = _PEN3L = 0 ;		// low pins used as digital I/O
 	_PEN1H = _PEN2H = _PEN3H = 0 ;		// high pins used as digital I/O
 #endif
@@ -214,7 +216,7 @@ void udb_background_trigger(void)
 // Process the TRIGGER interrupt.
 // This is used by libDCM to kick off gps-based calculations at a lower
 // priority after receiving each new set of GPS data.
-#if ( BOARD_TYPE == UDB4_BOARD )
+#if ( BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD  || BOARD_TYPE == AUAV3_BOARD)
 void __attribute__((__interrupt__,__no_auto_psv__)) _T7Interrupt(void) 
 #else
 void __attribute__((__interrupt__,__no_auto_psv__)) _T3Interrupt(void) 
@@ -253,7 +255,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _T5Interrupt(void)
 
 //	Executes whatever lower priority calculation needs to be done every 25 milliseconds.
 //	This is a good place to eventually compute pulse widths for servos.
-#if ( BOARD_TYPE == UDB4_BOARD )
+#if ( BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD  || BOARD_TYPE == AUAV3_BOARD )
 void __attribute__((__interrupt__,__no_auto_psv__)) _T6Interrupt(void)
 #else
 void __attribute__((__interrupt__,__no_auto_psv__)) _PWMInterrupt(void)
