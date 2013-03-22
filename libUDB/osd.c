@@ -3,56 +3,31 @@
 #if (USE_OSD == 1)
 
 
-#if (BOARD_IS_CLASSIC_UDB == 1)
 #define OSD_CS		_LATE0
 #define OSD_SCK 	_LATE2
 #define OSD_MOSI 	_LATE4
 // #define OSD_MISO 	0
 
-#else // UDB4 uses SPI1 port
-#define OSD_CS		_LATF7 // _LATB2
-#define OSD_SCK 	_LATF8 // _LATF6
-#define OSD_MOSI 	_LATF6 // _LATF7
-// #define OSD_MISO 	0  // _LATF8
-#endif
-
 
 void udb_init_osd( void )
 {
-#if (BOARD_IS_CLASSIC_UDB == 1)
-//	_TRISE0 = _TRISE2 = _TRISE4 = 0 ;
-//	_LATE0  = _LATE2  = _LATE4  = 1 ;
-	_TRISE0 = 0;
-    _TRISE2 = 0;
-    _TRISE4 = 0 ;
-	_LATE0  = 1;
-    _LATE2  = 1;
-    _LATE4  = 1 ;
-#else
-//	_TRISF6 = _TRISF7 = _TRISF8 = 0 ;
-//	_LATF6  = _LATF7  = _LATF8  = 1 ;
-	_TRISF6 = 0;
-    _TRISF7 = 0;
-    _TRISF8 = 0 ;
-	_LATF6  = 1;
-    _LATF7  = 1;
-    _LATF8  = 1 ;
-#endif
+	_TRISE0 = _TRISE2 = _TRISE4 = 0 ;
+	_LATE0  = _LATE2  = _LATE4  = 1 ;
 }
 
 
-void spi_write_raw_byte(uint8_t byte)
+void spi_write_raw_byte(unsigned char byte)
 {
-	uint8_t SPICount ;						// Counter used to clock out the data
+	unsigned char SPICount ;						// Counter used to clock out the data
 	
 	for (SPICount = 0; SPICount < 8; SPICount++)	// Prepare to clock out the Address byte
 	{
-		uint8_t outBit = ((byte & 0x80) != 0) ; // Check for a 1 and set the MOSI line appropriately
+		unsigned char outBit = ((byte & 0x80) != 0) ; // Check for a 1 and set the MOSI line appropriately
 		if (outBit) OSD_MOSI = 1 ;					// Write this bit using the bit-set / bit-clear instrictions
 		else 		OSD_MOSI = 0 ;
 		
 		OSD_SCK = 1 ;								// Toggle the clock line up
-#if ( BOARD_IS_CLASSIC_UDB == 1 && CLOCK_CONFIG == CRYSTAL_CLOCK )
+#if ( CLOCK_CONFIG == CRYSTAL_CLOCK )
 		Nop(); Nop(); Nop();						// Kill some time with SCK high to make a more solid pulse
 #else
 		Nop(); Nop(); Nop(); Nop(); Nop(); Nop();	// Kill some time with SCK high to make a more solid pulse
@@ -65,7 +40,7 @@ void spi_write_raw_byte(uint8_t byte)
 }
 
 
-void osd_spi_write_byte(int8_t byte)
+void osd_spi_write_byte(char byte)
 {
 	OSD_CS = 1 ;				// Make sure we start with active-low CS high
 	OSD_SCK = 0 ;				// and CK low
@@ -83,7 +58,7 @@ void osd_spi_write_byte(int8_t byte)
 }
 
 
-void osd_spi_write(int8_t addr, int8_t byte)
+void osd_spi_write(char addr, char byte)
 {
 	OSD_CS = 1 ;				// Make sure we start with active-low CS high
 	OSD_SCK = 0 ;				// and CK low
@@ -103,10 +78,10 @@ void osd_spi_write(int8_t addr, int8_t byte)
 
 
 /*
-uint8_t spi_read_raw_byte( void )
+unsigned char spi_read_raw_byte( void )
 {
-	uint8_t SPICount ;						// Counter used to clock out the data
-	uint8_t SPIData = 0 ;						// Counter used to clock out the data
+	unsigned char SPICount ;						// Counter used to clock out the data
+	unsigned char SPIData = 0 ;						// Counter used to clock out the data
 	
 	for (SPICount = 0; SPICount < 8; SPICount++)	// Prepare to clock out the Address byte
 	{
@@ -121,9 +96,9 @@ uint8_t spi_read_raw_byte( void )
 }
 
 
-uint8_t osd_spi_read(int8_t addr)
+unsigned char osd_spi_read(char addr)
 {
-	uint8_t SPIData = 0 ;
+	unsigned char SPIData = 0 ;
 	
 	OSD_CS = 1 ;				// Make sure we start with active-low CS high
 	OSD_SCK = 0 ;				// and CK low
@@ -142,16 +117,16 @@ uint8_t osd_spi_read(int8_t addr)
 */
 
 
-void osd_spi_write_location(int16_t loc)
+void osd_spi_write_location(int loc)
 {
-	osd_spi_write(0x05, (uint8_t)(loc>>8)) ;	// DMAH
-	osd_spi_write(0x06, (uint8_t)(loc & 0xFF)) ;	// DMAL
+	osd_spi_write(0x05, (unsigned char)(loc>>8)) ;	// DMAH
+	osd_spi_write(0x06, (unsigned char)(loc & 0xFF)) ;	// DMAL
 	
 	return ;
 }
 
 
-void osd_spi_write_string(const uint8_t *str)
+void osd_spi_write_string(const unsigned char *str)
 {
 	osd_spi_write(0x04,1) ;		// DMM: Enable auto-increment mode
 	
@@ -166,7 +141,7 @@ void osd_spi_write_string(const uint8_t *str)
 }
 
 
-void osd_spi_write_vertical_string_at_location(int16_t loc, const uint8_t *str)
+void osd_spi_write_vertical_string_at_location(int loc, const unsigned char *str)
 {
 	while (1)
 	{
@@ -182,7 +157,7 @@ void osd_spi_write_vertical_string_at_location(int16_t loc, const uint8_t *str)
 }
 
 
-void osd_spi_erase_chars(uint8_t n)
+void osd_spi_erase_chars(unsigned char n)
 {
 	osd_spi_write(0x04,1) ;		// DMM: Enable auto-increment mode
 	
@@ -197,10 +172,10 @@ void osd_spi_erase_chars(uint8_t n)
 }
 
 
-void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places, int8_t num_flags, int8_t header, int8_t footer)
+void osd_spi_write_number(long val, char num_digits, char num_flags, char header, char footer)
 {
 	boolean startWriting = 0 ;
-	int32_t d;
+	long d;
 	
 	osd_spi_write(0x04,1) ;			// DMM: Enable auto-increment mode
 	
@@ -225,7 +200,7 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 1000000000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(0x80 + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
@@ -236,9 +211,9 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 100000000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 9) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*100000000 ;
@@ -247,9 +222,9 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 10000000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 8) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*10000000 ;
@@ -258,9 +233,9 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 1000000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 7) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*1000000 ;
@@ -269,9 +244,9 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 100000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 6) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*100000 ;
@@ -280,9 +255,9 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 10000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 5) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*10000 ;
@@ -291,9 +266,9 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 1000) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 4) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*1000 ;
@@ -302,9 +277,9 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 100) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 3) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*100 ;
@@ -313,15 +288,15 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 			d = (val / 10) ;
 			if (d) startWriting = 1 ;
 			if (startWriting)
-				osd_spi_write_byte(((decimal_places == 2) ? 0xE0 : 0x80) + d) ;
+				osd_spi_write_byte((d) ? 0x80 + d : 0x8A) ;
 			else if (num_digits && (num_flags & NUM_FLAG_ZERO_PADDED))
-				osd_spi_write_byte(0x80) ;
+				osd_spi_write_byte(0x8A) ;
 			else if (num_digits && !(num_flags & NUM_FLAG_ZERO_PADDED))
 				osd_spi_write_byte(0x00) ;
 			val -= d*10 ;
 		
 		case 1:
-			osd_spi_write_byte(((decimal_places == 1) ? 0xE0 : 0x80) + val) ;
+			osd_spi_write_byte((val) ? 0x80 + val : 0x8A) ;
 	}
 	
 	if (footer)

@@ -1,5 +1,6 @@
-
-.include "p33fxxxx.inc"
+.nolist
+.include "p33Fxxxx.inc"
+.list
 
 ; MATH_ERROR 1
 ; STACK_ERROR 2

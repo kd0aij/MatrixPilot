@@ -21,25 +21,25 @@
 
 // used for the UDB4
 
-#define	xrateBUFF			2
-#define	yrateBUFF			1
-#define	zrateBUFF			3
+#define	ADCON2CONFIG 0b0010010000011000 ; //?
 
-#define	xaccelBUFF			5
-#define	yaccelBUFF			6
-#define	zaccelBUFF			4
+#define	xrateBUFF	2
+#define	yrateBUFF	1
+#define	zrateBUFF	3
 
-#define analogInput1BUFF	7
-#define analogInput2BUFF	8
-#define analogInput3BUFF	9
-#define analogInput4BUFF	10
+#define	xaccelBUFF	5
+#define	yaccelBUFF	6
+#define	zaccelBUFF	4
+
+#define analogInput1BUFF    7
+#define analogInput2BUFF    8
 
 #define XRATE_SIGN -
 #define YRATE_SIGN -
 #define ZRATE_SIGN -
 
-#define XACCEL_SIGN -
-#define YACCEL_SIGN -
+#define XACCEL_SIGN +
+#define YACCEL_SIGN +
 #define ZACCEL_SIGN +
 
 //#define VREF
@@ -51,11 +51,11 @@
 #define MAX_INPUTS	8
 #define MAX_OUTPUTS	8
 
-// LED pins
-#define LED_BLUE			LATEbits.LATE4
-#define LED_ORANGE			LATEbits.LATE3
-#define LED_GREEN			LATEbits.LATE2
-#define LED_RED				LATEbits.LATE1
+// LED pins (inverted)
+#define LED_BLUE    _LATE4
+#define LED_YELLOW  _LATE3
+#define LED_GREEN   _LATE2
+#define LED_RED     _LATE1
 
 // There are no hardware toggle switches on the UDB4, so use values of 0
 #define HW_SWITCH_1			0

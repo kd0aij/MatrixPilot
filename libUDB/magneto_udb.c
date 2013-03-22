@@ -18,15 +18,16 @@
 // You should have received a copy of the GNU General Public License
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
+
 #include "libUDB_internal.h"
 
 #if (BOARD_IS_CLASSIC_UDB == 1)
 
-#if (MAG_YAW_DRIFT == 1)
+#if ( MAG_YAW_DRIFT == 1 )
 
-const uint8_t enableMagRead[] =        { 0x3C , 0x00 , 0x10 , 0x20 , 0x00 } ;
-const uint8_t enableMagCalibration[] = { 0x3C , 0x00 , 0x11 , 0x20 , 0x01 } ;
-const uint8_t resetMagnetometer[]    = { 0x3C , 0x00 , 0x10 , 0x20 , 0x02 } ;
+const unsigned char enableMagRead[] =        { 0x3C , 0x00 , 0x10 , 0x20 , 0x00 } ;
+const unsigned char enableMagCalibration[] = { 0x3C , 0x00 , 0x11 , 0x20 , 0x01 } ;
+const unsigned char resetMagnetometer[]    = { 0x3C , 0x00 , 0x10 , 0x20 , 0x02 } ;
 
 void I2C_readMagData(void) ;
 void I2C_writeMagCommand(void) ;
@@ -36,24 +37,20 @@ void I2C_stopReadMagData(void) ;
 void I2C_doneReadMagData(void) ;
 void I2C_recen(void) ;
 void I2C_recstore(void) ;
-void I2C_send3C(void) ;
-void I2C_send03(void) ;
-void I2C_restart(void) ;
 
 void I2C_WriteMagData(void) ;
 void I2C_stopWriteMagData(void) ;
 
 void I2C_idle(void) ;
 
-int16_t udb_magFieldBody[3] ;  // magnetic field in the body frame of reference 
-int16_t udb_magOffset[3] = { 0 , 0 , 0 } ;  // magnetic offset in the body frame of reference
-int16_t magGain[3] = { RMAX , RMAX , RMAX } ; // magnetometer calibration gains
-int16_t rawMagCalib[3] = { 0 , 0 , 0 } ;
-uint8_t magreg[6] ;  // magnetometer read-write buffer
-int16_t magFieldRaw[3] ;
+int udb_magFieldBody[3] ;  // magnetic field in the body frame of reference 
+int udb_magOffset[3] = { 0 , 0 , 0 } ;  // magnetic offset in the body frame of reference
+int magGain[3] = { RMAX , RMAX , RMAX } ; // magnetometer calibration gains
+int rawMagCalib[3] = { 0 , 0 , 0 } ;
+unsigned char magreg[6] ;  // magnetometer read-write buffer
 
-int16_t I2ERROR = 0 ;
-int16_t I2interrupts = 0 ;
+int I2ERROR = 0 ;
+int I2interrupts = 0 ;
 
 void (* I2C_state ) ( void ) = &I2C_idle ;
 
@@ -79,16 +76,14 @@ void udb_init_I2C(void)
 	return ;
 }
 
-int16_t mrindex ;  // index into the read write buffer 
-int16_t magMessage = 0 ; // message type
+int mrindex ;  // index into the read write buffer 
+int magMessage = 0 ; // message type
 
-int16_t magCalibPause = 0 ;
-
-int16_t I2messages = 0 ;
+int I2messages = 0 ;
 
 void rxMagnetometer(void)  // service the magnetometer
 {
-	int16_t magregIndex ;
+	int magregIndex ;
 	
 	I2messages++ ;
 #if ( LED_RED_MAG_CHECK == 1 )
@@ -104,8 +99,7 @@ void rxMagnetometer(void)  // service the magnetometer
 	if ( _I2CEN == 0 ) // I2C is off
 	{
 		I2C_state = &I2C_idle ; // disable response to any interrupts
-		_LATF2 = 1 ;
-		_LATF3 = 1 ; // pull SDA and SCL high
+		_RF2 = _RF3 = 1 ; // pull SDA and SCL high
 		udb_init_I2C() ; // turn the I2C back on
 		magMessage = 0 ; // start over again
 		return ;
@@ -121,13 +115,11 @@ void rxMagnetometer(void)  // service the magnetometer
 		_I2CEN = 0 ;  // turn off the I2C
 		_MI2CIF = 0 ; // clear the I2C master interrupt
 		_MI2CIE = 0 ; // disable the interrupt
-		_LATF2 = 0 ;
-		_LATF3 = 0 ; // pull SDA and SCL low
+		_RF2 = _RF3 = 0 ; // pull SDA and SCL low
 		return ;
 	}
 
 	mrindex = 0 ;
-	if ( magCalibPause == 0 )
 	{
 		magMessage++ ;
 		if ( magMessage > 7 )
@@ -158,7 +150,6 @@ void rxMagnetometer(void)  // service the magnetometer
 				magreg[magregIndex] = enableMagCalibration[magregIndex] ;
 			}
 			I2C_state = &I2C_writeMagCommand ;
-			magCalibPause = 2 ;
 			_MI2CIF = 1 ;
 			break ;
 		case  5 :  // read the calibration data
@@ -181,10 +172,6 @@ void rxMagnetometer(void)  // service the magnetometer
 			I2C_state = &I2C_idle ;
 			break ;
 		}
-	}
-	else
-	{
-		magCalibPause -- ;
 	}
 	return ;
 }
@@ -234,28 +221,10 @@ void I2C_readMagData(void)
 {
 	if ( I2CCONbits.RCEN == 0 )
 	{
-		I2C_state = &I2C_send3C ;
+		I2C_state = &I2C_startReadMagData ;
 		I2CCONbits.SEN = 1 ;
 	}
 	return ;
-}
-
-void I2C_send3C(void)
-{
-	I2C_state = &I2C_send03 ;
-	I2CTRN = 0x3C ;
-}
-
-void I2C_send03(void)
-{
-	I2C_state = &I2C_restart ;
-	I2CTRN = 0x03 ;
-}
-
-void I2C_restart(void)
-{
-	I2C_state = &I2C_startReadMagData ;
-	I2CCONbits.RSEN = 1;  // repeated start
 }
 
 
@@ -318,12 +287,28 @@ void I2C_stopReadMagData(void)
 }
 
 
+int previousMagFieldRaw[3] = { 0 , 0 , 0 } ;
+
+
 void I2C_doneReadMagData(void)
 {
-	int16_t vectorIndex ;
+	int vectorIndex ;
+	int magFieldRaw[3] ;
 	magFieldRaw[0] = (magreg[0]<<8)+magreg[1] ; 
 	magFieldRaw[1] = (magreg[2]<<8)+magreg[3] ; 
 	magFieldRaw[2] = (magreg[4]<<8)+magreg[5] ;
+
+	// check to see if Magnetometer is stuck in the single reading mode:
+	if ( (magMessage == 7) && ( magFieldRaw[0] == previousMagFieldRaw[0] )
+		&& ( magFieldRaw[1] == previousMagFieldRaw[1] )
+		&& ( magFieldRaw[2] == previousMagFieldRaw[2] ) )
+	{
+		I2C_state = &I2C_idle ;
+		magMessage = 0 ;
+	}
+	previousMagFieldRaw[0] = magFieldRaw[0] ;
+	previousMagFieldRaw[1] = magFieldRaw[1] ;
+	previousMagFieldRaw[2] = magFieldRaw[2] ;
 
 	if ( magMessage == 7 )
 	{
@@ -349,7 +334,7 @@ void I2C_doneReadMagData(void)
 			rawMagCalib[vectorIndex] = magFieldRaw[vectorIndex] ;
 			if (  ( magFieldRaw[vectorIndex] > MAGNETICMINIMUM ) && ( magFieldRaw[vectorIndex] < MAGNETICMAXIMUM ) )
 			{
-				magGain[vectorIndex] = __builtin_divud( ((int32_t) ( MAG_GAIN*RMAX)), magFieldRaw[vectorIndex] ) ;
+				magGain[vectorIndex] = __builtin_divud( ((long) ( 700.0*RMAX)), magFieldRaw[vectorIndex] ) ;
 			}
 			else
 			{
