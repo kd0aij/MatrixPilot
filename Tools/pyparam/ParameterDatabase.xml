@@ -21,6 +21,9 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 		<dataStorageArea>CONTROL_GAINS</dataStorageArea>
 		<dataStorageArea>THROTTLE_HEIGHT_OPTIONS</dataStorageArea>
 		<dataStorageArea>AIRSPEED_OPTIONS</dataStorageArea>
+		<dataStorageArea>FBW_OPTIONS</dataStorageArea>
+		<dataStorageArea>NAV_OPTIONS</dataStorageArea>
+		<dataStorageArea>CONTROL_GAINS_2</dataStorageArea>
 	</dataStorageAreas>
 
 <serialisationFlags>
@@ -45,6 +48,13 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 	<typeName>UDB_TYPE_Q14</typeName>
 	<sendFunction>mavlink_send_param_Q14</sendFunction>
 	<setFunction>mavlink_set_param_Q14</setFunction>
+	<mavlinkType>MAVLINK_TYPE_FLOAT</mavlinkType>
+	</udbType>
+	<udbType>
+	
+	<typeName>UDB_TYPE_Q16</typeName>
+	<sendFunction>mavlink_send_param_Q16</sendFunction>
+	<setFunction>mavlink_set_param_Q16</setFunction>
 	<mavlinkType>MAVLINK_TYPE_FLOAT</mavlinkType>
 	</udbType>
 	<udbType>
@@ -99,7 +109,7 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 </udbTypes>
 
 <parameterBlocks>
-	<parameterBlock>
+<!--	<parameterBlock>
 		<blockName>PID_SETTINGS</blockName>
 		<storage_area>CONTROL_GAINS</storage_area>
 		<serialisationFlags>
@@ -165,6 +175,7 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 				<max>0.5</max>
 				<readonly>false</readonly>
 			</parameter>
+
 			<parameter>
 				<parameterName>PID_RUDELEVGAIN</parameterName>
 				<udb_param_type>UDB_TYPE_Q14</udb_param_type>
@@ -203,6 +214,7 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 				<max>0.5</max>
 				<readonly>false</readonly>
 			</parameter>
+
 			<parameter>
 				<parameterName>PID_ROLLKPRUD</parameterName>
 				<udb_param_type>UDB_TYPE_Q14</udb_param_type>
@@ -225,6 +237,7 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 		</parameters>
 		<description>PID Settings Block </description>
 	</parameterBlock>
+-->
 
 
 	<parameterBlock>
@@ -597,12 +610,10 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 			<externString>fractional alt_hold_throttle_max</externString>
 			<externString>int alt_hold_pitch_min</externString>
 			<externString>int alt_hold_pitch_max</externString>
-			<externString>int alt_hold_pitch_high</externString>
-			<externString>int rtl_pitch_down</externString>
 			<externString>int minimum_groundspeed</externString>
 			<externString>int maximum_airspeed</externString>
 			<externString>int minimum_airspeed</externString>
-			<externString>int desiredSpeed</externString>
+
 		</externs>
 		<load_callback>NULL</load_callback>
 		<in_mavlink_parameters>true</in_mavlink_parameters>
@@ -671,30 +682,10 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 				<readonly>false</readonly>
 			</parameter>
 			
-			<parameter>
-				<parameterName>TH_P_HIGH</parameterName>
-				<udb_param_type>UDB_TYPE_INT</udb_param_type>
-				<variable_name>alt_hold_pitch_high</variable_name>
-				<description>Pitch down when above maximum altitude</description>
-				<min>0</min>
-				<max>89</max>
-				<readonly>false</readonly>
-			</parameter>
-			<parameter>
-				<parameterName>TH_P_RTL_DOWN</parameterName>
-				<udb_param_type>UDB_TYPE_INT</udb_param_type>
-				<variable_name>rtl_pitch_down</variable_name>
-				<description>Return to launch pitch down</description>
-				<min>0</min>
-				<max>89</max>
-				<readonly>false</readonly>
-			</parameter>
 		</parameters>
 	
 		<description>Throttle and height control gains and options</description>
 	</parameterBlock>
-
-
 
 
 	<parameterBlock>
@@ -710,11 +701,6 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 			<externString>int minimum_airspeed</externString>
 			<externString>int cruise_airspeed</externString>
 			<externString>int desiredSpeed</externString>
-			<externString>int airspeed_pitch_min_aspd</externString>
-			<externString>int airspeed_pitch_max_aspd</externString>
-			<externString>int airspeed_pitch_adjust_rate</externString>
-			<externString>fractional airspeed_pitch_ki</externString>
-			<externString>int airspeed_pitch_ki_limit</externString>
 		</externs>
 		<load_callback>NULL</load_callback>
 		<in_mavlink_parameters>true</in_mavlink_parameters>
@@ -764,58 +750,213 @@ xsi:schemaLocation="ParameterDB ParameterDatabase.xsd">
 				<max>300.0</max>
 				<readonly>false</readonly>
 			</parameter>
+		</parameters>
+	
+		<description>Airspeed options</description>
+	</parameterBlock>
+
+
+
+
+	<parameterBlock>
+		<blockName>FBW_OPTIONS</blockName>
+		<storage_area>FBW_OPTIONS</storage_area>
+		<serialisationFlags>
+			<serialisationFlag>LOAD_AT_STARTUP</serialisationFlag>
+			<serialisationFlag>LOAD_AT_REBOOT</serialisationFlag>
+		</serialisationFlags>
+		<externs>
+			<externString>int fbw_rollPositionMax</externString>
+		</externs>
+		<load_callback>NULL</load_callback>
+		<in_mavlink_parameters>true</in_mavlink_parameters>
+		<parameters>
 			<parameter>
-				<parameterName>ASPD_P_MIN_ASPD</parameterName>
+				<parameterName>FBW_MAX_R_ANGLE</parameterName>
+				<udb_param_type>UDB_TYPE_INT</udb_param_type>
+				<variable_name>fbw_rollPositionMax</variable_name>
+				<description>Maximum roll angle from manual input in degrees</description>
+				<min>20</min>
+				<max>180.0</max>
+				<readonly>false</readonly>
+			</parameter>
+		</parameters>
+	
+		<description>Fly by wire options</description>
+	</parameterBlock>
+
+
+
+	<parameterBlock>
+		<blockName>NAV_OPTIONS</blockName>
+		<storage_area>NAV_OPTIONS</storage_area>
+		<serialisationFlags>
+			<serialisationFlag>LOAD_AT_STARTUP</serialisationFlag>
+			<serialisationFlag>LOAD_AT_REBOOT</serialisationFlag>
+		</serialisationFlags>
+		<externs>
+			<externString>int nav_rollPositionMax</externString>
+			<externString>int nav_roll_rate</externString>
+			<externString>unsigned int loiter_radius</externString>
+			<externString>fractional auto_nav_roll_gain</externString>
+			
+		</externs>
+		<load_callback>NULL</load_callback>
+		<in_mavlink_parameters>true</in_mavlink_parameters>
+		<parameters>
+			<parameter>
+				<parameterName>NAV_MAX_R_ANGLE</parameterName>
+				<udb_param_type>UDB_TYPE_INT_CIRCULAR</udb_param_type>
+				<variable_name>nav_rollPositionMax</variable_name>
+				<description>Maximum roll angle during navigation in degrees</description>
+				<min>20</min>
+				<max>180.0</max>
+				<readonly>false</readonly>
+			</parameter>
+			<parameter>
+				<parameterName>NAV_ROLL_RATE</parameterName>
 				<udb_param_type>UDB_TYPE_DCM_ANGLE</udb_param_type>
-				<variable_name>airspeed_pitch_min_aspd</variable_name>
-				<description>Estimated pitch change for minimum airspeed during glide(degrees)</description>
-				<min>-90</min>
-				<max>90.0</max>
+				<variable_name>
+nav_roll_rate</variable_name>
+				<description>Target roll rate while doing navigation in degrees per second</description>
+				<min>1</min>
+				<max>180.0</max>
 				<readonly>false</readonly>
 			</parameter>
 			<parameter>
-				<parameterName>ASPD_P_MAX_ASPD</parameterName>
-				<udb_param_type>UDB_TYPE_DCM_ANGLE</udb_param_type>
-				<variable_name>airspeed_pitch_max_aspd</variable_name>
-				<description>Estimated pitch change required for maximum airspeed during glide(degrees)</description>
-				<min>-90</min>
-				<max>90.0</max>
+				<parameterName>NAV_LOITER_RAD</parameterName>
+				<udb_param_type>UDB_TYPE_INT</udb_param_type>
+				<variable_name>
+loiter_radius</variable_name>
+				<description>Loiter radius in meters</description>
+				<min>0</min>
+				<max>10000.0</max>
 				<readonly>false</readonly>
 			</parameter>
+			
 			<parameter>
-				<parameterName>ASPD_P_RATE_LIM</parameterName>
-				<udb_param_type>UDB_TYPE_FRAME_ANGLERATE</udb_param_type>
-				<variable_name>airspeed_pitch_adjust_rate</variable_name>
-				<description>Pitch rate per second (in integer degrees)</description>
-				<min>1.0</min>
-				<max>720.0</max>
-				<readonly>false</readonly>
-			</parameter>
-			<parameter>
-				<parameterName>ASPD_P_KI</parameterName>
+				<parameterName>NAV_ROLL_GAIN</parameterName>
 				<udb_param_type>UDB_TYPE_Q14</udb_param_type>
-				<variable_name>airspeed_pitch_ki</variable_name>
-				<description>Airspeed error integration gain</description>
-				<min>0.0</min>
+				<variable_name>auto_nav_roll_gain</variable_name>
+				<description>Gain between navigation error and roll position</description>
+				<min>0.01</min>
 				<max>1.0</max>
 				<readonly>false</readonly>
 			</parameter>
+
+			
+		</parameters>
+	
+		<description>Fly by wire options</description>
+	</parameterBlock>
+
+
+
+
+	<parameterBlock>
+		<blockName>CONTROL_GAINS_2</blockName>
+		<storage_area>CONTROL_GAINS_2</storage_area>
+		<serialisationFlags>
+			<serialisationFlag>LOAD_AT_STARTUP</serialisationFlag>
+			<serialisationFlag>LOAD_AT_REBOOT</serialisationFlag>
+		</serialisationFlags>
+		<externs>
+			<externString>long rate_error_load_gain</externString>
+			<externString>long pitch_error_rate_gain</externString>
+			<externString>long yaw_damping</externString>
+			<externString>long yaw_ff_correction_rate</externString>
+			<externString>long yaw_ff_correct_thresh</externString>
+			<externString>long yaw_ffgain_Q16</externString>
+			<externString>long roll_damping</externString>
+			<externString>long roll_error_rate_gain</externString>
+			
+		</externs>
+		<load_callback>NULL</load_callback>
+		<in_mavlink_parameters>true</in_mavlink_parameters>
+		<parameters>
 			<parameter>
-				<parameterName>ASPD_P_KI_LIMIT</parameterName>
-				<udb_param_type>UDB_TYPE_DCM_ANGLE</udb_param_type>
-				<variable_name>airspeed_pitch_ki_limit</variable_name>
-				<description>Airspeed error integration limit (degrees)</description>
-				<min>0.0</min>
-				<max>45.0</max>
+				<parameterName>GAIN_RATE_LOAD</parameterName>
+				<udb_param_type>UDB_TYPE_Q16</udb_param_type>
+				<variable_name>rate_error_load_gain</variable_name>
+				<description>Gain between turn rate error and load</description>
+				<min>-100.0</min>
+				<max>100.0</max>
+				<readonly>false</readonly>
+			</parameter>
+			
+			<parameter>
+				<parameterName>GAIN_PITCH_RATE</parameterName>
+				<udb_param_type>UDB_TYPE_Q16</udb_param_type>
+				<variable_name>pitch_error_rate_gain</variable_name>
+				<description>Gain between position error and rate demand</description>
+				<min>-1000.0</min>
+				<max>1000.0</max>
+				<readonly>false</readonly>
+			</parameter>
+			<parameter>
+				<parameterName>GAIN_YAW_DAMP</parameterName>
+				<udb_param_type>UDB_TYPE_Q16</udb_param_type>
+				<variable_name>yaw_damping</variable_name>
+				<description>Gain for error in yaw rate</description>
+				<min>-1000.0</min>
+				<max>1000.0</max>
+				<readonly>false</readonly>
+			</parameter>
+			<parameter>
+				<parameterName>GAIN_YAWFFCORR</parameterName>
+				<udb_param_type>UDB_TYPE_Q16</udb_param_type>
+				<variable_name>yaw_ff_correction_rate</variable_name>
+				<description>Gain for yaw feedforward correction rate</description>
+				<min>-1000.0</min>
+				<max>1000.0</max>
+				<readonly>false</readonly>
+			</parameter>
+			
+			<parameter>
+				<parameterName>GAIN_YAWCORRTH</parameterName>
+				<udb_param_type>UDB_TYPE_Q16</udb_param_type>
+				<variable_name>yaw_ff_correct_thresh</variable_name>
+				<description>Yaw rate threshold above which yaw feedforward correction works</description>
+				<min>-1000.0</min>
+				<max>1000.0</max>
+				<readonly>false</readonly>
+			</parameter>
+			
+			<parameter>
+				<parameterName>GAIN_YAWFF</parameterName>
+				<udb_param_type>UDB_TYPE_Q16</udb_param_type>
+				<variable_name>yaw_ffgain_Q16</variable_name>
+				<description>Yaw feedforward gain</description>
+				<min>-1000.0</min>
+				<max>1000.0</max>
+				<readonly>false</readonly>
+			</parameter>
+			
+			<parameter>
+				<parameterName>GAIN_ROLL_RATE</parameterName>
+				<udb_param_type>UDB_TYPE_Q16</udb_param_type>
+				<variable_name>roll_error_rate_gain</variable_name>
+				<description>Gain between roll position error and rate demand</description>
+				<min>-1000.0</min>
+				<max>1000.0</max>
+				<readonly>false</readonly>
+			</parameter>
+			
+			<parameter>
+				<parameterName>GAIN_ROLL_DAMP</parameterName>
+				<udb_param_type>UDB_TYPE_Q16</udb_param_type>
+				<variable_name>roll_damping</variable_name>
+				<description>Roll </description>
+				<min>-1000.0</min>
+				<max>1000.0</max>
 				<readonly>false</readonly>
 			</parameter>
 			
 			
 		</parameters>
 	
-		<description>Airspeed options</description>
+		<description>Gains for wing load controller</description>
 	</parameterBlock>
-
 
 
 

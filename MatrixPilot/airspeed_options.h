@@ -24,20 +24,31 @@
 
 // Airspeeds in m/s
 #define MINIMUM_GROUNDSPEED 		3.0
-#define MINIMUM_AIRSPEED			7.0
-#define MAXIMUM_AIRSPEED			20.0
-#define CRUISE_AIRSPEED				12.0	// Gliding airspeed when aircraft is level
+#define MINIMUM_AIRSPEED			10.0
+#define MAXIMUM_AIRSPEED			30.0
+#define CRUISE_AIRSPEED				14.0	// Gliding airspeed when aircraft is level
+#define RTL_AIRSPEED				16.0	// return to launch airspeed
 
 // Cruise airspeed may be below minimum airspeed for high drag aircraft.
 
 // Gliding airspeed control
-// Must use ALTITUDE_GAINS_VARIABLE=1 with this option.
-#define GLIDE_AIRSPEED_CONTROL 		0
+typedef enum
+{
+	ASP_CNTRL_STANDARD,
+	ASP_CNTRL_TOTAL_ENERGY,
+} ASPD_CNTRL;
+
+#define AIRSPEED_CONTROL ASP_CNTRL_TOTAL_ENERGY
+
+// When using total energy airsped control, this is the
+// time constant used to target airspeed change.
+// MUST NEVER BE SMALLER THAN 0.6
+#define ASPD_ADJ_TIME_CONSTANT		1.0
 
 // Pitch feedforward for gliding airspeed
 // linearly interpolated from cruise airspeed to min and max airspeed
-#define AIRSPEED_PITCH_MIN_ASPD		0.0		// Default off, start with 5.0
-#define AIRSPEED_PITCH_MAX_ASPD		0.0		// Default off, start with -10.0
+#define AIRSPEED_PITCH_MIN_ASPD		5.0		// Default off, start with 5.0
+#define AIRSPEED_PITCH_MAX_ASPD		-10.0		// Default off, start with -10.0
 
 // Maximum rate of pitch demand change in deg/s.  Used to make control smoother.
 // Default 10.0, Higher for small aircraft. Too low may cause instability.
@@ -46,8 +57,7 @@
 
 // Airspeed error integrator
 #define AIRSPEED_PITCH_KI			0.04		// Integrataion rate.  High = unstable, low = slow response.
-#define AIRSPEED_PITCH_KI_MAX		0.0			// Limit of integration control in degrees.  Start with 5.0.
-
+#define AIRSPEED_PITCH_KI_MAX		10.0			// Limit of integration control in degrees.  Start with 5.0.
 
 
 #endif

@@ -14,34 +14,40 @@ extern struct ADchannel udb_zaccel ;
 extern struct ADchannel udb_xrate ;
 extern struct ADchannel udb_yrate ;
 extern struct ADchannel udb_zrate ;
-extern int16_t height_target_min ;
-extern int16_t height_target_max ;
-extern int16_t height_margin ;
+extern int height_target_min ;
+extern int height_target_max ;
+extern int height_margin ;
 extern fractional alt_hold_throttle_min ;
 extern fractional alt_hold_throttle_max ;
-extern int16_t alt_hold_pitch_min ;
-extern int16_t alt_hold_pitch_max ;
-extern int16_t alt_hold_pitch_high ;
-extern int16_t rtl_pitch_down ;
-extern int16_t minimum_groundspeed ;
-extern int16_t maximum_airspeed ;
-extern int16_t minimum_airspeed ;
-extern int16_t desiredSpeed ;
-extern int16_t minimum_groundspeed ;
-extern int16_t maximum_airspeed ;
-extern int16_t minimum_airspeed ;
-extern int16_t cruise_airspeed ;
-extern int16_t desiredSpeed ;
-extern int16_t airspeed_pitch_min_aspd ;
-extern int16_t airspeed_pitch_max_aspd ;
-extern int16_t airspeed_pitch_adjust_rate ;
-extern fractional airspeed_pitch_ki ;
-extern int16_t airspeed_pitch_ki_limit ;
+extern int alt_hold_pitch_min ;
+extern int alt_hold_pitch_max ;
+extern int minimum_groundspeed ;
+extern int maximum_airspeed ;
+extern int minimum_airspeed ;
+extern int minimum_groundspeed ;
+extern int maximum_airspeed ;
+extern int minimum_airspeed ;
+extern int cruise_airspeed ;
+extern int desiredSpeed ;
+extern int fbw_rollPositionMax ;
+extern int nav_rollPositionMax ;
+extern int nav_roll_rate ;
+extern unsigned int loiter_radius ;
+extern fractional auto_nav_roll_gain ;
+extern long rate_error_load_gain ;
+extern long pitch_error_rate_gain ;
+extern long yaw_damping ;
+extern long yaw_ff_correction_rate ;
+extern long yaw_ff_correct_thresh ;
+extern long yaw_ffgain_Q16 ;
+extern long roll_damping ;
+extern long roll_error_rate_gain ;
 
 
 const mavlink_parameter_parser    mavlink_parameter_parsers[] = {
     { &mavlink_send_param_int16, &mavlink_set_param_int16, MAVLINK_TYPE_INT32_T},
     { &mavlink_send_param_Q14, &mavlink_set_param_Q14, MAVLINK_TYPE_FLOAT},
+    { &mavlink_send_param_Q16, &mavlink_set_param_Q16, MAVLINK_TYPE_FLOAT},
     { &mavlink_send_param_pwtrim, &mavlink_set_param_pwtrim, MAVLINK_TYPE_FLOAT},
     { &mavlink_send_param_gyroscale_Q14, &mavlink_set_param_gyroscale_Q14, MAVLINK_TYPE_FLOAT},
     { &mavlink_send_int_circular, &mavlink_set_int_circular, MAVLINK_TYPE_INT32_T},
@@ -53,20 +59,7 @@ const mavlink_parameter_parser    mavlink_parameter_parsers[] = {
     };
 
 const mavlink_parameter mavlink_parameters_list[] = {
-     {"PID_ROLLKP" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &rollkp, sizeof(rollkp) },
-    {"PID_ROLLKD" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_GYROSCALE_Q14, PARAMETER_READWRITE, (void*) &rollkd, sizeof(rollkd) },
-    {"PID_YAWKPAIL" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &yawkpail, sizeof(yawkpail) },
-    {"PID_YAWKDAIL" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_GYROSCALE_Q14, PARAMETER_READWRITE, (void*) &yawkdail, sizeof(yawkdail) },
-    {"PID_PITCHGAIN" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &pitchgain, sizeof(pitchgain) },
-    {"PID_PITCHKD" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &pitchkd, sizeof(pitchkd) },
-    {"PID_RUDELEVGAIN" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &rudderElevMixGain, sizeof(rudderElevMixGain) },
-    {"PID_ROLLKPRUD" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &rollkprud, sizeof(rollkprud) },
-    {"PID_YAWKPRUD" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &yawkprud, sizeof(yawkprud) },
-    {"PID_YAWKDRUD" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &yawkprud, sizeof(yawkprud) },
-    {"PID_ROLLKPRUD" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &rollkprud, sizeof(rollkprud) },
-    {"PID_ROLLKDRUD" , {.param_float=0.0} , {.param_float=0.5} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &rollkdrud, sizeof(rollkdrud) },
-
-    {"MAG_CAL_RAW0" , {.param_int32=-32767} , {.param_int32=32767} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &rawMagCalib[0], sizeof(rawMagCalib[0]) },
+     {"MAG_CAL_RAW0" , {.param_int32=-32767} , {.param_int32=32767} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &rawMagCalib[0], sizeof(rawMagCalib[0]) },
     {"MAG_CAL_RAW1" , {.param_int32=-32767} , {.param_int32=32767} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &rawMagCalib[1], sizeof(rawMagCalib[1]) },
     {"MAG_CAL_RAW2" , {.param_int32=-32767} , {.param_int32=32767} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &rawMagCalib[2], sizeof(rawMagCalib[2]) },
     {"MAG_GAIN0" , {.param_int32=-32767} , {.param_int32=32767} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &magGain[0], sizeof(magGain[0]) },
@@ -108,23 +101,36 @@ const mavlink_parameter mavlink_parameters_list[] = {
     {"TH_T_HOLD_MAX" , {.param_float=0} , {.param_float=1} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &alt_hold_throttle_max, sizeof(alt_hold_throttle_max) },
     {"TH_P_HOLD_MIN" , {.param_int32=-89} , {.param_int32=0} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &alt_hold_pitch_min, sizeof(alt_hold_pitch_min) },
     {"TH_P_HOLD_MAX" , {.param_int32=0} , {.param_int32=89} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &alt_hold_pitch_max, sizeof(alt_hold_pitch_max) },
-    {"TH_P_HIGH" , {.param_int32=0} , {.param_int32=89} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &alt_hold_pitch_high, sizeof(alt_hold_pitch_high) },
-    {"TH_P_RTL_DOWN" , {.param_int32=0} , {.param_int32=89} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &rtl_pitch_down, sizeof(rtl_pitch_down) },
 
     {"ASPD_DESIRED" , {.param_float=0} , {.param_float=300.0} , UDB_TYPE_M_AIRSPEED_TO_DM, PARAMETER_READWRITE, (void*) &desiredSpeed, sizeof(desiredSpeed) },
     {"ASPD_MIN_GSPD" , {.param_float=0} , {.param_float=20000} , UDB_TYPE_M_AIRSPEED_TO_CM, PARAMETER_READWRITE, (void*) &minimum_groundspeed, sizeof(minimum_groundspeed) },
     {"ASPD_MIN" , {.param_float=0} , {.param_float=300.0} , UDB_TYPE_M_AIRSPEED_TO_CM, PARAMETER_READWRITE, (void*) &minimum_airspeed, sizeof(minimum_airspeed) },
     {"ASPD_MAX" , {.param_float=0} , {.param_float=300.0} , UDB_TYPE_M_AIRSPEED_TO_CM, PARAMETER_READWRITE, (void*) &maximum_airspeed, sizeof(maximum_airspeed) },
     {"ASPD_CRUISE" , {.param_float=0} , {.param_float=300.0} , UDB_TYPE_M_AIRSPEED_TO_CM, PARAMETER_READWRITE, (void*) &cruise_airspeed, sizeof(cruise_airspeed) },
-    {"ASPD_P_MIN_ASPD" , {.param_int32=-90} , {.param_int32=90.0} , UDB_TYPE_DCM_ANGLE, PARAMETER_READWRITE, (void*) &airspeed_pitch_min_aspd, sizeof(airspeed_pitch_min_aspd) },
-    {"ASPD_P_MAX_ASPD" , {.param_int32=-90} , {.param_int32=90.0} , UDB_TYPE_DCM_ANGLE, PARAMETER_READWRITE, (void*) &airspeed_pitch_max_aspd, sizeof(airspeed_pitch_max_aspd) },
-    {"ASPD_P_RATE_LIM" , {.param_int32=1.0} , {.param_int32=720.0} , UDB_TYPE_FRAME_ANGLERATE, PARAMETER_READWRITE, (void*) &airspeed_pitch_adjust_rate, sizeof(airspeed_pitch_adjust_rate) },
-    {"ASPD_P_KI" , {.param_float=0.0} , {.param_float=1.0} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &airspeed_pitch_ki, sizeof(airspeed_pitch_ki) },
-    {"ASPD_P_KI_LIMIT" , {.param_int32=0.0} , {.param_int32=45.0} , UDB_TYPE_DCM_ANGLE, PARAMETER_READWRITE, (void*) &airspeed_pitch_ki_limit, sizeof(airspeed_pitch_ki_limit) },
+
+    {"FBW_MAX_R_ANGLE" , {.param_int32=20} , {.param_int32=180.0} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &fbw_rollPositionMax, sizeof(fbw_rollPositionMax) },
+
+    {"NAV_MAX_R_ANGLE" , {.param_int32=20} , {.param_int32=180.0} , UDB_TYPE_INT_CIRCULAR, PARAMETER_READWRITE, (void*) &nav_rollPositionMax, sizeof(nav_rollPositionMax) },
+    {"NAV_ROLL_RATE" , {.param_int32=1} , {.param_int32=180.0} , UDB_TYPE_DCM_ANGLE, PARAMETER_READWRITE, (void*) &
+nav_roll_rate, sizeof(
+nav_roll_rate) },
+    {"NAV_LOITER_RAD" , {.param_int32=0} , {.param_int32=10000.0} , UDB_TYPE_INT, PARAMETER_READWRITE, (void*) &
+loiter_radius, sizeof(
+loiter_radius) },
+    {"NAV_ROLL_GAIN" , {.param_float=0.01} , {.param_float=1.0} , UDB_TYPE_Q14, PARAMETER_READWRITE, (void*) &auto_nav_roll_gain, sizeof(auto_nav_roll_gain) },
+
+    {"GAIN_RATE_LOAD" , {.param_float=-100.0} , {.param_float=100.0} , UDB_TYPE_Q16, PARAMETER_READWRITE, (void*) &rate_error_load_gain, sizeof(rate_error_load_gain) },
+    {"GAIN_PITCH_RATE" , {.param_float=-1000.0} , {.param_float=1000.0} , UDB_TYPE_Q16, PARAMETER_READWRITE, (void*) &pitch_error_rate_gain, sizeof(pitch_error_rate_gain) },
+    {"GAIN_YAW_DAMP" , {.param_float=-1000.0} , {.param_float=1000.0} , UDB_TYPE_Q16, PARAMETER_READWRITE, (void*) &yaw_damping, sizeof(yaw_damping) },
+    {"GAIN_YAWFFCORR" , {.param_float=-1000.0} , {.param_float=1000.0} , UDB_TYPE_Q16, PARAMETER_READWRITE, (void*) &yaw_ff_correction_rate, sizeof(yaw_ff_correction_rate) },
+    {"GAIN_YAWCORRTH" , {.param_float=-1000.0} , {.param_float=1000.0} , UDB_TYPE_Q16, PARAMETER_READWRITE, (void*) &yaw_ff_correct_thresh, sizeof(yaw_ff_correct_thresh) },
+    {"GAIN_YAWFF" , {.param_float=-1000.0} , {.param_float=1000.0} , UDB_TYPE_Q16, PARAMETER_READWRITE, (void*) &yaw_ffgain_Q16, sizeof(yaw_ffgain_Q16) },
+    {"GAIN_ROLL_RATE" , {.param_float=-1000.0} , {.param_float=1000.0} , UDB_TYPE_Q16, PARAMETER_READWRITE, (void*) &roll_error_rate_gain, sizeof(roll_error_rate_gain) },
+    {"GAIN_ROLL_DAMP" , {.param_float=-1000.0} , {.param_float=1000.0} , UDB_TYPE_Q16, PARAMETER_READWRITE, (void*) &roll_damping, sizeof(roll_damping) },
 
     };
 
-const int16_t count_of_parameters_list = sizeof(mavlink_parameters_list) / sizeof(mavlink_parameter);
+const int count_of_parameters_list = sizeof(mavlink_parameters_list) / sizeof(mavlink_parameter);
 
 
 #endif 

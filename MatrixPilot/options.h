@@ -40,7 +40,7 @@
 // AUAV1_BOARD - Nick Arsov's UDB3 clone, version one
 // See the MatrixPilot wiki for more details on different UDB boards.
 // If building for the UDB4, use the MatrixPilot-udb4.mcw project workspace. 
-#define BOARD_TYPE 							UDB3_BOARD
+#define BOARD_TYPE 							UDB4_BOARD
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@
 // ORIENTATION_ROLLCW180: Rick's pitcure #11, board rolled 90 degrees clockwise,
 //		from point of view of the pilot, then rotate the board 180 around the Z axis of the plane,
 //		so that the GPS connector points toward the tail of the plane
-#define BOARD_ORIENTATION					ORIENTATION_FORWARDS
+#define BOARD_ORIENTATION					ORIENTATION_BACKWARDS
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -117,8 +117,8 @@
 // If you define SPEED_CONTROL to be 1, MatrixPilot will take air speed into account
 // in the altitude controls, and will trim the throttle and pitch to maintain air speed.
 // Define DESIRED_SPEED to be the air speed that you want, in meters/second.
-#define SPEED_CONTROL						0
-#define DESIRED_SPEED						10.0 // meters/second
+#define SPEED_CONTROL						1
+#define DESIRED_SPEED						14.0 // meters/second
 
 // Inverted flight
 // Set these to 1 to enable stabilization of inverted flight in stabilized and/or waypoint modes.
@@ -159,35 +159,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Configure Input and Output Channels
 //
-// For classic UDB boards:
 // Use a single PPM input connection from the RC receiver to the UDB on RC input channel 4.
 // This frees up RC inputs 3, 2, and 1 to act as RC outputs 4, 5, and 6.
+// If you're not sure, leave USE_PPM_INPUT set to 0.
+// PPM_NUMBER_OF_CHANNELS is the number of channels sent on the PWM signal.  This is
+// often different from the NUM_INPUTS value below, and should usually be left at 8.
 // If PPM_ALT_OUTPUT_PINS is set to 0, the 9 available RC outputs will be sent to the
 // following pins, in this order: Out1, Out2, Out3, In3, In2, In1, RE0, RE2, RE4.
 // With it set to 1, the RC outputs will be in this alternate configuration:
 // Out1, Out2, Out3, RE0, RE2, RE4, In3, In2, In1.
-// 
-// For UDB4 boards:
-// Use a single PPM input connection from the RC receiver to the UDB on RC input channel 1.
-// The 8 standard output channels remain unaffected.  2 additional output channels are available 
-// on pins RA4 and RA1.
-// 
-// For all boards:
-// If you're not sure, leave USE_PPM_INPUT set to 0.
-// PPM_NUMBER_OF_CHANNELS is the number of channels sent on the PWM signal.  This is
-// often different from the NUM_INPUTS value below, and should usually be left at 8.
-// 
 #define USE_PPM_INPUT						0
 #define PPM_NUMBER_OF_CHANNELS				8
 #define PPM_SIGNAL_INVERTED					0
 #define PPM_ALT_OUTPUT_PINS					0
 
-// NUM_INPUTS: 
-// For classic boards: Set to 1-5 (or 1-8 when using PPM input)
+// NUM_INPUTS: Set to 1-5 (or 1-8 when using PPM input)
 //   1-4 enables only the first 1-4 of the 4 standard input channels
 //   5 also enables E8 as the 5th input channel
-// For UDB4 boards: Set to 1-8
-#define NUM_INPUTS							5
+#define NUM_INPUTS							8
 
 // Channel numbers for each input.
 // Use as is, or edit to match your setup.
@@ -196,8 +185,16 @@
 #define THROTTLE_INPUT_CHANNEL				CHANNEL_3
 #define AILERON_INPUT_CHANNEL				CHANNEL_1
 #define ELEVATOR_INPUT_CHANNEL				CHANNEL_2
-#define RUDDER_INPUT_CHANNEL				CHANNEL_5
-#define MODE_SWITCH_INPUT_CHANNEL			CHANNEL_4
+#define RUDDER_INPUT_CHANNEL				CHANNEL_4
+#define MODE_SWITCH_INPUT_CHANNEL			CHANNEL_8
+
+#define ROLL_INPUT_CHANNEL					CHANNEL_1
+#define PITCH_INPUT_CHANNEL					CHANNEL_2
+#define YAW_INPUT_CHANNEL					CHANNEL_4
+#define FLAP_INPUT_CHANNEL					CHANNEL_5
+#define CAMBER_INPUT_CHANNEL				CHANNEL_6
+#define BRAKE_INPUT_CHANNEL					CHANNEL_7
+
 #define CAMERA_PITCH_INPUT_CHANNEL			CHANNEL_UNUSED
 #define CAMERA_YAW_INPUT_CHANNEL			CHANNEL_UNUSED
 #define CAMERA_MODE_INPUT_CHANNEL			CHANNEL_UNUSED
@@ -207,15 +204,13 @@
 #define PASSTHROUGH_C_INPUT_CHANNEL			CHANNEL_UNUSED
 #define PASSTHROUGH_D_INPUT_CHANNEL			CHANNEL_UNUSED
 
-// NUM_OUTPUTS:
-// For classic boards: Set to 3, 4, 5, or 6
+// NUM_OUTPUTS: Set to 3, 4, 5, or 6
 //   3 enables only the standard 3 output channels
 //   4 also enables E0 as the 4th output channel
 //   5 also enables E2 as the 5th output channel
 //   6 also enables E4 as the 6th output channel
 //   NOTE: If USE_PPM_INPUT is enabled above, up to 9 outputs are available.)
-// For UDB4 boards: Set to 3-8 (or up to 10 using pins RA4 and RA1.)
-#define NUM_OUTPUTS							4
+#define NUM_OUTPUTS							10
 
 // Channel numbers for each output
 // Use as is, or edit to match your setup.
@@ -232,6 +227,18 @@
 #define AILERON_OUTPUT_CHANNEL				CHANNEL_1
 #define ELEVATOR_OUTPUT_CHANNEL				CHANNEL_2
 #define RUDDER_OUTPUT_CHANNEL				CHANNEL_4
+
+#define AILERON_LEFT_OUTPUT_CHANNEL			CHANNEL_1
+#define ELEVATOR_OUTPUT_CHANNEL				CHANNEL_2
+#define THROTTLE_OUTPUT_CHANNEL				CHANNEL_3
+#define RUDDER_OUTPUT_CHANNEL				CHANNEL_4
+#define AILERON_RIGHT_OUTPUT_CHANNEL		CHANNEL_5
+#define FLAPMID_LEFT_OUTPUT_CHANNEL			CHANNEL_6
+#define FLAPMID_RIGHT_OUTPUT_CHANNEL		CHANNEL_7
+#define FLAP_LEFT_OUTPUT_CHANNEL			CHANNEL_8
+#define FLAP_RIGHT_OUTPUT_CHANNEL			CHANNEL_9
+#define SPOILER_OUTPUT_CHANNEL				CHANNEL_10
+
 #define AILERON_SECONDARY_OUTPUT_CHANNEL	CHANNEL_UNUSED
 #define CAMERA_PITCH_OUTPUT_CHANNEL			CHANNEL_UNUSED
 #define CAMERA_YAW_OUTPUT_CHANNEL			CHANNEL_UNUSED
@@ -244,8 +251,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Servo Reversing Configuration
-// Here you can choose which reversing switches use hardware switches (only available on classic boards),
-// and hard code the rest.
+// Here you can choose which reversing switches use hardware switches, and hard code the rest.
 // Note that your servo reversing settings here should match what you set on your transmitter.
 // For any of these that evaluate to 1 (either hardcoded or by flipping a switch on the board,
 // as you define below), that servo will be sent reversed controls.
@@ -256,6 +262,14 @@
 #define THROTTLE_CHANNEL_REVERSED			0 // Set to 1 to hardcode a channel to be reversed
 #define CAMERA_PITCH_CHANNEL_REVERSED		0
 #define CAMERA_YAW_CHANNEL_REVERSED			0
+
+#define CAMBER_CHANNEL_REVERSED				0
+#define FLAP_CHANNEL_REVERSED				0
+#define BRAKE_CHANNEL_REVERSED				0
+
+#define ROLL_CHANNEL_REVERSED	AILERON_CHANNEL_REVERSED
+#define PITCH_CHANNEL_REVERSED	ELEVATOR_CHANNEL_REVERSED
+#define YAW_CHANNEL_REVERSED	RUDDER_CHANNEL_REVERSED
 
 // Set this to 1 if you need to switch the left and right elevon or vtail surfaces
 #define ELEVON_VTAIL_SURFACES_REVERSED		0
@@ -294,7 +308,7 @@
 // FAILSAFE_INPUT_MIN and _MAX define the range within which we consider the radio on.
 // Normal signals should fall within about 2000 - 4000.
 #define FAILSAFE_INPUT_CHANNEL				THROTTLE_INPUT_CHANNEL
-#define FAILSAFE_INPUT_MIN					1500
+#define FAILSAFE_INPUT_MIN					2050
 #define FAILSAFE_INPUT_MAX					4500
 
 // FAILSAFE_TYPE controls the UDB's behavior when in failsafe mode due to loss of transmitter
@@ -335,8 +349,7 @@
 // SERIAL_MAVLINK is only supported on the UDB4 to ensure that sufficient RAM is available.
 // Note that SERIAL_MAVLINK defaults to using a baud rate of 57600 baud (other formats default to 19200)
 
-#define SERIAL_OUTPUT_FORMAT 	SERIAL_NONE
-
+#define SERIAL_OUTPUT_FORMAT 	SERIAL_MAVLINK
 // MAVLink requires an aircraft Identifier (I.D) as it is deaigned to control multiple aircraft
 // Each aircraft in the sky will need a unique I.D. in the range from 0-255
 #define MAVLINK_SYSID	55
@@ -347,12 +360,10 @@
 // USE_OSD enables the OSD system.  Customize the OSD Layout in the osd_layout.h file.
 #define USE_OSD								0
 
-// NUM_ANALOG_INPUTS: 
-// For classic boards: Set to 0, 1, or 2
+// NUM_ANALOG_INPUTS: Set to 0, 1, or 2
 //   1 enables Radio In 1 as an analog Input
 //   2 also enables Radio In 2 as another analog Input
 //   NOTE: Can only be set this higher than 0 if USE_PPM_INPUT is enabled above.
-// For UDB4 boards: Set to 0-4.  Analog pins are AN15 - AN18.
 #define NUM_ANALOG_INPUTS					0
 
 // Channel numbers for each analog input
@@ -447,7 +458,7 @@
 // AILERON_ELEV_MIX is the degree of elevator adjustment for aileron
 // ELEVATOR_BOOST is the additional gain multiplier for the manually commanded elevator deflection
 #define PITCHGAIN							0.10
-#define PITCHKD								0.04
+#define PITCHKD								0.2
 #define RUDDER_ELEV_MIX						0.20
 #define ROLL_ELEV_MIX						0.05
 #define ELEVATOR_BOOST						0.50
@@ -567,30 +578,30 @@
 // These settings are only used when Altitude Hold is enabled above.
 
 // Min and Max target heights in meters.  These only apply to stabilized mode.
-#define HEIGHT_TARGET_MIN					25.0
-#define HEIGHT_TARGET_MAX					100.0
+#define HEIGHT_TARGET_MIN					40.0
+#define HEIGHT_TARGET_MAX					120.0
 
 // The range of altitude within which to linearly vary the throttle
 // and pitch to maintain altitude.  A bigger value makes altitude hold
 // smoother, and is suggested for very fast planes.
-#define HEIGHT_MARGIN						10
+#define HEIGHT_MARGIN						20
 
 // Use ALT_HOLD_THROTTLE_MAX when below HEIGHT_MARGIN of the target height.
 // Interpolate between ALT_HOLD_THROTTLE_MAX and ALT_HOLD_THROTTLE_MIN
 // when within HEIGHT_MARGIN of the target height.
 // Use ALT_HOLD_THROTTLE_MIN when above HEIGHT_MARGIN of the target height.
 // Throttle values are from 0.0 - 1.0.
-#define ALT_HOLD_THROTTLE_MIN				0.35
-#define ALT_HOLD_THROTTLE_MAX				1.0
+#define ALT_HOLD_THROTTLE_MIN				0.0
+#define ALT_HOLD_THROTTLE_MAX				0.7
 
 // Use ALT_HOLD_PITCH_MAX when below HEIGHT_MARGIN of the target height.
 // Interpolate between ALT_HOLD_PITCH_MAX and ALT_HOLD_PITCH_MIN when
 // within HEIGHT_MARGIN of the target height.
 // Use ALT_HOLD_PITCH_HIGH when above HEIGHT_MARGIN of the target height.
 // Pitch values are in degrees.  Negative values pitch the plane down.
-#define ALT_HOLD_PITCH_MIN					-15.0
-#define ALT_HOLD_PITCH_MAX					 15.0
-#define ALT_HOLD_PITCH_HIGH					-15.0
+#define ALT_HOLD_PITCH_MIN					-30.0
+#define ALT_HOLD_PITCH_MAX					 50.0
+#define ALT_HOLD_PITCH_HIGH					-1.0
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -601,35 +612,25 @@
 // This only takes effect when entering RTL mode, which only happens when the plane loses the transmitter signal.
 #define RTL_PITCH_DOWN						0.0
 
+// USE FIXED TRIMPOINTS
+#define FIXED_TRIMPOINT 	1
+#define THROTTLE_TRIMPOINT 	2200
+#define CHANNEL_TRIMPOINT	3020
 
 ////////////////////////////////////////////////////////////////////////////////
 // Hardware In the Loop Simulation
 // Only set this to 1 for testing in the simulator.  Do not try to fly with this set to 1!
 // See the MatrixPilot wiki for more info on using HILSIM.
 // HILSIM_BAUD is the serial speed for communications with the X-Plane plugin.  Default is
-// now 38400.  Make sure the X-Plane plugin's Setup file has its speed set to match.
-#define HILSIM 								0
-#define HILSIM_BAUD							38400
-
+// 19200, but 230400 is a good speedy option.  Make sure the X-Plane plugin's Setup file has
+// its speed set to match.
+#define HILSIM 								1
+#define HILSIM_BAUD							57600
+#define HILSIM_FAST_STANDBY					1	// dont wait so long at startup
 
 ////////////////////////////////////////////////////////////////////////////////
 // Software In the Loop Simulation
-// Only set this to 1 when building for simulation directly on your computer instead of
-// running on a UDB.
-// See the MatrixPilot wiki for more info on using SILSIM.
-// Below are settings to configure the simulated UDB UARTs.
-// The SERIAL_RC_INPUT settings allow optionally talking over a serial port to a UDB
-// passing RC inputs through to the simulated UDB.
-#define SILSIM								0
-#define SILSIM_GPS_RUN_AS_SERVER			0
-#define SILSIM_GPS_PORT						14551		// default port to connect to XPlane HILSIM plugin
-#define SILSIM_GPS_HOST						"127.0.0.1"
-#define SILSIM_TELEMETRY_RUN_AS_SERVER		0
-#define SILSIM_TELEMETRY_PORT				14550		// default port to connect to QGroundControl
-#define SILSIM_TELEMETRY_HOST				"127.0.0.1"
-#define SILSIM_SERIAL_RC_INPUT_DEVICE		""			// i.e. "COM4" or "/dev/cu.usbserial-A600dP4v", or "" to disable
-#define SILSIM_SERIAL_RC_INPUT_BAUD			38400
-
+#define SITL_ENABLE 						0
 
 ////////////////////////////////////////////////////////////////////////////////
 // Flight Plan handling
@@ -679,3 +680,4 @@
 // The following define is used to enable vertical initialization for VTOL
 // To enable vertical initialization, uncomment the line
 //#define INITIALIZE_VERTICAL
+
