@@ -24,11 +24,9 @@
 
 
 // seconds
-#define DR_PERIOD (int16_t)((HEARTBEAT_HZ/GPS_RATE)+4 )
+#define DR_PERIOD (int16_t)((40/GPS_RATE)+4 )
 
-// seconds
-#define DR_TIMESTEP (1.0/HEARTBEAT_HZ)
-
+#define DR_TIMESTEP 0.025
 #define MAX16 (4.0*RMAX)
 
 // seconds

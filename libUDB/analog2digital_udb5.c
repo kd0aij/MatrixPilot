@@ -30,9 +30,11 @@
 #if (NUM_ANALOG_INPUTS >= 1)
 struct ADchannel udb_analogInputs[NUM_ANALOG_INPUTS] ; // 0-indexed, unlike servo pwIn/Out/Trim arrays
 #endif
-struct ADchannel udb_vcc ;
+struct ADchannel udb_vref ; // this is VCC/2 on the UDB5, not a band-gap reference
 struct ADchannel udb_5v ;
 
+struct ADchannel udb_vcc ; // added for linking only - RobD
+struct ADchannel udb_rssi ; // added for linking only - RobD
 
 // Number of locations for ADC buffer = 6 (AN0,15,16,17,18) x 1 = 6 words
 // Align the buffer. This is needed for peripheral indirect mode
@@ -85,7 +87,7 @@ void udb_init_ADC( void )
 	_CSS0 = 1 ;		// Enable AN0 for channel scan
 	_CSS1 = 1 ;		// Enable AN1 for channel scan
 	_PCFG0 = 0 ; 	// AN0 as Analog Input
-    _PCFG1 = 0 ;    // AN1 as Analog Input
+        _PCFG1 = 0 ;    // AN1 as Analog Input
 
 	
 //  include the extra analog input pins
@@ -116,7 +118,7 @@ void udb_init_ADC( void )
 	DMA0STB = __builtin_dmaoffset(BufferB) ;
 	
 	IFS0bits.DMA0IF = 0 ;			//Clear the DMA interrupt flag bit
-    IEC0bits.DMA0IE = 1 ;			//Set the DMA interrupt enable bit
+        IEC0bits.DMA0IE = 1 ;			//Set the DMA interrupt enable bit
 	_DMA0IP = 5 ;					//Set the DMA ISR priority
 	
 	DMA0CONbits.CHEN = 1 ;			// Enable DMA
@@ -142,7 +144,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _DMA0Interrupt(void)
 	
 #if (HILSIM != 1)
 	int16_t *CurBuffer = (DmaBuffer == 0) ? BufferA : BufferB ;
-	udb_vcc.input = CurBuffer[A_VCC_BUFF-1] ;
+	udb_vref.input = CurBuffer[A_VCC_BUFF-1] ;
 	udb_5v.input =  CurBuffer[A_5V_BUFF-1] ;
 	
 #if (NUM_ANALOG_INPUTS >= 1)
@@ -172,7 +174,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _DMA0Interrupt(void)
 #ifdef VREF
 //		udb_vref.sum = 0 ;
 #endif
-	udb_vcc.sum = 0 ; 
+	udb_vref.sum = 0 ;
 	udb_5v.sum = 0 ;
 #if (NUM_ANALOG_INPUTS >= 1)
 		udb_analogInputs[0].sum = 0;
@@ -191,7 +193,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _DMA0Interrupt(void)
 	
 	//	perform the integration:
 
-	udb_vcc.sum += udb_vcc.input ;
+	udb_vref.sum += udb_vref.input ;
 	udb_5v.sum +=  udb_5v.input ;
 
 #if (NUM_ANALOG_INPUTS >= 1)
@@ -213,7 +215,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _DMA0Interrupt(void)
 	if ( sample_count > ALMOST_ENOUGH_SAMPLES )
 	{	
 
-		udb_vcc.value = __builtin_divsd( udb_vcc.sum, sample_count ) ;
+		udb_vref.value = __builtin_divsd( udb_vref.sum, sample_count ) ;
 		udb_5v.value = __builtin_divsd( udb_5v.sum, sample_count ) ;
 		
 #if (NUM_ANALOG_INPUTS >= 1)

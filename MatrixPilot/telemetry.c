@@ -20,22 +20,13 @@
 
 
 #include "defines.h"
-#if (USE_TELELOG == 1)
-#include "telemetry_log.h"
-#endif
-#include "../libUDB/heartbeat.h"
 #if (SILSIM != 1)
 #include "../libUDB/libUDB_internal.h" // Needed for access to RCON
 #endif
 #include "../libDCM/libDCM_internal.h" // Needed for access to internal DCM values
-#include "../libDCM/estAltitude.h"
-#include <string.h>
+
 
 #if (SERIAL_OUTPUT_FORMAT != SERIAL_MAVLINK) // All MAVLink telemetry code is in MAVLink.c
-
-#if (FLYBYWIRE_ENABLED == 1)
-#include "FlyByWire.h"
-#endif
 
 #define _ADDED_C_LIB 1 // Needed to get vsnprintf()
 #include <stdio.h>
@@ -55,8 +46,6 @@ void sio_fp_checksum( uint8_t inchar ) ;
 void sio_cam_data( uint8_t inchar ) ;
 void sio_cam_checksum( uint8_t inchar ) ;
 
-void sio_fbw_data( unsigned char inchar ) ;
-
 char fp_high_byte;
 uint8_t fp_checksum;
 
@@ -64,9 +53,11 @@ void (* sio_parse ) ( uint8_t inchar ) = &sio_newMsg ;
 
 
 #define SERIAL_BUFFER_SIZE 256
-char serial_buffer[SERIAL_BUFFER_SIZE+1] ;
+char serial_buffer[SERIAL_BUFFER_SIZE] ;
 int16_t sb_index = 0 ;
 int16_t end_index = 0 ;
+
+
 
 void init_serial()
 {
@@ -74,10 +65,10 @@ void init_serial()
 	dcm_flags._.nmea_passthrough = 1;
 #endif
 	
-	udb_serial_set_rate(19200) ;
+//	udb_serial_set_rate(19200) ;
 //	udb_serial_set_rate(38400) ;
 //	udb_serial_set_rate(57600) ;
-//	udb_serial_set_rate(115200) ;
+	udb_serial_set_rate(115200) ;
 //	udb_serial_set_rate(230400) ;
 //	udb_serial_set_rate(460800) ;
 //	udb_serial_set_rate(921600) ; // yes, it really will work at this rate
@@ -97,45 +88,35 @@ void udb_serial_callback_received_byte(uint8_t rxchar)
 
 void sio_newMsg( uint8_t inchar )
 {
-	switch (inchar)
+	if ( inchar == 'V' )
 	{
-	case 'V':
 		sio_parse = &sio_voltage_high ;
-		break;
+	}
 	
 #if ( FLIGHT_PLAN_TYPE == FP_LOGO )
-	case 'L':
+	else if ( inchar == 'L' )
 #else
-	case 'W':
+	else if ( inchar == 'W' )
 #endif
+	{
 		fp_high_byte = -1 ; // -1 means we don't have the high byte yet (0-15 means we do)
 		fp_checksum = 0 ;
 		sio_parse = &sio_fp_data ;
 		flightplan_live_begin() ;
-		break;
-
+	}
 #if (CAM_USE_EXTERNAL_TARGET_DATA == 1)
-	case 'T':
+	else if ( inchar == 'T' )
+	{
 		fp_high_byte = -1 ; // -1 means we don't have the high byte yet (0-15 means we do)
 		fp_checksum = 0 ;
 		sio_parse = &sio_cam_data ;
 		camera_live_begin() ;
-		break;
+	}
 #endif
-
-#if (FLYBYWIRE_ENABLED == 1)
-
-	case 'F':
-		fp_checksum = 'F' ;
-		sio_parse = &sio_fbw_data ;
-		fbw_live_begin() ;
-		break;
-#endif
-
-	default:
+	else
+	{
 		// error ?
-		break;
-	} // switch
+	}
 }
 
 
@@ -307,80 +288,15 @@ void sio_cam_checksum( uint8_t inchar )
 		sio_parse = &sio_newMsg ;
 	}
 }
-#endif // CAM_USE_EXTERNAL_TARGET_DATA
 
+#endif
 
-#if (FLYBYWIRE_ENABLED == 1)
-void sio_fbw_data( unsigned char inchar )
-{
-	if (get_fbw_pos() < LENGTH_OF_PACKET)
-	{
-		fp_checksum += inchar;
-		if (!fbw_live_received_byte(inchar))
-			fbw_live_begin();
-	}
-	else if (get_fbw_pos() == LENGTH_OF_PACKET)
-	{
- 		// UART has an extra BYTE for checksum, IP doesn't need it.
- 		if (inchar == fp_checksum)
-		{
-			fbw_live_commit();
-		}
-		sio_parse = &sio_newMsg ;
-		fbw_live_begin();
-	}
-	else
-	{
-		sio_parse = &sio_newMsg ;
-		fbw_live_begin();
-	}
-}
-#endif // (FLYBYWIRE_ENABLED == 1)
 
 ////////////////////////////////////////////////////////////////////////////////
 // 
 // Output Serial Data
 //
 
-#if (USE_TELELOG == 1)
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
-void serial_output( char* format, ... )
-{
-	char telebuf[200];
-
-	va_list arglist ;
-	va_start(arglist, format) ;
-	
-	int16_t len = vsnprintf(telebuf, sizeof(telebuf), format, arglist);
-
-//	static int maxlen = 0;
-//	if (len > maxlen) {
-//		maxlen = len;
-//		printf("maxlen %u\r\n", maxlen);
-//	}
-
-	int16_t start_index = end_index ;
-	int16_t remaining = (SERIAL_BUFFER_SIZE - start_index) ;
-	if (remaining < len) {
-		printf("SERBUF discarding %u bytes\r\n", len - remaining);
-	}
-	if (remaining > 1)
-	{
-		strncpy( (char*)(&serial_buffer[start_index]), telebuf, MIN(remaining, len)) ;
-		end_index = start_index + MIN(remaining, len);
-		serial_buffer[end_index] = '\0';
-	}
-	if (sb_index == 0)
-	{
-		udb_serial_start_sending_data();
-	}
-	log_telemetry(telebuf, len);
-
-	va_end(arglist);
-}
-#else
 // add this text to the output buffer
 void serial_output( char* format, ... )
 {
@@ -404,7 +320,7 @@ void serial_output( char* format, ... )
 	
 	va_end(arglist);
 }
-#endif // USE_TELELOG
+
 
 int16_t udb_serial_callback_get_byte_to_send(void)
 {
@@ -419,6 +335,7 @@ int16_t udb_serial_callback_get_byte_to_send(void)
 		sb_index = 0 ;
 		end_index = 0 ;
 	}
+	
 	return -1;
 }
 
@@ -427,7 +344,7 @@ int16_t udb_serial_callback_get_byte_to_send(void)
 
 void serial_output_8hz( void )
 {
-	serial_output("lat: %li, long: %li, alt: %li\r\nrmat: %i, %i, %i, %i, %i, %i, %i, %i, %i\r\n" ,
+	serial_output("lat: %li long: %li alt: %li\t rmat: %5i %5i %5i %5i %5i %5i %5i %5i %5i\r\n" ,
 		lat_gps.WW , long_gps.WW , alt_sl_gps.WW ,
 		rmat[0] , rmat[1] , rmat[2] ,
 		rmat[3] , rmat[4] , rmat[5] ,
@@ -515,39 +432,50 @@ void serial_output_8hz( void )
 	}
 }
 
+
 #elif ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB || SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA )
+
+int16_t telemetry_counter = 8 ;
+
+#if ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA )
+int16_t pwIn_save[NUM_INPUTS + 1] ;
+int16_t pwOut_save[NUM_OUTPUTS + 1] ;
+#endif
 
 extern int16_t waypointIndex ;
 
+#if (RECORD_FREE_STACK_SPACE == 1)
+extern uint16_t maxstack ;
+#endif
+
 void serial_output_8hz( void )
 {
-	static int16_t telemetry_counter = 8;
-	static int toggle = 0;
-#if ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA )
+#if ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB )	// Only run through this function twice per second, by skipping all but every 4 runs through it.
+	// Saves CPU and XBee power.
+	if (udb_heartbeat_counter % 20 != 0) return ;  // Every 4 runs (5 heartbeat counts per 8Hz)
+	
+#elif ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA )
 	// SERIAL_UDB_EXTRA expected to be used with the OpenLog which can take greater transfer speeds than Xbee
 	// F2: SERIAL_UDB_EXTRA format is printed out every other time, although it is being called at 8Hz, this
 	//		version will output four F2 lines every second (4Hz updates)
-	static int16_t pwIn_save[NUM_INPUTS + 1] ;
-	static int16_t pwOut_save[NUM_OUTPUTS + 1] ;
-#elif ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB )	// Only run through this function twice per second, by skipping all but every 4 runs through it.
-	// Saves CPU and XBee power.
-	if (udb_heartbeat_counter % 20 != 0) return ;  // Every 4 runs (5 heartbeat counts per 8Hz)
-#endif // SERIAL_OUTPUT_FORMAT
+#endif
 
 	switch (telemetry_counter)
 	{
 		// The first lines of telemetry contain info about the compile-time settings from the options.h file
 		case 8:
-			serial_output("\r\nF14:WIND_EST=%i:GPS_TYPE=%i:DR=%i:BOARD_TYPE=%i:AIRFRAME=%i:"
-						  "RCON=0x%X:TRAP_FLAGS=0x%X:TRAP_SOURCE=0x%lX:ALARMS=%i:"  \
-						  "CLOCK=%i:FP=%d:\r\n",
-				WIND_ESTIMATION, GPS_TYPE, DEADRECKONING, BOARD_TYPE, AIRFRAME_TYPE, 
-				get_reset_flags(), trap_flags, trap_source, osc_fail_count, 
-				CLOCK_CONFIG, FLIGHT_PLAN_TYPE) ;
-			RCON = 0 ;
-			trap_flags = 0 ;
-			trap_source = 0 ;
-			osc_fail_count = 0 ;
+			if ( _SWR == 0 )
+			{
+				// if there was not a software reset (trap error) clear the trap data
+				trap_flags = trap_source = osc_fail_count = 0 ;
+			}
+			serial_output("\r\nF14:WIND_EST=%i:GPS_TYPE=%i:DR=%i:BOARD_TYPE=%i:AIRFRAME=%i:RCON=0x%X:TRAP_FLAGS=0x%X:TRAP_SOURCE=0x%lX:ALARMS=%i:"  \
+							"CLOCK=%i:FP=%d:\r\n",
+				WIND_ESTIMATION, GPS_TYPE, DEADRECKONING, BOARD_TYPE, AIRFRAME_TYPE, udb_get_reset_flags() , trap_flags , trap_source , osc_fail_count, CLOCK_CONFIG, FLIGHT_PLAN_TYPE ) ;
+				RCON = 0 ;
+				trap_flags = 0 ;
+				trap_source = 0 ;
+				osc_fail_count = 0 ;
 			break ;
 		case 7:
 			serial_output("F15:IDA=");
@@ -606,14 +534,9 @@ void serial_output_8hz( void )
 			if (tow.WW > 0) tow.WW += 500 ;
 				
 #elif ( SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA )
-//			if (udb_heartbeat_counter % 10 != 0)  // Every 2 runs (5 heartbeat counts per 8Hz)
-//			if (udb_heartbeat_counter % (HEARTBEAT_HZ/4) != 0)  // Every 2 runs (5 heartbeat counts per 8Hz)
-
-			toggle = !toggle;
-
-			if (toggle)
+			if (udb_heartbeat_counter % 10 != 0)  // Every 2 runs (5 heartbeat counts per 8Hz)
 			{
-				serial_output("F2:T%li:S%d%d%d:N%li:E%li:A%li:W%i:"
+					serial_output("F2:T%li:S%d%d%d:N%li:E%li:A%li:W%i:"
 					"a%i:b%i:c%i:d%i:e%i:f%i:g%i:h%i:i%i:"
 					"c%u:s%i:cpu%u:bmv%i:"
 					"as%u:wvx%i:wvy%i:wvz%i:ma%i:mb%i:mc%i:svs%i:hd%i:",
@@ -629,7 +552,7 @@ void serial_output_8hz( void )
 					magFieldEarth[0],magFieldEarth[1],magFieldEarth[2],
 #else
 					(int16_t)0, (int16_t)0, (int16_t)0,
-#endif // MAG_YAW_DRIFT
+#endif
 					
 					svs, hdop ) ;
 				
@@ -655,16 +578,12 @@ void serial_output_8hz( void )
 					locationErrorEarth[0] , locationErrorEarth[1] , locationErrorEarth[2] , 
 					 flags.WW, osc_fail_count,
 					 IMUvelocityx._.W1, IMUvelocityy._.W1, IMUvelocityz._.W1, goal.x, goal.y, goal.height );
-//				serial_output("tmp%i:prs%li:alt%.2f:agl%.2f:",
-//					get_barometer_temperature(), get_barometer_pressure(), 
-//					get_barometer_alt(), get_barometer_agl());
 #if (RECORD_FREE_STACK_SPACE == 1)
-				extern uint16_t maxstack;
-				serial_output("stk%d:", (int16_t)(4096-maxstack));
-#endif // RECORD_FREE_STACK_SPACE
+				serial_output("stk%d:", (int16_t)(maxstack));
+#endif
 				serial_output("\r\n");
 			}
-#endif // SERIAL_OUTPUT_FORMAT
+#endif
 			if (flags._.f13_print_req == 1)
 			{
 				// The F13 line of telemetry is printed when origin has been captured and inbetween F2 lines in SERIAL_UDB_EXTRA
@@ -675,17 +594,12 @@ void serial_output_8hz( void )
 				flags._.f13_print_req = 0 ;
 			}
 			
-			break ;
+			return ;
 		}
 	}
-	if (telemetry_counter)
-	{
-		telemetry_counter-- ;
-	}
-#if (USE_TELELOG == 1)
-	log_swapbuf();
-#endif
+	telemetry_counter-- ;
 }
+
 
 #elif ( SERIAL_OUTPUT_FORMAT == SERIAL_OSD_REMZIBI )
 
@@ -730,6 +644,7 @@ void serial_output_8hz( void )
 		magMessage ,
 		I2CCONREG , I2CSTATREG , I2ERROR ,
 		I2messages, I2interrupts ) ;
+	return ;
 }
 */
 
@@ -737,15 +652,7 @@ void serial_output_8hz( void )
 {
 	if (udb_heartbeat_counter % 10 == 0) // Every 2 runs (5 heartbeat counts per 8Hz)
 	{
-		serial_output("MagOffset: %i, %i, %i\r\n"
-					  "MagBody: %i, %i, %i\r\n"
-					  "MagEarth: %i, %i, %i\r\n"
-					  "MagGain: %i, %i, %i\r\n"
-					  "Calib: %i, %i, %i\r\n"
-					  "MagMessage: %i\r\n"
-					  "TotalMsg: %i\r\n"
-					  "I2CCON: %X, I2CSTAT: %X, I2ERROR: %X\r\n"
-					  "\r\n" ,
+		serial_output("MagOffset: %i, %i, %i\r\nMagBody: %i, %i, %i\r\nMagEarth: %i, %i, %i\r\nMagGain: %i, %i, %i\r\nCalib: %i, %i, %i\r\nMagMessage: %i\r\nTotalMsg: %i\r\nI2CCON: %X, I2CSTAT: %X, I2ERROR: %X\r\n\r\n" ,
 			udb_magOffset[0]>>OFFSETSHIFT , udb_magOffset[1]>>OFFSETSHIFT , udb_magOffset[2]>>OFFSETSHIFT ,
 			udb_magFieldBody[0] , udb_magFieldBody[1] , udb_magFieldBody[2] ,
 			magFieldEarth[0] , magFieldEarth[1] , magFieldEarth[2] ,

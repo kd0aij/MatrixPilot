@@ -40,18 +40,17 @@ extern int16_t waggle ;
 //#define WAGGLE_SIZE 300
 
 struct flag_bits {
-			uint16_t unused						: 5 ;
-			uint16_t save_origin   				: 1 ;
-			uint16_t GPS_steering				: 1 ;
-			uint16_t pitch_feedback				: 1 ;
-			uint16_t altitude_hold_throttle		: 1 ;
-			uint16_t altitude_hold_pitch		: 1 ;
-			uint16_t man_req					: 1 ;
-			uint16_t auto_req					: 1 ;
-			uint16_t home_req					: 1 ;
-			uint16_t rtl_hold					: 1 ;
-			uint16_t f13_print_req				: 1 ;
-			uint16_t update_autopilot_state_asap: 1 ;
+			uint16_t unused					: 6 ;
+			uint16_t save_origin   			: 1 ;
+			uint16_t GPS_steering			: 1 ;
+			uint16_t pitch_feedback			: 1 ;
+			uint16_t altitude_hold_throttle	: 1 ;
+			uint16_t altitude_hold_pitch	: 1 ;
+			uint16_t man_req				: 1 ;
+			uint16_t auto_req				: 1 ;
+			uint16_t home_req				: 1 ;
+			uint16_t rtl_hold				: 1 ;
+			uint16_t f13_print_req			: 1 ;
 			} ;
 			
 union fbts_int { struct flag_bits _ ; int16_t WW ; } ;
@@ -144,11 +143,11 @@ void flightplan_live_received_byte( uint8_t inbyte ) ;
 void flightplan_live_commit( void ) ;
 
 // Failsafe Type
-#define FAILSAFE_RTL					1
-#define FAILSAFE_MAIN_FLIGHTPLAN		2
+#define FAILSAFE_RTL	1
+#define FAILSAFE_MAIN_FLIGHTPLAN    2
 
-#define FP_WAYPOINTS					1
-#define FP_LOGO							2
+#define FP_WAYPOINTS	1
+#define FP_LOGO		2
 
 
 

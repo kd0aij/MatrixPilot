@@ -19,16 +19,13 @@
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#if defined(__dsPIC33F__)
-#include "p33fxxxx.h"
-#elif defined(__dsPIC33E__)
+#if defined(__dsPIC33E__)
 #include "p33exxxx.h"
 #elif defined(__PIC24E__)
 #include "p24exxxx.h"
 #endif
 #include <stdint.h>
 #include <stdio.h>
-#include "../MatrixPilot/defines.h"
 #include "interrupt.h"
 
 #define TRAP_SRC_MATHERR	1
@@ -41,9 +38,12 @@
 extern volatile int16_t trap_flags ;
 extern volatile int32_t trap_source ;
 extern volatile int16_t osc_fail_count ;
+
 extern volatile int16_t stack_ptr ;
 
-uint32_t getErrLoc(void);  // Get Address Error Loc
+
+extern uint32_t getErrLoc(void);  // Get Address Error Loc
+
 
 void __attribute__((__interrupt__)) _OscillatorFail(void);
 void __attribute__((__interrupt__)) _AddressError(void);
@@ -56,7 +56,7 @@ void reset(int16_t flags, uint32_t addrs)
 {
 	trap_flags = flags;
 	trap_source = addrs;
-//	stack_ptr = SP_current();
+	stack_ptr = SP_current();
 	asm("reset");
 }
 
@@ -90,10 +90,11 @@ unsigned int dmaErrFlag = 0, dmaPWErrLoc = 0, dmaRWErrLoc;
 void __attribute__((interrupt, no_auto_psv)) _DMACError(void)
 {
 	INTCON1bits.DMACERR = 0;        // Clear the trap flag
-#if (BOARD_TYPE == AUAV3_BOARD)
-//	errLoc = getErrLoc();
+
+//	errLoc =getErrLoc();
 	dmaErrFlag = DMAPWC;
 	//dmaErrFlag = INTCON3bits.DAE;
+
 
 // Peripheral Write Collision Error Location	
 	if (dmaErrFlag &0x1)
@@ -107,6 +108,7 @@ void __attribute__((interrupt, no_auto_psv)) _DMACError(void)
 
 	DMARQC = 0;						// Clear the DMA Request Collision Flag Bit
 	DMAPWC = 0;						// Clear the Peripheral Write Collision Flag Bit
-#endif // BOARD_TYPE
+    INTCON1bits.DMACERR = 0;        // Clear the trap flag
+	
 	reset(TRAP_SRC_DMACERR, getErrLoc());
 }

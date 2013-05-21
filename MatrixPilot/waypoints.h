@@ -25,8 +25,6 @@
 // Move on to the next waypoint when getting within this distance of the current goal (in meters)
 #define WAYPOINT_RADIUS 		25
 
-#define CAM_VIEW_LAUNCH					{ 0, 0, 0 }
-
 // Origin Location
 // When using relative waypoints, the default is to interpret those waypoints as relative to the
 // plane's power-up location.  Here you can choose to use any specific, fixed 3D location as the
@@ -47,8 +45,11 @@
 // examine the telemetry after a flight, take a look in the .csv file, it will be easy to spot the
 // altitude, expressed in meters.
 
-#define USE_FIXED_ORIGIN		0
-#define FIXED_ORIGIN_LOCATION	{ -1219950467, 374124664, 30.0 }	// A point in Baylands Park in Sunnyvale, CA
+#define USE_FIXED_ORIGIN		1
+//#define FIXED_ORIGIN_LOCATION	{ -1219950467, 374124664, 30.0 }	// A point in Baylands Park in Sunnyvale, CA
+
+// AAM East Field runway center 39°50'31.83"N  105°12'44.81"W
+#define FIXED_ORIGIN_LOCATION	{ -1052124472, 398421750, 1808.0 }	// AAM East Field runway center
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,46 +138,30 @@
 // 
 // By default the only waypoint is defined to be 75 meters above the starting point.
 
-/*
-const struct waypointDef waypoints[] = {
-		{ {   0,   0, 75 } , F_NORMAL, CAM_VIEW_LAUNCH } ,  // return to, and loiter 75 meters above the startup position
-} ;
- */
-
-/*
-const struct waypointDef waypoints[] = {
-		{ { 1000,    0  , 750 } , F_NORMAL,   CAM_VIEW_LAUNCH } ,
-		{ { 1000, 1000  , 750 } , F_NORMAL,   CAM_VIEW_LAUNCH } ,
-		{ {    0, 1000  , 750 } , F_INVERTED, CAM_VIEW_LAUNCH } ,
-		{ {    0,    0  , 750 } , F_NORMAL,   CAM_VIEW_LAUNCH } ,
-		{ {   50,   50  , 750 } , F_LOITER + F_TRIGGER + F_LAND, CAM_VIEW_LAUNCH } ,
-} ;
- */
-
- // CORNER is the absolute value of the X or Y coordinate at the corners of the course. 
-#define CORNER 1000
-
-// CLEARANCE is an allowance for obstacles.
-#define CLEARANCE 250
-
-#define CAM_VIEW_2  { CORNER, CORNER, 0 } // Define a Camera ViewPoint to look at 100 ,100, 0
-
-// Here is the T3 course definition:
+//const struct waypointDef waypoints[] = {
+//		{ {   0,   0, 75 } , F_NORMAL, CAM_VIEW_LAUNCH } ,  // return to, and loiter 75 meters above the startup position
+//};
 
 const struct waypointDef waypoints[] = {
-		{ {    CORNER  ,    CORNER  , CLEARANCE + 100 } , F_NORMAL, CAM_VIEW_LAUNCH } ,
-		{ {    CORNER  ,  - CORNER  , CLEARANCE +  75 } , F_NORMAL, CAM_VIEW_LAUNCH } ,
-		{ {  - CORNER  ,    CORNER  , CLEARANCE +  50 } , F_NORMAL, CAM_VIEW_LAUNCH } ,
-		{ {  - CORNER  ,  - CORNER  , CLEARANCE +  25 } , F_NORMAL, CAM_VIEW_LAUNCH } ,
-		{ {    CORNER  ,    CORNER  , CLEARANCE +  50 } , F_NORMAL, CAM_VIEW_LAUNCH } ,
-		{ {    CORNER  ,  - CORNER  , CLEARANCE +  75 } , F_NORMAL, CAM_VIEW_LAUNCH } ,
-		{ {  - CORNER  ,    CORNER  , CLEARANCE + 100 } , F_NORMAL, CAM_VIEW_LAUNCH } ,
-		{ {  - CORNER  ,  - CORNER  , CLEARANCE +  75 } , F_NORMAL, CAM_VIEW_2 } ,
-		{ {    CORNER  ,    CORNER  , CLEARANCE +  50 } , F_NORMAL, CAM_VIEW_2 } ,
-		{ {    CORNER  ,  - CORNER  , CLEARANCE +  25 } , F_NORMAL, CAM_VIEW_2 } ,
-		{ {  - CORNER  ,    CORNER  , CLEARANCE +  50 } , F_NORMAL, CAM_VIEW_2 } ,
-		{ {  - CORNER  ,  - CORNER  , CLEARANCE +  75 } , F_NORMAL, CAM_VIEW_2 } ,
-} ;
+    {
+        { 237, -70, 30}, F_NORMAL, CAM_VIEW_LAUNCH
+    }, //Waypoint 0
+    {
+        { 268, 54, 50}, F_NORMAL, CAM_VIEW_LAUNCH
+    }, //Waypoint 1
+    {
+        { -175, 186, 50}, F_NORMAL, CAM_VIEW_LAUNCH
+    }, //Waypoint 2
+    {
+        { -224, 67, 30}, F_NORMAL, CAM_VIEW_LAUNCH
+    }, //Waypoint 3
+    {
+        { -34, 8, 20}, F_NORMAL, CAM_VIEW_LAUNCH
+    }, //Waypoint 4
+    {
+        { 55, -16, 20}, F_NORMAL, CAM_VIEW_LAUNCH
+    }, //Waypoint 5
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////

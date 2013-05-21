@@ -21,21 +21,14 @@
 
 #include "../libUDB/libUDB.h"
 #include "../libUDB/interrupt.h"
-//#include "config.h"
-//#include "redef.h"
 #include "../libDCM/estAltitude.h"
-//#include "defines.h"
-//#include "p33Exxxx.h"
-#include "../libCommon/uart.h"
+#include "../libCommon/uart3.h"
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 
-#if (USE_CONSOLE != 0)
-
 #define LOWORD(a) ((WORD)(a))
 #define HIWORD(a) ((WORD)(((DWORD)(a) >> 16) & 0xFFFF))
-
-void AT45D_FormatFS(void);
 
 typedef struct tagCmds {
 	int index;
@@ -44,23 +37,26 @@ typedef struct tagCmds {
 } cmds_t;
 
 
+int logging_enabled = 0;
 int cmdlen = 0;
 char cmdstr[32];
 
 
 void cmd_ver(void)
 {
-	printf("MatrixPilot v0.1, " __TIME__ " " __DATE__ "\r\n");
+	printf("AUAV3 v0.1, " __TIME__ " " __DATE__ "\r\n");
 }
 
 void cmd_start(void)
 {
 	printf("starting.\r\n");
+	logging_enabled = 1;
 }
 
 void cmd_stop(void)
 {
 	printf("stopped.\r\n");
+	logging_enabled = 0;
 }
 
 void cmd_on(void)
@@ -90,9 +86,12 @@ void cmd_crash(void)
 	cmd_crash();
 }
 
+extern struct ADchannel udb_vcc ;
+extern struct ADchannel udb_rssi ;
+
 void cmd_adc(void)
 {
-//	printf("ADC vcc %u, 5v %u, rssi %u\r\n", udb_vcc.value, udb_5v.value, udb_rssi.value);
+	printf("ADC vcc %u, 5v %u, rssi %u\r\n", udb_vcc.value, udb_5v.value, udb_rssi.value);
 }
 
 void cmd_barom(void)
@@ -107,6 +106,8 @@ void cmd_barom(void)
 void cmd_magno(void)
 {
 }
+
+
 
 void printbin16(int a)
 {
@@ -141,18 +142,8 @@ const char *word_to_binary(int x)
     return b;
 }
 
-void show_size_msgDataParse(void);
-
-void gentrap(void);
-
-void cmd_trap(void)
-{
-	gentrap();
-}
-
 void cmd_reg(void)
 {
-#if (BOARD_TYPE == AUAV3_BOARD)
 	printf("USB Registers:\r\n");
 	printf("\tU1OTGSTAT = %s\r\n", word_to_binary(U1OTGSTAT));
 	printf("\tU1OTGCON  = %s\r\n", word_to_binary(U1OTGCON));
@@ -162,13 +153,6 @@ void cmd_reg(void)
 	printf("\tU1CNFG2   = %s\r\n", word_to_binary(U1CNFG2));
 	printf("\tU1OTGIR   = %s\r\n", word_to_binary(U1OTGIR));
 	printf("\tU1OTGIE   = %s\r\n", word_to_binary(U1OTGIE));
-
-	printf("IC Registers:\r\n");
-	printf("\tIC1CON1 = %s %04x\r\n", word_to_binary(IC1CON1), IC1CON1);
-	printf("\tIC1CON2 = %s %04x\r\n", word_to_binary(IC1CON2), IC1CON2);
-	printf("\tIC2CON1 = %s %04x\r\n", word_to_binary(IC2CON1), IC2CON1);
-	printf("\tIC2CON2 = %s %04x\r\n", word_to_binary(IC2CON2), IC2CON2);
-#endif // BOARD_TYPE
 /*
 UxOTGSTAT: USB OTG STATUS REGISTER
 VBUSVD: A-VBUS Valid Indicator bit
@@ -209,15 +193,6 @@ void cmd_reset(void)
 
 void cmd_help(void);
 
-void log_close(void);
-
-void cmd_close(void)
-{
-#if (USE_TELELOG == 1)
-	log_close();
-#endif
-}
-
 const cmds_t cmdslist[] = {
 	{ 0, cmd_help,   "help" },
 	{ 0, cmd_ver,    "ver" },
@@ -233,8 +208,6 @@ const cmds_t cmdslist[] = {
 	{ 0, cmd_magno,  "mag" },
 	{ 0, cmd_crash,  "crash" },
 	{ 0, cmd_reset,  "reset" },
-	{ 0, cmd_trap,   "trap" },
-	{ 0, cmd_close,  "close" },
 };
 
 void cmd_help(void)
@@ -247,42 +220,32 @@ void cmd_help(void)
 	}
 }
 
-// int strncmp(const char *string1, const char *string2, size_t count);
-// int strcmp(const char *string1, const char *string2);
-
 void command(char* cmdstr)
 {
 	int i;
 
 	for (i = 0; i < (sizeof(cmdslist)/sizeof(cmdslist[0])); i++) {
-//		printf("comparing %s with %s\r\n", cmdstr, cmdlist[i]);
 		if (strcmp(cmdslist[i].cmdstr, cmdstr) == 0) {
-//			printf("found command %u (%s)\r\n", i, cmdslist[i].cmdstr);
 			cmdslist[i].fptr();
 		}
 	}
 }
 
-void init_console(void)
-{
-	Init();
-}
-
 void console(void)
 {
-    if (kbhit()) {
-		char ch = getch();
+	if (UART3IsPressed()) {
+		char ch = UART3GetChar();
 		if (cmdlen < sizeof(cmdstr)) {
 			cmdstr[cmdlen] = ch;
 			if ((ch == '\r') || (ch == '\n')) {
 				cmdstr[cmdlen] = '\0';			
 				if (strlen(cmdstr) > 0) {
-					putch('\r');
+					UART3PutChar('\r');
 					command(cmdstr);
 					cmdlen = 0;
 				}
 			} else {
-				putch(ch);
+				UART3PutChar(ch);
 				cmdlen++;
 			}
 		} else {
@@ -291,4 +254,3 @@ void console(void)
 	}
 }
 
-#endif // USE_CONSOLE

@@ -21,17 +21,40 @@
 
 #include "libUDB_internal.h"
 #include "oscillator.h"
-#include "interrupt.h"
 
-#if (USE_CONSOLE != 0)
-#include "../libCommon/commands.h"
-#include "../libCommon/uart.h"
+#if (BOARD_TYPE == AUAV3_BOARD)
+#include "../libCommon/uart3.h"
 #include <stdio.h>
 extern int __C30_UART;
-#endif // USE_CONSOLE
+#endif
+
 
 #if (BOARD_IS_CLASSIC_UDB)
-#error Classic UDB boards are no not supported in this version
+#if ( CLOCK_CONFIG == CRYSTAL_CLOCK )
+_FOSC( CSW_FSCM_OFF & HS ) ;		// external high speed crystal
+#elif ( CLOCK_CONFIG == FRC8X_CLOCK ) 
+_FOSC(CSW_FSCM_OFF & FRC_PLL8);
+#endif
+_FWDT( WDT_OFF ) ;					// no watchdog timer
+
+
+// Add compatibility for c30 V3.3
+#ifndef BORV_20
+#define BORV_20 BORV20
+#endif
+#ifndef _FICD
+#define _FICD(x) _ICD(x)
+#endif
+
+
+_FBORPOR( 	PBOR_ON &				// brown out detection on
+			BORV_20 &				// brown out set to 2.0 V
+			MCLR_EN &				// enable MCLR
+			RST_PWMPIN &			// pwm pins as pwm
+			PWMxH_ACT_HI &			// PWMH is active high
+			PWMxL_ACT_HI ) ;		// PMWL is active high
+_FGS( CODE_PROT_OFF ) ;				// no protection
+_FICD( 0xC003 ) ;					// normal use of debugging port
 
 #elif (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD )
 _FOSCSEL(FNOSC_PRIPLL); // pri plus PLL (primary osc  w/ PLL)
@@ -44,13 +67,13 @@ _FOSC(FCKSM_CSDCMD &
 // OSC2 pin has clock out function.
 // Primary Oscillator XT mode.
 _FWDT(	FWDTEN_OFF &
-		WINDIS_OFF );
+		WINDIS_OFF ) ;
 _FGS(	GSS_OFF &
 		GCP_OFF &
-		GWRP_OFF );
-_FPOR(	FPWRT_PWR1 );
+		GWRP_OFF ) ;
+_FPOR(	FPWRT_PWR1 ) ;
 _FICD(	JTAGEN_OFF &
-		ICS_PGD2 );
+		ICS_PGD2 ) ;
 
 #elif (BOARD_TYPE == AUAV3_BOARD)
 
@@ -99,14 +122,6 @@ _FICD(	JTAGEN_OFF &
 
 #else // __XC16__
 
-_FOSCSEL(FNOSC_FRC);
-//_FOSCSEL(FNOSC_PRIPLL & IESO_OFF);
-_FOSC(FCKSM_CSECMD & OSCIOFNC_OFF & POSCMD_XT & IOL1WAY_ON);
-//_FWDT(FWDTEN_OFF & WINDIS_OFF & PLLKEN_ON & WDTPRE_PRI128 & PDTPOST_PS32768);
-_FWDT(FWDTEN_OFF);
-_FICD(ICS_PGD3);
-_FPOR(ALTI2C1_ON & ALTI2C2_ON);
-/*
 //_FOSCSEL(FNOSC_FRC);
 _FOSCSEL(FNOSC_PRIPLL & IESO_OFF);
 _FOSC(FCKSM_CSECMD & OSCIOFNC_OFF & POSCMD_XT & IOL1WAY_ON);
@@ -114,23 +129,19 @@ _FOSC(FCKSM_CSECMD & OSCIOFNC_OFF & POSCMD_XT & IOL1WAY_ON);
 _FWDT(FWDTEN_OFF & WINDIS_OFF & PLLKEN_ON);
 _FICD(ICS_PGD3);
 _FPOR(ALTI2C1_ON & ALTI2C2_ON);
- */
 
 #endif // __XC16__
 
-#endif // BOARD_TYPE
+#endif
 
 
-int16_t defaultCorcon = 0;
+int16_t defaultCorcon = 0 ;
+
 
 volatile int16_t trap_flags __attribute__ ((persistent, near));
 volatile int32_t trap_source __attribute__ ((persistent, near));
 volatile int16_t osc_fail_count __attribute__ ((persistent, near)) ;
 
-uint16_t get_reset_flags(void)
-{
-	return RCON;
-}
 
 #if (BOARD_TYPE == AUAV3_BOARD )
 // This method assigns all PPS registers
@@ -171,14 +182,6 @@ void configurePPS(void)
     _INT1R = 124; // RPI124/RG12
 
     // IC1:8 are Input Capture module inputs
-//    _IC1R = 64; // IC1 on RP64/RD0
-//    _IC2R = 75; // IC2 on RP75/RD11
-//    _IC3R = 72; // IC3 on RP72/RD8
-//    _IC4R = 31; // IC4 on RP31/RA15
-//    _IC5R = 30; // IC5 on RP30/RA14
-//    _IC6R = 21; // IC6 on RP21/RA5
-//    _IC7R = 20; // IC7 on RP20/RA4
-//    _IC8R = 104; // IC8 on RP104/RF8
     _IC1R = IC_RPIN1;
     _IC2R = IC_RPIN2;
     _IC3R = IC_RPIN3;
@@ -187,12 +190,6 @@ void configurePPS(void)
     _IC6R = IC_RPIN6;
     _IC7R = IC_RPIN7;
     _IC8R = IC_RPIN8;
-
-    // temporarily assign REFCLK0 to OC1 pin for PLL testing
-////    _RP112R = 0b010000; // OC1 output RP112
-//    _RP112R = 0b110001; // REFCLK0 output RP112
-//    REFOCONbits.RODIV = 7;  // divide by 128
-//    REFOCONbits.ROON = 1;   // enable refclk output
 
 // OC1:8 are PWM module outputs
 /* OC modules not currently used, but will be needed for multirotor ESC control
@@ -219,14 +216,14 @@ void configurePPS(void)
     _RP85R = 0b000001;  // U1TX output RP85
 
     // UART2 RX, TX; This is the "USART" in MatrixPilot
-    // On the AUAV3, the opto-uart port labeled "OUART1" is on nets U1RX,TX and pins RPI78,RP79
-    _U2RXR = 78;        // U2RX input RP178
-    _RP79R = 0b000011;  // U2TX output RP79
+    // assign it to the non-opto UART labeled "UART3" on nets U3RX,TX and pins RP98,99
+    _U2RXR = 98;        // U2RX input RP98
+    _RP99R = 0b000011;  // U2TX output RP99
 
-    // UART3 RX, TX
-    // On the AUAV3, the uart port labeled "UART3" is on nets U3RX,TX and pins RP98,99
-    _U3RXR = 98;        // U3RX input RP98
-    _RP99R = 0b011011;  // U3TX output RP99
+    // UART3 RX, TX; This is Robert's debug port
+    // assign it to the opto-uart port labeled "OUART1" on nets U1RX,TX and pins RPI78,RP79
+    _U3RXR = 78;        // U3RX input RP178
+    _RP79R = 0b011011;  // U3TX output RP79
 
     // UART4 RX, TX
     // On the AUAV3, the opto-uart port labeled "OUART2" is on nets U2RX,TX and pins RP100,101
@@ -296,139 +293,37 @@ void configureDigitalIO(void)
     TRISAbits.TRISA7 = 0; // DIG1
     TRISEbits.TRISE1 = 0; // DIG0
 }
-#else
-void configureDigitalIO(void)
-{
-	_TRISD8 = 1 ;
-#if (USE_PPM_INPUT == 0)
-	_TRISD9 = _TRISD10 = _TRISD11 = _TRISD12 = _TRISD13 = _TRISD14 = _TRISD15 = _TRISD8 ;
 #endif
-}
-#endif
-
-void init_leds(void)
-{
-#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD )
-	_LATE1 = LED_OFF;_LATE2 = LED_OFF; _LATE3 = LED_OFF;_LATE4 = LED_OFF;
-	_TRISE1 = 0;_TRISE2 = 0;_TRISE3 = 0;_TRISE4 = 0;
-#elif (BOARD_TYPE == AUAV3_BOARD )
-    // port B
-    _LATB2 = LED_OFF; _LATB3 = LED_OFF; _LATB4 = LED_OFF; _LATB5 = LED_OFF;
-    // port B
-    TRISBbits.TRISB2 = 0; // LED1
-    TRISBbits.TRISB3 = 0; // LED2
-    TRISBbits.TRISB4 = 0; // LED3
-    TRISBbits.TRISB5 = 0; // LED4
-#else
-#error Invalid BOARD_TYPE
-#endif
-}
 
 void mcu_init(void)
 {
-	defaultCorcon = CORCON;
+        defaultCorcon = CORCON ;
 	
 	if ( _SWR == 0 )
 	{
 		// if there was not a software reset (trap error) clear the trap data
-		trap_flags = 0;
-		trap_source = 0;
-		osc_fail_count = 0;
+		trap_flags = 0 ;
+		trap_source = 0 ;
+		osc_fail_count = 0 ;
 	}
-
-// new RobD
-	ANSELA = 0x0000;
-	ANSELB = 0x0000;
-	ANSELC = 0x0000;
-	ANSELD = 0x0000;
-	ANSELE = 0x0000;
-	ANSELG = 0x0000;
 	
-#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD)
-	PLLFBDbits.PLLDIV = 30; // FOSC = 32 MHz (XT = 8.00MHz, N1=2, N2=4, M = 32)
-#endif
+	PLLFBDbits.PLLDIV = 30 ; // FOSC = 32 MHz (XT = 8.00MHz, N1=2, N2=4, M = 32)
 
 #if (BOARD_TYPE == AUAV3_BOARD )
-/*
-    // Configure the device PLL to obtain 60 MIPS operation. The crystal
-    // frequency is 8MHz. Divide 8MHz by 2, multiply by 60 and divide by
-    // 2. This results in Fosc of 120MHz. The CPU clock frequency is
-    // Fcy = Fosc/2 = 60MHz. Wait for the Primary PLL to lock and then
-    // configure the auxilliary PLL to provide 48MHz needed for USB 
-    // Operation.
-
-	PLLFBD = 58;				// M  = 60
-	CLKDIVbits.PLLPOST = 0;		// N1 = 2
-	CLKDIVbits.PLLPRE = 0;		// N2 = 2
-	OSCTUN = 0;
- */
-#if (MIPS == 64)
-#warning Fast OSC selected
-    // Configure the device PLL to obtain 64 MIPS operation. The crystal
-    // frequency is 8MHz. Divide 8MHz by 2, multiply by 64 and divide by
-    // 2. This results in Fosc of 128MHz. The CPU clock frequency is
-    // Fcy = Fosc/2 = 64MHz. Wait for the Primary PLL to lock and then
-    // configure the auxilliary PLL to provide 48MHz needed for USB 
-    // Operation.
-	PLLFBD = 62;				// M  = 64
-#elif (MIPS == 32)
-#warning Medium OSC selected
-    // Configure the device PLL to obtain 32 MIPS operation. The crystal
-    // frequency is 8MHz. Divide 8MHz by 2, multiply by 32 and divide by
-    // 2. This results in Fosc of 64MHz. The CPU clock frequency is
-    // Fcy = Fosc/2 = 32MHz. Wait for the Primary PLL to lock and then
-    // configure the auxilliary PLL to provide 48MHz needed for USB 
-    // Operation.
-	PLLFBD = 30;				// M  = 32
-#elif (MIPS == 16)
-#warning Slow OSC selected
-    // Configure the device PLL to obtain 16 MIPS operation. The crystal
-    // frequency is 8MHz. Divide 8MHz by 2, multiply by 64 and divide by
-    // 2. This results in Fosc of 32MHz. The CPU clock frequency is
-    // Fcy = Fosc/2 = 16MHz. Wait for the Primary PLL to lock and then
-    // configure the auxilliary PLL to provide 48MHz needed for USB 
-    // Operation.
-	PLLFBD = 14;				// M  = 16
-#else
-#error Invalid MIPS Configuration
-#endif // MIPS
-	CLKDIVbits.PLLPOST = 0;		// N1 = 2
-	CLKDIVbits.PLLPRE = 0;		// N2 = 2
-	OSCTUN = 0;			
-
-    //	Initiate Clock Switch to Primary Oscillator with PLL (NOSC= 0x3)
-	__builtin_write_OSCCONH(0x03);		
-	__builtin_write_OSCCONL(0x01);
-	while (OSCCONbits.COSC != 0x3);       
-
-    // Configuring the auxiliary PLL, since the primary
-    // oscillator provides the source clock to the auxiliary
-    // PLL, the auxiliary oscillator is disabled. Note that
-    // the AUX PLL is enabled. The input 8MHz clock is divided
-    // by 2, multiplied by 24 and then divided by 2. Wait till 
-    // the AUX PLL locks.
-    ACLKCON3 = 0x24C1;   
-    ACLKDIV3 = 0x7;   
-    ACLKCON3bits.ENAPLL = 1;
-    while (ACLKCON3bits.APLLCK != 1); 
 
 	configurePPS();
-#if (USE_CONSOLE != 0)
-	__C30_UART = USE_CONSOLE;
-	init_console();
+	configureDigitalIO();
+	__C30_UART = 3;
+	UART3Init();
 
-    printf("\r\n\r\nMatrixPilot " __TIME__ " " __DATE__ " @ %u mips\r\n", MIPS);
 	if ( _SWR == 1 )
 	{
-		printf("S/W Reset: trap_flags %04x, trap_source %04x%04x, osc_fail_count %u\r\n", 
-			trap_flags, 
-			(unsigned int)(trap_source >> 16), 
-			(unsigned int)(trap_source & 0xffff), 
+        printf("S/W Reset: trap_flags %04x, trap_source %04x%04x, osc_fail_count %u\r\n",
+			trap_flags,
+			(unsigned int)(trap_source >> 16),
+			(unsigned int)(trap_source & 0xffff),
 			osc_fail_count);
 	}
-#endif // USE_CONSOLE
-#endif // BOARD_TYPE
-
-	configureDigitalIO();
-    init_leds();
+    printf("\r\n\r\nMatrixPilot-AUAV3 @ %u mips\r\n", MIPS);
+#endif
 }

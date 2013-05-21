@@ -28,7 +28,7 @@
 //	The parser uses a state machine implemented via a pointer to a function.
 //	Binary values received from the GPS are directed to program variables via a table
 //	of pointers to the variable locations.
-//	Unions of structures are used to be able to access the variables as long, ints, or bytes.
+//	Unions of structures are used to be able to access the variables as int32_t, ints, or bytes.
 
 void msg_start( uint8_t inchar ) ;
 void msg_D0( uint8_t inchar ) ;
@@ -39,8 +39,8 @@ void msg_CS1( uint8_t inchar ) ;
 void (* msg_parse ) ( uint8_t inchar ) = &msg_start ;
 
 
-const char gps_refresh_rate[]			= "$PMTK220,250*29\r\n" ;		// Set to 4Hz
-const char gps_baud_rate[]				= "$PMTK251,19200*22\r\n" ;		// Set to 19200
+const char gps_refresh_rate[]	= "$PMTK220,250*29\r\n" ;		// Set to 4Hz
+const char gps_baud_rate[]		= "$PMTK251,19200*22\r\n" ;		// Set to 19200
 const char gps_sbas_enable[]			= "$PMTK313,1*2E\r\n";			// Enable SBAS
 const char gps_waas_enable[]			= "$PMTK301,2*2E\r\n";			// Enable WAAS
 const char gps_navthreshold_disable[]	= "$PMTK397,0*23\r\n";			// Make sure we receive all position updates

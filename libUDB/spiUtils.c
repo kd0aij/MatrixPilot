@@ -22,13 +22,17 @@
 #include "libUDB.h"
 #include "spiUtils.h"
 #include "interrupt.h"
-
-#if (BOARD_TYPE == UDB5_BOARD || BOARD_TYPE == AUAV3_BOARD)
-
-#include "HardwareProfile.h"
+#include "oscillator.h"
 #include <libpic30.h>
+
+//#include <stdint.h>
 #include <stdbool.h>
 #include <spi.h>
+
+
+#define LED_ON		0
+#define LED_OFF		1
+
 
 void initSPI1_master16(uint16_t priPre, uint16_t secPre) {
     /* Holds the information about SPI configuration */
@@ -336,6 +340,29 @@ void writeSPI2reg16(uint16_t addr, uint16_t data) {
     __delay_us(1);
 }
 
+// blocking 8 bit read from MPU6000 register
+
+unsigned char readSPI2reg16(unsigned int addr) {
+    int k;
+    // assert chip select
+    SPI2_SS = 0;
+
+    addr |= 0x80;
+    k = SPI2BUF;
+    //    WriteSPI2(addr); // issue read command
+    SPI2BUF = addr << 8; // issue read command
+
+    // wait for address write and data read
+    //    while (!SPI2STATbits.SPIRBF);
+    for (k = 0; k < 200; k++)
+        if (SPI2STATbits.SPIRBF) break;
+
+    // deassert chip select
+    SPI2_SS = 1;
+
+    return 0xFF & SPI2BUF;
+}
+
 // Global control block shared by SPI2 routines
 uint16_t * SPI2_data;
 uint8_t SPI2_high, SPI2_low;
@@ -397,4 +424,3 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SPI2Interrupt(void) {
     return;
 }
 
-#endif // BOARD_TYPE

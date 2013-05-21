@@ -23,7 +23,6 @@
 #define LIB_UDB_H
 
 #include <stdint.h>
-#define _ADDED_C_LIB 1 // Needed to get vsnprintf()
 #include <stdio.h>
 
 #include "options.h"
@@ -34,6 +33,7 @@
 #endif
 #include "fixDeps.h"
 #include "libUDB_defines.h"
+#include "magnetometerOptions.h"
 #include "nv_memory_options.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -93,6 +93,9 @@ void udb_background_callback_triggered(void);			// Callback
 // from 0-100.
 uint8_t udb_cpu_load(void);
 
+// Read-only value increments with each 40Hz heartbeat
+extern uint16_t udb_heartbeat_counter ;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Radio Inputs / Servo Outputs
@@ -130,8 +133,8 @@ void udb_servo_record_trims(void);
 // Functions only included with nv memory.
 #if(USE_NV_MEMORY == 1)
 // Call this funtion to skip doing radio trim calibration
-void udb_skip_radio_trim();
-void udb_skip_imu_calibration();
+void udb_skip_radio_trim(boolean);
+void udb_skip_imu_calibration(boolean);
 
 typedef struct tagUDB_SKIP_FLAGS
 {
@@ -162,6 +165,7 @@ extern struct ADchannel udb_xaccel, udb_yaccel, udb_zaccel;	// x, y, and z accel
 extern struct ADchannel udb_xrate, udb_yrate, udb_zrate;	// x, y, and z gyro channels
 extern struct ADchannel udb_vref;							// reference voltage
 extern struct ADchannel udb_analogInputs[];
+extern struct ADchannel udb_5v ;
 
 #if (ANALOG_CURRENT_INPUT_CHANNEL != CHANNEL_UNUSED)
 extern union longww battery_current;	// battery_current._.W1 is in tenths of Amps
@@ -183,6 +187,18 @@ extern uint8_t rc_signal_strength;	// rc_signal_strength is 0-100 as percent of 
 void udb_a2d_record_offsets(void);
 void udb_callback_read_sensors(void);		// Callback
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Magnetometer
+
+// If the magnetometer is connected and enabled, these will be the raw values, and the
+// calibration offsets.
+extern fractional udb_magFieldBody[3];
+extern fractional udb_magOffset[3];
+
+// Implement this callback to make use of the magetometer data.  This is called each
+// time the magnetometer reports new data.
+void udb_magnetometer_callback_data_available(void);	// Callback
 
 ////////////////////////////////////////////////////////////////////////////////
 // LEDs
