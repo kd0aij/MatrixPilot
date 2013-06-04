@@ -18,6 +18,9 @@
 #elif (BOARD_TYPE == UDB5_BOARD)
 #define MPU_SPI 2
 #define _TRISMPUINT _TRISA14
+#elif (BOARD_TYPE & AUAV2_BOARD)
+#define MPU_SPI 1
+#define _TRISMPUINT _TRISA12
 #elif (BOARD_TYPE == AUAV3_BOARD)
 #define MPU_SPI 1
 #define _TRISMPUINT _TRISG12
@@ -165,6 +168,5 @@
 void MPU6000_print(void);
 void MPU6000_read(void);			// read raw data
 
-extern struct ADchannel mpu_temp;
 
 #endif // __MPU6000_H__

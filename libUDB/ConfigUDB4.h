@@ -38,8 +38,8 @@
 #define YRATE_SIGN -
 #define ZRATE_SIGN -
 
-#define XACCEL_SIGN -
-#define YACCEL_SIGN -
+#define XACCEL_SIGN +
+#define YACCEL_SIGN +
 #define ZACCEL_SIGN +
 
 //#define VREF
@@ -51,17 +51,16 @@
 #define MAX_INPUTS	8
 #define MAX_OUTPUTS	8
 
-// LED pins
-#define LED_BLUE			LATEbits.LATE4
-#define LED_ORANGE			LATEbits.LATE3
-#define LED_GREEN			LATEbits.LATE2
-#define LED_RED				LATEbits.LATE1
+// LED pins (inverted)
+#define LED_BLUE    _LATE4
+#define LED_YELLOW  _LATE3
+#define LED_GREEN   _LATE2
+#define LED_RED     _LATE1
 
-#define IC_PIN1 _RD8
-#define IC_PIN2 _RD9
-#define IC_PIN3 _RD10
-#define IC_PIN4 _RD11
-#define IC_PIN5 _RD12
-#define IC_PIN6 _RD13
-#define IC_PIN7 _RD14
-#define IC_PIN8 _RD15
+// tail light output (inverted)
+#define TAIL_LIGHT  _LATD4
+
+// There are no hardware toggle switches on the UDB4, so use values of 0
+#define HW_SWITCH_1			0
+#define HW_SWITCH_2			0
+#define HW_SWITCH_3			0

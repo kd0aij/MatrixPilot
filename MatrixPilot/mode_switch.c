@@ -20,6 +20,9 @@
   
 
 #include "defines.h"
+
+#if (AIRFRAME_TYPE != AIRFRAME_QUAD)
+
 #include "mode_switch.h"
 
 #define  MAX_PAUSE_TOGGLE  20  // 20 frames at 40Hz is 1/2 second.
@@ -60,12 +63,12 @@ int16_t flight_mode_switch_manual(void)
 	return flags._.man_req;
 }
 
-int16_t flight_mode_switch_stabilize(void)
+int16_t flight_mode_switch_auto(void)
 {
 	return flags._.auto_req;
 }
 
-int16_t flight_mode_switch_waypoints(void)
+int16_t flight_mode_switch_home(void)
 {
 	return flags._.home_req;
 }
@@ -102,23 +105,13 @@ void flight_mode_switch_2pos_poll(void) // this is called at 40 hertz
 		case STABILIZED_LONG_TERM :
 			if ( udb_pwIn[MODE_SWITCH_INPUT_CHANNEL] < MODE_SWITCH_THRESHOLD_LOW )
 			{
-				#if (FLYBYWIRE_ENABLED == 0)
-				// when using fbw_IP, we are *always* in stabilized mode
 				flight_mode_switch_state = ENT_MANUAL_T1 ;
-				#endif
 			}
 			break ;
 		case ENT_MANUAL_T1 :
 			toggle_switch_counter_40hz = 0 ;
-			#if (FLYBYWIRE_ENABLED == 1)
-				// when using fbw_IP, we are *always* in stabilized mode
-				flight_mode_switch_state = FLIGHT_MODE_SWITCH_STABILIZED ;
-				flight_mode_switch_state = STABILIZED_T1 ;
-        
-			#else
-				request_autopilot_mode = FLIGHT_MODE_SWITCH_MANUAL ;
-				flight_mode_switch_state = MANUAL_T1 ;
-			#endif
+			request_autopilot_mode = FLIGHT_MODE_SWITCH_MANUAL ;
+			flight_mode_switch_state = MANUAL_T1 ;
 			break ;
 		case MANUAL_T1 :
 			if ( udb_pwIn[MODE_SWITCH_INPUT_CHANNEL] > MODE_SWITCH_THRESHOLD_LOW )
@@ -142,10 +135,7 @@ void flight_mode_switch_2pos_poll(void) // this is called at 40 hertz
 		case STABILIZED_T1 :
 			if ( udb_pwIn[MODE_SWITCH_INPUT_CHANNEL] < MODE_SWITCH_THRESHOLD_LOW )
 			{
-				#if (FLYBYWIRE_ENABLED == 0)
-				// when using fbw_IP, we are *always* in stabilized mode
 				flight_mode_switch_state = ENT_MANUAL_T2 ;
-				#endif
 			}
 			else
 			{
@@ -158,14 +148,8 @@ void flight_mode_switch_2pos_poll(void) // this is called at 40 hertz
 			break ;
 		case ENT_MANUAL_T2 :
 			toggle_switch_counter_40hz = 0 ;
-			#if (FLYBYWIRE_ENABLED == 1)
-				// when using fbw_IP, we are *always* in stabilized mode
-				request_autopilot_mode = FLIGHT_MODE_SWITCH_STABILIZED ;
-				flight_mode_switch_state = STABILIZED_T1 ;
-			#else
 			request_autopilot_mode = FLIGHT_MODE_SWITCH_MANUAL ;
 			flight_mode_switch_state = MANUAL_T2 ;
-			#endif
 			break ;	
 		case MANUAL_T2 :
 			if ( udb_pwIn[MODE_SWITCH_INPUT_CHANNEL] > MODE_SWITCH_THRESHOLD_LOW )
@@ -245,17 +229,9 @@ void flight_mode_switch_check_set(void)
 		}
 		else
 		{
-			#if (FLYBYWIRE_ENABLED == 1)
-			// when using fbw_IP, we are *always* in stabilized mode
-			flags._.man_req = 0 ;
-			flags._.auto_req = 1 ;
-			flags._.home_req = 0 ;
-			
-			#else
 			flags._.man_req = 1 ;
 			flags._.auto_req = 0 ;
 			flags._.home_req = 0 ;
-			#endif
 		}	
 #endif // MODE_SWITCH_TWO_POSITION
 		// With Failsafe Hold enabled: After losing RC signal, and then regaining it, you must manually
@@ -287,3 +263,5 @@ void flight_mode_switch_check_set(void)
 		flags._.home_req = 1 ;
 	}
 }
+
+#endif // AIRFRAME_TYPE

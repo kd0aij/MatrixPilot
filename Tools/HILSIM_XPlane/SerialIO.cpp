@@ -1,10 +1,13 @@
 #include "stdafx.h"
 #include "SerialIO.h"
 
-
+#if (defined(WIN32) && defined(WIN))
+#include "UDBSocket.h" // gcc windows builds
+#else
 extern "C" {
 #include "UDBSocket.h" // MS Visual C++, XCode, linux builds
 }
+#endif
 
 
 UDBSocket		serialSock = NULL;

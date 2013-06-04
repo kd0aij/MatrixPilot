@@ -21,8 +21,11 @@
 
 #include "defines.h"
 
+#if (AIRFRAME_TYPE != AIRFRAME_QUAD)
+
 #if (FLIGHT_PLAN_TYPE == FP_WAYPOINTS)
 
+#warning Compiling-in flightplan-waypoints
 
 struct relWaypointDef { struct relative3D loc ; int16_t flags ; struct relative3D viewpoint ; } ;
 struct waypointDef { struct waypoint3D loc ; int16_t flags ; struct waypoint3D viewpoint ; } ;
@@ -197,12 +200,25 @@ void run_flightplan( void )
 	}
 	else
 	{
-		if ( tofinish_line < WAYPOINT_RADIUS ) // crossed the finish line
+		if ( desired_behavior._.cross_track )
 		{
-			if ( desired_behavior._.loiter )
-				set_goal( GPSlocation, wp_to_relative(currentWaypointSet[waypointIndex]).loc ) ;
-			else
-				next_waypoint() ;
+			if ( tofinish_line < WAYPOINT_RADIUS ) // crossed the finish line
+			{
+				if ( desired_behavior._.loiter )
+					set_goal( GPSlocation, wp_to_relative(currentWaypointSet[waypointIndex]).loc ) ;
+				else
+					next_waypoint() ;
+			}
+		}
+		else
+		{
+			if ( (tofinish_line < WAYPOINT_RADIUS) || (togoal.x < WAYPOINT_RADIUS) ) // crossed the finish line
+			{
+				if ( desired_behavior._.loiter )
+					set_goal( GPSlocation, wp_to_relative(currentWaypointSet[waypointIndex]).loc ) ;
+				else
+					next_waypoint() ;
+			}
 		}
 	}
 	
@@ -247,3 +263,5 @@ void flightplan_live_commit( void )
 
 
 #endif
+
+#endif // AIRFRAME_TYPE

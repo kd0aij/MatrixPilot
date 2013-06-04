@@ -23,8 +23,6 @@
 #define LIB_UDB_H
 
 #include <stdint.h>
-#define _ADDED_C_LIB 1 // Needed to get vsnprintf()
-#include <stdio.h>
 
 #include "options.h"
 #if (SILSIM == 1)
@@ -32,10 +30,13 @@
 #else
 #include <dsp.h>
 #endif
-
 #include "fixDeps.h"
 #include "libUDB_defines.h"
+#include "magnetometerOptions.h"
 #include "nv_memory_options.h"
+
+#include <stdio.h>
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // libUDB.h defines the API for accessing the UDB hardware through libUDB.
@@ -60,9 +61,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Initialize the UDB
-
-// Call this first soon after the board boots up
-void mcu_init(void);
 
 // Call this once soon after the board boots up
 void udb_init(void);
@@ -93,6 +91,39 @@ void udb_background_callback_triggered(void);			// Callback
 // This function returns the current CPU load as an integer percentage value
 // from 0-100.
 uint8_t udb_cpu_load(void);
+
+#if (AIRFRAME_TYPE == AIRFRAME_QUAD)
+
+#if (BOARD_TYPE & AUAV2_BOARD) || (DUAL_IMU == 1)
+// number of heartbeats per second set by MPU6000 sample rate
+#define HEARTBEAT_HZ 200
+
+// frequency of PID loop (HEARTBEAT_HZ / PID_HZ must be an integer)
+#define PID_HZ 200
+
+#else
+// number of heartbeats per second
+#define HEARTBEAT_HZ 400
+//#define HEARTBEAT_HZ 40
+
+// frequency of PID loop (HEARTBEAT_HZ / PID_HZ must be an integer)
+#define PID_HZ 400
+//#define PID_HZ 40
+
+#endif
+
+#else // AIRFRAME_TYPE
+
+// number of heartbeats per second
+#define HEARTBEAT_HZ 40
+
+// frequency of PID loop (HEARTBEAT_HZ / PID_HZ must be an integer)
+#define PID_HZ 40
+
+#endif // AIRFRAME_TYPE
+
+// Read-only value increments with each heartbeat
+extern uint16_t udb_heartbeat_counter ;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -131,8 +162,8 @@ void udb_servo_record_trims(void);
 // Functions only included with nv memory.
 #if(USE_NV_MEMORY == 1)
 // Call this funtion to skip doing radio trim calibration
-void udb_skip_radio_trim(boolean);
-void udb_skip_imu_calibration(boolean);
+void udb_skip_radio_trim();
+void udb_skip_imu_calibration();
 
 typedef struct tagUDB_SKIP_FLAGS
 {
@@ -145,7 +176,7 @@ extern UDB_SKIP_FLAGS udb_skip_flags;
 #endif
 
 // Implement this callback to prepare the pwOut values.
-// It is called at 40Hz (once every 25ms) at a low priority.
+// It is called at HEARTBEAT_HZ at a low priority.
 void udb_servo_callback_prepare_outputs(void);			// Callback
 
 // Called immediately whenever the radio_on flag is set to 0
@@ -184,6 +215,18 @@ extern uint8_t rc_signal_strength;	// rc_signal_strength is 0-100 as percent of 
 void udb_a2d_record_offsets(void);
 void udb_callback_read_sensors(void);		// Callback
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Magnetometer
+
+// If the magnetometer is connected and enabled, these will be the raw values, and the
+// calibration offsets.
+extern fractional udb_magFieldBody[3];
+extern fractional udb_magOffset[3];
+
+// Implement this callback to make use of the magetometer data.  This is called each
+// time the magnetometer reports new data.
+void udb_magnetometer_callback_data_available(void);	// Callback
 
 ////////////////////////////////////////////////////////////////////////////////
 // LEDs
@@ -251,7 +294,7 @@ void osd_spi_write_number(int32_t val, int8_t num_digits, int8_t decimal_places,
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// EEPROM (Supported on UDB4 and UDB5 only)
+// EEPROM (Supported on UDB4 only)
 
 // Write 1 byte to eeprom at address, or read 1 byte from address in eeprom into data
 void eeprom_ByteWrite(uint16_t address, uint8_t data);
@@ -259,7 +302,7 @@ void eeprom_ByteRead(uint16_t address, uint8_t *data);
 
 // Write numbytes of data to eeprom, starting at address. The write area can not span a
 // page boundry.  Pages start on addresses of multiples of 64.
-// Read numbytes of data from address in eeprom into data.  Note that there is no 1-page
+// Read numbytes of data from address in eeprom into data.  Note taht there is no 1-page
 // limit for sequential reads as there is for page writes.
 void eeprom_PageWrite(uint16_t address, uint8_t *data, uint8_t numbytes);
 void eeprom_SequentialRead(uint16_t address, uint8_t *data, uint16_t numbytes);

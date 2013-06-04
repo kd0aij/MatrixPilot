@@ -18,20 +18,25 @@
 // You should have received a copy of the GNU General Public License
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
-
 #include "defines.h"
+#include "options.h"
+#include "delay.h"
+#include "debug.h"
 
-#if (USE_TELELOG == 1)
-#include "telemetry_log.h"
+#ifdef USE_FREERTOS
+#include "FreeRTOS.h"
 #endif
 
-#if (USE_USB == 1)
-#include "preflight.h"
-#endif
 
-#if (USE_CONFIGFILE == 1)
-#include "config.h"
-#endif
+void testproc_loop(void);
+void testproc_init(void);
+
+int fs_init(void);
+int fs_openlog(void);
+
+int fs_test(void);
+//int thinfat32_test(void);
+
 
 //	main program for testing the IMU.
 
@@ -40,32 +45,58 @@ int mp_argc;
 char **mp_argv;
 int main(int argc, char** argv)
 {
-	// keep these values available for later
+	// keep thees values available for later
 	mp_argc = argc;
 	mp_argv = argv;
 #else
 int main (void)
 {
-	mcu_init();
 #endif
-#if (USE_TELELOG == 1)
-	log_init();
-#endif
-#if (USE_USB == 1)
-	preflight();
-#endif
-	udb_init();
-	dcm_init();
-#if (USE_CONFIGFILE == 1)
-	init_config();
-#endif
-	init_servoPrepare();
-	init_states();
-	init_behavior();
-	init_serial();
+	udb_init() ;
+	printf("Initialising MatrixPilot\r\n");
+	dcm_init() ;
+#if (AIRFRAME_TYPE == AIRFRAME_QUAD)
+	quad_init();
+#else // AIRFRAME_TYPE
 
-	udb_run();
-	// This never returns.
+#if !(BOARD_TYPE & AUAV2_BOARD)
+	init_servoPrepare() ;
+	init_states() ;
+	init_behavior() ;
+	init_serial() ;
+#endif // (BOARD_TYPE & AUAV2_BOARD)
 
-	return 0;
+#endif // AIRFRAME_TYPE
+
+	printf("Initialising Filesystem\r\n");
+//	for (;;) {}
+	
+	fs_init();
+	delay_ms(100);
+	fs_openlog();
+	delay_ms(100);
+
+//	testproc_init();
+//	fs_test();
+//	thinfat32_test();
+
+	printf("MatrixPilot Initialised\r\n");
+
+#ifdef USE_FREERTOS
+	// initialise the RTOS
+
+	// start the RTOS running, this function should never return
+	vTaskStartScheduler();
+	// but in case it does
+#endif
+
+	while (1)
+	{	
+		udb_run() ;
+#ifdef USE_DEBUG_IO
+		testproc_loop();
+#endif
+	}	
+	return 0 ;
 }
+

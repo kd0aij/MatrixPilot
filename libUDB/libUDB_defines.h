@@ -41,45 +41,61 @@ union longlongLL { int64_t LL ; struct LL _ ; struct wwww __ ; } ;
 #define NUM_POINTERS_IN(x)		(sizeof(x)>>1)
 #endif
 
+// Choose the type of air frame by setting AIRFRAME_TYPE in options.h
+// See options.h for a description of each type
+#define AIRFRAME_STANDARD			0
+#define AIRFRAME_VTAIL				1
+#define AIRFRAME_DELTA				2
+#define AIRFRAME_HELI				3		// Untested
+#define AIRFRAME_QUAD				4		// Under development
+
 // Build for the specific board type
-#define RED_BOARD		1	// red board with vertical LISY gyros (deprecated)
-#define GREEN_BOARD		2	// green board with Analog Devices 75 degree/second gyros (deprecated)
-#define UDB3_BOARD		3	// red board with daughter boards 500 degree/second Invensense gyros (deprecated)
-#define RUSTYS_BOARD	4	// Red board with Rusty's IXZ-500_RAD2a patch board (deprecated)
-#define UDB4_BOARD		5	// board with dsPIC33 and integrally mounted 500 degree/second Invensense gyros
-#define CAN_INTERFACE	6
-#define UDB5_BOARD		8	// board with dsPIC33 and MPU6000
-#define AUAV3_BOARD		9	// Nick Arsov's AUAV3 with dsPIC33EP and MPU6000
+#define UDB4_BOARD				5	// board with dsPIC33 and integrally mounted 500 degree/second Invensense gyros
+#define CAN_INTERFACE			6
+#define AUAV2_REV				7   // bits 0-2 indicate AUAV2 hardware revision
+#define AUAV2_BOARD				8   // bit 3 indicates AUAV2
+#define AUAV2_BOARD_ALPHA1		(AUAV2_BOARD + 0)
+#define AUAV2_BOARD_ALPHA2		(AUAV2_BOARD + 1)
+#define AUAV3_BOARD				(AUAV2_BOARD + 2) // Nick Arsov's AUAV3 with dsPIC33EP and MPU6000
+
+#define UDB5_BOARD				16	// board with dsPIC33 and MPU6000
+
+
+// Clock configurations
+#define CRYSTAL_CLOCK	1
+#define FRC8X_CLOCK		2
+#define UDB4_CLOCK		3
+
 
 #if (SILSIM != 1)
-// Device header file
-#if defined(__XC16__)
-#include <xc.h>
-#elif defined(__C30__)
-#if defined(__dsPIC33E__)
-#include <p33Exxxx.h>
-#elif defined(__dsPIC33F__)
-#include <p33Fxxxx.h>
-#endif
-#endif
-
 // Include the necessary files for the current board type
+
 #if (BOARD_TYPE == UDB4_BOARD)
+#include "p33FJ256GP710A.h"
 #include "ConfigUDB4.h"
+
+#elif (BOARD_TYPE & AUAV2_BOARD)
+#ifdef __dsPIC33EP512MU810__
+#include "p33EP512MU810.h"
+#else
+#include "p33FJ128MC708.h"
+#endif
+#if (BOARD_TYPE == AUAV3_BOARD)
+#include "ConfigAUAV3.h"
+#else
+#include "ConfigAUAV2.h"
+#endif
 
 #elif (BOARD_TYPE == UDB5_BOARD)
 #include "ConfigUDB5.h"
 
-#elif (BOARD_TYPE == AUAV3_BOARD)
-#include "ConfigAUAV3.h"
-
 #elif (BOARD_TYPE == CAN_INTERFACE)
+#include "p30f6010A.h"
 #include "../CANInterface/ConfigCANInterface.h"
 #else
 #error "unsupported value for BOARD_TYPE"
 #endif
-
-#endif // (SILSIM != 1)
+#endif
 
 #if (SILSIM == 1)
 #undef HILSIM
@@ -90,8 +106,8 @@ union longlongLL { int64_t LL ; struct LL _ ; struct wwww __ ; } ;
 #include "ConfigHILSIM.h"
 #endif
 
-// TODO: check this as it seems to be related to CLASSIC boards only
-#if (USE_PPM_INPUT == 1 && BOARD_TYPE != AUAV3_BOARD)
+
+#if (USE_PPM_INPUT == 1)
 #undef MAX_INPUTS
 #define MAX_INPUTS 8
 #undef MAX_OUTPUTS
@@ -114,9 +130,21 @@ union longlongLL { int64_t LL ; struct LL _ ; struct wwww __ ; } ;
 
 #include "boardRotation_defines.h"
 
-//#define BOARD_IS_CLASSIC_UDB		0
-// Clock configurations
-#define CLOCK_CONFIG 				3 // legacy definition for telemetry output
+#define BOARD_IS_CLASSIC_UDB		0
+//#define FREQOSC 					32000000
+#define CLK_PHASES					2
+//#define CLOCK_CONFIG 				UDB4_CLOCK
+
+//#if (CLOCK_CONFIG == CRYSTAL_CLOCK)
+//#error here
+//#endif
+//#define CLOCK_CONFIG				CRYSTAL_CLOCK
+#if ( CLOCK_CONFIG == CRYSTAL_CLOCK )
+#define FREQOSC 	(80000000UL)
+//#error here
+#else
+#define FREQOSC 	(79227500UL)
+#endif
 
 
 // Dead reckoning
@@ -160,11 +188,22 @@ struct ADchannel {
 
 
 struct udb_flag_bits {
-			uint16_t unused					  	    : 6 ;
+			uint16_t unused					  	    : 6 ;   // shouldn't this be 14 bits? - moreso, shouldn't the int be an unsigned char?
 			uint16_t a2d_read						: 1 ;
 			uint16_t radio_on						: 1 ;
 			} ;
 
+// Baud Rate Generator -- See section 19.3.1 of datasheet.
+// Fcy = FREQOSC / CLK_PHASES
+// UXBRG = (Fcy/(16*BaudRate))-1
+// UXBRG = ((32000000/2)/(16*9600))-1
+// UXBRG = 103
+
+#if ( BOARD_IS_CLASSIC_UDB == 1 )
+#define UDB_BAUD(x) ((int16_t)((FREQOSC / CLK_PHASES) / ((int32_t)16 * x) - 1))
+#else
+#define UDB_BAUD(x) ((int16_t)((FREQOSC / CLK_PHASES) / ((int32_t)4 * x) - 1))
+#endif
 
 // LED states
 #define LED_ON		0
@@ -205,13 +244,8 @@ struct udb_flag_bits {
 
 #define MAX_VOLTAGE				543	// 54.3 Volts max for the sensor from SparkFun (in tenths of Volts)
 #define VOLTAGE_SENSOR_OFFSET	0	// Add 0.0 Volts to whatever value we sense
-
+	
 extern int16_t magMessage ;
 extern int16_t vref_adj ;
 
-#define NETWORK_INTERFACE_NONE                  0
-#define NETWORK_INTERFACE_WIFI_MRF24WG          1
-#define NETWORK_INTERFACE_ETHERNET_ENC624J600   2
-#define NETWORK_INTERFACE_ETHERNET_ENC28J60     3
-
-#endif // UDB_DEFINES_H
+#endif

@@ -1,5 +1,4 @@
-CC       = /usr/local/i386-mingw32-4.3.0/bin/i386-mingw32-gcc
-CPP      = /usr/local/i386-mingw32-4.3.0/bin/i386-mingw32-g++
+CC       = /usr/local/i386-mingw32-4.3.0/bin/i386-mingw32-g++
 CFLAGS   = -pipe -Wall -W -O0 -DWIN=1 -DIBM=1
 INCPATH  = -Iinclude -I.
 LFLAGS   = -shared -Wl -lws2_32 -lOpenGL32 -Llib -lXPLM
@@ -7,7 +6,7 @@ RM_FILE  = rm -f
 
 OBJECTS_DIR = ./
 
-TARGET  = HILSIM-win32.xpl
+TARGET  = HILSIM_win.xpl
 
 OBJECTS = HILSIM.o SerialIO.o UDBSocketWin.o Setup.o stdafx.o utility.o 
 
@@ -16,7 +15,7 @@ first: all
 .SUFFIXES: .c .o .cpp
 
 .cpp.o:
-	$(CPP) -c $(CFLAGS) $(INCPATH) -o $@ $<
+	$(CC) -c $(CFLAGS) $(INCPATH) -o $@ $<
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(INCPATH) -o $@ $<
@@ -24,7 +23,7 @@ first: all
 all: Makefile $(TARGET)
 
 $(TARGET):  $(UICDECLS) $(OBJECTS) $(OBJMOC)  
-	$(CPP) -o $(TARGET) $(OBJECTS) $(LFLAGS)
+	$(CC) -o $(TARGET) $(OBJECTS) $(LFLAGS)
 
 clean:
 	-$(RM_FILE) $(OBJECTS)

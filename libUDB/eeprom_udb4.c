@@ -21,9 +21,19 @@
 #include "libUDB_internal.h"
 
 
+#ifdef AUAV3
 #define SCL			PORTGbits.RG2		// I2C Clock PORTG pin 2
 #define SDA			PORTGbits.RG3		// I2C Data PORTG pin 3
+#define SCL_TRIS	TRISGbits.TRISG2	// SCL Tris bit
 #define	SDA_TRIS	TRISGbits.TRISG3	// SDA Tris bit
+#else
+#define SCL			PORTAbits.RA2		// I2C Clock PORTG pin 2
+#define SDA			PORTAbits.RA3		// I2C Data PORTG pin 3
+#define SCL_TRIS	TRISAbits.TRISA2	// SCL Tris bit
+#define	SDA_TRIS	TRISAbits.TRISA3	// SDA Tris bit
+#endif
+
+
 #define CONTROLBYTE	0b10100000			// Control byte
 #define ACKBIT		0x00				// ACK bit
 #define NAKBIT		0x80				// NAK bit
@@ -35,7 +45,8 @@ uint8_t eeprom_control = CONTROLBYTE ;	// Control byte variable
 
 void udb_eeprom_init( void )
 {
-	TRISGbits.TRISG2 = 0;		//SCL Line make Output.
+//	TRISGbits.TRISG2 = 0;		//SCL Line make Output.
+	SCL_TRIS = 0;				//SCL Line make Output.
 	SDA_TRIS = 1;				//SDA Line make Input.
 	
 	return ;

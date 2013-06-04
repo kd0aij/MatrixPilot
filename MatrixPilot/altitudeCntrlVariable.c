@@ -22,6 +22,8 @@
 
 #include "defines.h"
 
+#if (AIRFRAME_TYPE != AIRFRAME_QUAD)
+
 #if(ALTITUDE_GAINS_VARIABLE == 1)
 
 #include "airspeedCntrl.h"
@@ -335,7 +337,7 @@ void normalAltitudeCntrl(void)
 		if ( !flags._.altitude_hold_pitch )
 		{
 			pitchAltitudeAdjust = 0 ;
-		}
+		}		
 	}
 	else
 	{
@@ -398,3 +400,5 @@ void hoverAltitudeCntrl(void)
 }
 
 #endif	//(ALTITUDE_GAINS_VARIABLE == 1)
+
+#endif // AIRFRAME_TYPE

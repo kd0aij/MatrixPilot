@@ -21,70 +21,49 @@
 
 // used for the UDB5
 
-#define ACCEL_RANGE 4    // 4 g range
+#define	xrateBUFF			2
+#define	yrateBUFF			1
+#define	zrateBUFF			3
 
-// note : it is possible to use other accelerometer ranges on the MPU6000
+#define	xaccelBUFF			5
+#define	yaccelBUFF			6
+#define	zaccelBUFF			4
 
-#define SCALEGYRO 3.0016 // 500 degree/second range
-#define SCALEACCEL 1.29  // 4 g range
+#define analogInput1BUFF	7
+#define analogInput2BUFF	8
+#define analogInput3BUFF	9
+#define analogInput4BUFF	10
 
-// A/D channels:
-
-#define A_VCC_BUFF			1
-#define A_5V_BUFF			2
-
-#define analogInput1BUFF	3
-#define analogInput2BUFF	4
-#define analogInput3BUFF	5
-#define analogInput4BUFF	6
-
-// MPU6000 configuration
-// device is rotated 90 degrees clockwise from breakout board/AUAV3
-// y -> x
-// x -> -y
-
-#define	xrate_MPU_channel	4
-#define	yrate_MPU_channel	5
-#define	zrate_MPU_channel	6
-
-#define temp_MPU_channel    3
-
-#define	xaccel_MPU_channel			0
-#define	yaccel_MPU_channel			1
-#define	zaccel_MPU_channel			2
-
-#define XRATE_SIGN +
+#define XRATE_SIGN -
 #define YRATE_SIGN -
 #define ZRATE_SIGN -
 
 #define XACCEL_SIGN -
-#define YACCEL_SIGN +
+#define YACCEL_SIGN -
 #define ZACCEL_SIGN +
 
+//#define VREF
+
+#define SCALEGYRO 4.95
+#define SCALEACCEL 2.64
 
 // Max inputs and outputs
 #define MAX_INPUTS	8
 #define MAX_OUTPUTS	8
 
 // LED pins
-#define LED_BLUE			LATEbits.LATE4
-#define LED_ORANGE			LATEbits.LATE3
-#define LED_GREEN			LATEbits.LATE2
-#define LED_RED				LATEbits.LATE1
+#define LED_BLUE			LATBbits.LATB1
+#define LED_YELLOW			LATBbits.LATB4
+#define LED_GREEN			LATBbits.LATB0
+#define LED_RED				LATBbits.LATB3
 
-// SPI SS pin definitions
+// There are no hardware toggle switches on the UDB4, so use values of 0
+#define HW_SWITCH_1			0
+#define HW_SWITCH_2			0
+#define HW_SWITCH_3			0
 
-#define SPI1_SS   _LATB2
-#define SPI2_SS	  _LATG9
 
-#define SPI1_TRIS	_TRISB2
-#define SPI2_TRIS	_TRISG9
-
-#define IC_PIN1 _RD8
-#define IC_PIN2 _RD9
-#define IC_PIN3 _RD10
-#define IC_PIN4 _RD11
-#define IC_PIN5 _RD12
-#define IC_PIN6 _RD13
-#define IC_PIN7 _RD14
-#define IC_PIN8 _RD15
+// LED 1 -> Green (RB0)
+// LED 2 -> Blue  (RB1)
+// LED 3 -> Red   (RB3)
+// LED 4 -> Yellow   (RB4)

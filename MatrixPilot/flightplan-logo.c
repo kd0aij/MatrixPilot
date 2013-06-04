@@ -20,6 +20,7 @@
 
 
 #include "defines.h"
+#include "stdlib.h"
 
 #if (FLIGHT_PLAN_TYPE == FP_LOGO)
 
@@ -29,7 +30,7 @@ struct logoInstructionDef {
 	uint16_t do_fly		:  1 ;
 	uint16_t use_param	:  1 ;
 	uint16_t subcmd		:  8 ;
-	int16_t arg			: 16 ;
+	int16_t arg					: 16 ;
 } ;
 
 #define PLANE				0
@@ -425,7 +426,7 @@ void run_flightplan( void )
 			if (logo_goal_has_moved()) {
 				update_goal_from(lastGoal) ;
 				compute_bearing_to_goal() ;
-			}
+		}
 		}
 		logo_inject_pos = 0 ;
 		
@@ -462,10 +463,20 @@ void run_flightplan( void )
 	}
 	else
 	{
-		if ( tofinish_line < WAYPOINT_RADIUS ) // crossed the finish line
+		if ( desired_behavior._.cross_track )
 		{
-			process_instructions() ;
-		}	
+			if ( tofinish_line < WAYPOINT_RADIUS ) // crossed the finish line
+			{
+				process_instructions() ;
+			}
+		}
+		else
+		{
+			if ( (tofinish_line < WAYPOINT_RADIUS) || (togoal.x < WAYPOINT_RADIUS) ) // crossed the finish line
+			{
+				process_instructions() ;
+			}
+		}
 	}
 	return ;
 }
@@ -535,7 +546,6 @@ int16_t get_current_angle( void )
 	int8_t earth_yaw = rect_to_polar(&curHeading) ;// (0=East,  ccw)
 	int16_t angle = (earth_yaw * 180 + 64) >> 7 ;			// (ccw, 0=East)
 	angle = -angle + 90;								// (clockwise, 0=North)
-	if (angle < 0) angle += 360 ;
 	return angle ;
 }
 
@@ -550,7 +560,6 @@ int16_t get_angle_to_point( int16_t x, int16_t y )
 	// dir_to_goal										// 0-255 (ccw, 0=East)
 	int16_t angle = (dir_to_goal * 180 + 64) >> 7 ;			// 0-359 (ccw, 0=East)
 	angle = -angle + 90;								// 0-359 (clockwise, 0=North)
-	if (angle < 0) angle += 360 ;
 	return angle ;
 }
 

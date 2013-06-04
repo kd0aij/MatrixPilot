@@ -32,11 +32,12 @@ struct waypoint3D { int32_t x ; int32_t y ; int16_t z ; } ;
 struct fixedOrigin3D {int32_t x; int32_t y; float z;} ;
 
 struct dcm_flag_bits {
-			uint16_t unused					: 4 ;
+			uint16_t unused					: 3 ;
 			uint16_t rollpitch_req			: 1 ;
 			uint16_t gps_history_valid		: 1 ;
 			uint16_t dead_reckon_enable		: 1 ;
 			uint16_t reckon_req				: 1 ;
+    		uint16_t integrate_req 			: 1 ;
 			uint16_t first_mag_reading		: 1 ;
 			uint16_t mag_drift_req			: 1 ;
 			uint16_t yaw_req				: 1 ;
@@ -55,6 +56,7 @@ struct dcm_flag_bits {
 #define GPS_UBX_2HZ			2
 #define GPS_UBX_4HZ			4
 #define GPS_MTEK			5
+
 #define GPS_NMEA			6
 
 //#define GPS_RATE			((GPS_TYPE == GPS_MTEK) ? 4 : GPS_TYPE)
@@ -102,5 +104,9 @@ struct dcm_flag_bits {
 
 #define WIND_NAV_AIR_SPEED_MIN			200		// Minimum airspeed in cm/sec for wind navigation to apply
 #define GPS_SPEED_MIN					150		// Minimum ground speed in cm/sec to use GPS for yaw drift compensation
+
+// boxcar filter parameters for gplanefilt
+#define ACC_BOX_N 3
+#define ACC_BOX_LEN 20
 
 #endif

@@ -21,6 +21,8 @@
 
 #include "defines.h"
 
+#if (AIRFRAME_TYPE != AIRFRAME_QUAD)
+
 int16_t current_orientation ;
 union bfbts_word desired_behavior ;
 
@@ -205,3 +207,5 @@ void triggerActionSetValue( boolean newValue )
 	
 	return ;
 }
+
+#endif // AIRFRAME_TYPE
