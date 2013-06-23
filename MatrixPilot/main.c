@@ -21,18 +21,6 @@
 
 #include "defines.h"
 
-#if (USE_TELELOG == 1)
-#include "telemetry_log.h"
-#endif
-
-#if (USE_USB == 1)
-#include "preflight.h"
-#endif
-
-#if (USE_CONFIGFILE == 1)
-#include "config.h"
-#endif
-
 //	main program for testing the IMU.
 
 #if (SILSIM == 1)
@@ -40,32 +28,22 @@ int mp_argc;
 char **mp_argv;
 int main(int argc, char** argv)
 {
-	// keep these values available for later
+	// keep thees values available for later
 	mp_argc = argc;
 	mp_argv = argv;
 #else
-int main(void)
+int main (void)
 {
-	mcu_init();
 #endif
-#if (USE_TELELOG == 1)
-	log_init();
-#endif
-#if (USE_USB == 1)
-	preflight();
-#endif
-	udb_init();
-	dcm_init();
-#if (USE_CONFIGFILE == 1)
-	init_config();
-#endif
-	init_servoPrepare();
-	init_states();
-	init_behavior();
-	init_serial();
-
-	udb_run();
+	udb_init() ;
+	dcm_init() ;
+	init_servoPrepare() ;
+	init_states() ;
+	init_behavior() ;
+	init_serial() ;
+	
+	udb_run() ;
 	// This never returns.
-
-	return 0;
+	
+	return 0 ;
 }

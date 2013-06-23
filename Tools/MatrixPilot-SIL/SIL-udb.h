@@ -48,8 +48,7 @@ extern volatile int16_t trap_flags ;
 extern volatile int32_t trap_source ;
 extern volatile int16_t osc_fail_count ;
 
-void udb_magnetometer_callback(void);
-uint16_t get_reset_flags(void) ;
+uint16_t udb_get_reset_flags(void) ;
 void sil_reset(void);
 
 uint16_t get_current_milliseconds();

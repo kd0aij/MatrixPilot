@@ -34,8 +34,6 @@ int gettimeofday (struct timeval *tp, struct timezone *tzp);
 
 
 #include "libUDB.h"
-#include "magnetometer.h"
-#include "magnetometerOptions.h"
 #include "events.h"
 #include "SIL-udb.h"
 #include "UDBSocket.h"
@@ -154,7 +152,7 @@ void udb_run(void)
 			udb_flags._.radio_on = (sil_radio_on && udb_pwIn[FAILSAFE_INPUT_CHANNEL] >= FAILSAFE_INPUT_MIN && udb_pwIn[FAILSAFE_INPUT_CHANNEL] <= FAILSAFE_INPUT_MAX);
 			LED_GREEN = (udb_flags._.radio_on) ? LED_ON : LED_OFF ;
 
-			udb_background_callback_periodic(); // Run at 40Hz
+			if (udb_heartbeat_counter % 20 == 0) udb_background_callback_periodic(); // Run at 2Hz
 			udb_servo_callback_prepare_outputs();
 			
 			sil_ui_update();
@@ -219,7 +217,7 @@ void udb_a2d_record_offsets(void)
 }
 
 
-uint16_t get_reset_flags(void)
+uint16_t udb_get_reset_flags(void)
 {
 	return mp_rcon;
 }
@@ -375,7 +373,7 @@ void I2C_doneReadMagData(void)
 			( abs(udb_magFieldBody[1]) < MAGNETICMAXIMUM ) &&
 			( abs(udb_magFieldBody[2]) < MAGNETICMAXIMUM ) )
 		{
-			udb_magnetometer_callback();
+			udb_magnetometer_callback_data_available();
 		}
 		else
 		{
@@ -383,11 +381,4 @@ void I2C_doneReadMagData(void)
 		}
 	}
 }
-
-void HILSIM_MagData(void)
-{
-	magMessage = 7 ; // indicate valid magnetometer data
-	I2C_doneReadMagData() ; // run the magnetometer computations
-}
-
 #endif
