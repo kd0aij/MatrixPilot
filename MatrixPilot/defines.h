@@ -71,7 +71,9 @@ void yawCntrl(void);
 void altitudeCntrl(void);
 void setTargetAltitude(int16_t targetAlt);
 
-void init_yawCntrl(void);void init_rollCntrl(void);void init_pitchCntrl(void);
+void init_yawCntrl(void);
+void init_rollCntrl(void);
+void init_pitchCntrl(void);
 
 
 // wind gain adjustment
@@ -236,7 +238,7 @@ void cameraCntrl(void);
 void camera_live_begin(void);
 void camera_live_received_byte(uint8_t inbyte);
 void camera_live_commit(void);
-void camera_live_commit_values(const struct relative3D target);
+void camera_live_commit_relative_position(const struct relative3D target);
 
 #define CAM_VIEW_LAUNCH     { 0, 0, 0 }
 

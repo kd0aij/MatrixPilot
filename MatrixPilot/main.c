@@ -33,6 +33,12 @@
 #include "config.h"
 #endif
 
+#if (NETWORK_INTERFACE != NETWORK_INTERFACE_NONE)
+    #define THIS_IS_STACK_APPLICATION
+    #include "TCPIP_Stack/TCPIP.h"
+    #include "MyIpNetwork.h"
+#endif
+
 //	main program for testing the IMU.
 
 #if (SILSIM == 1)
@@ -63,6 +69,11 @@ int main(void)
 	init_states();
 	init_behavior();
 	init_serial();
+
+    #if (NETWORK_INTERFACE != NETWORK_INTERFACE_NONE)
+	// should be done after init_serial() for error messages
+    init_MyIpNetwork() ;
+    #endif
 
 	udb_run();
 	// This never returns.

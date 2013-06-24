@@ -50,6 +50,10 @@
 #include "mavlink_options.h"
 #include "../libUDB/events.h"
 
+#if (NETWORK_INTERFACE != NETWORK_INTERFACE_NONE) && (NETWORK_USE_MAVLINK == 1)
+#include "MyIpData.h"
+#include "MyIpHelpers.h"
+#endif
 // Setting MAVLINK_TEST_ENCODE_DECODE to 1, will replace the normal code that sends MAVLink messages with
 // as test suite.  The inserted code will self-test every message type to encode packets, de-code packets,
 // and it will then check that the results match. The code reports a pass rate and fail rate
@@ -262,6 +266,11 @@ int16_t mavlink_serial_send(mavlink_channel_t UNUSED(chan), uint8_t buf[], uint1
 	{
 		memcpy(&serial_buffer[start_index], buf, len);
 		end_index = start_index + len;
+
+  #if (NETWORK_INTERFACE != NETWORK_INTERFACE_NONE) && (NETWORK_USE_MAVLINK == 1)
+    ArrayToSrc(eSourceMAVLink, buf, len);
+    MyIpSetSendPacketFlagSrc(eSourceMAVLink);
+  #endif
 	}
 	if (serial_interrupt_stopped == 1)
 	{

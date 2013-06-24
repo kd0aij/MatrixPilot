@@ -36,6 +36,8 @@ void dcm_run_imu_step(void);    // This needs to be run every 25ms
 void read_accel();
 void read_gyros();
 
+extern uint16_t velocity_previous;
+
 extern fractional dirovergndHRmat[];
 extern fractional dirovergndHGPS[];
 extern fractional locationErrorEarth[3];

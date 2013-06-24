@@ -36,7 +36,12 @@
 #if (FLY_BY_DATALINK_ENABLED == 1)
 #include "fly_by_datalink.h"
 #endif
+#if (ANALOG_AIRSPEED_INPUT_CHANNEL != CHANNEL_UNUSED)
+#include "airspeedPitot.h"
+#endif
 
+#define _ADDED_C_LIB 1 // Needed to get vsnprintf()
+#include <stdio.h>
 #include <stdarg.h>
 
 
@@ -642,6 +647,10 @@ void serial_output_8hz(void)
 				extern uint16_t maxstack;
 				serial_output("stk%d:", (int16_t)(4096-maxstack));
 #endif // RECORD_FREE_STACK_SPACE
+
+#if (ANALOG_AIRSPEED_INPUT_CHANNEL != CHANNEL_UNUSED)
+        serial_output("pitot%i:", airspeedPitot.value) ;
+#endif
 				serial_output("\r\n");
 			}
 #endif // SERIAL_OUTPUT_FORMAT

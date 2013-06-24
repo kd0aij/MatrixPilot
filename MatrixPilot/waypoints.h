@@ -137,11 +137,11 @@
 // 
 // By default the only waypoint is defined to be 75 meters above the starting point.
 
-/*
+
 const struct waypointDef waypoints[] = {
 		{ {   0,   0, 75 } , F_NORMAL, CAM_VIEW_LAUNCH } ,  // return to, and loiter 75 meters above the startup position
 };
- */
+ 
 
 /*
 const struct waypointDef waypoints[] = {
@@ -153,6 +153,7 @@ const struct waypointDef waypoints[] = {
 };
  */
 
+/*
  // CORNER is the absolute value of the X or Y coordinate at the corners of the course. 
 #define CORNER 1000
 
@@ -177,7 +178,7 @@ const struct waypointDef waypoints[] = {
 		{ {  - CORNER  ,    CORNER  , CLEARANCE +  50 } , F_NORMAL, CAM_VIEW_2 } ,
 		{ {  - CORNER  ,  - CORNER  , CLEARANCE +  75 } , F_NORMAL, CAM_VIEW_2 } ,
 };
-
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // rtlWaypoints[]

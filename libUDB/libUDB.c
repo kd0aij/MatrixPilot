@@ -24,6 +24,11 @@
 #include "interrupt.h"
 #include "events.h"
 
+#include "defines.h"
+#if (NETWORK_INTERFACE != NETWORK_INTERFACE_NONE)
+    #include "MyIpNetwork.h"
+#endif
+
 #if (USE_TELELOG == 1)
 #include "telemetry_log.h"
 #endif
@@ -166,12 +171,15 @@ void udb_run(void)
 		console();
 #endif
 
-#if (USE_MCU_IDLE == 1)
+#if (USE_MCU_IDLE == 1) && (NETWORK_INTERFACE == NETWORK_INTERFACE_NONE)
 		Idle();
-#else
-		// pause cpu counting timer while not in an ISR
-		indicate_loading_main;
 #endif
+		// pause cpu counting timer while not in an ISR
+		indicate_loading_main ;
+		
+    #if (NETWORK_INTERFACE != NETWORK_INTERFACE_NONE)
+    ServiceMyIpNetwork();
+    #endif
 		// TODO: is the LPRC disabled?
 	}
 	// Never returns
@@ -227,12 +235,25 @@ void udb_servo_record_trims(void)
 }
 
 // saturation logic to maintain pulse width within bounds
-int16_t udb_servo_pulsesat(int32_t pw)
+int16_t udb_servo_pulsesat (int32_t pw)
 {
-	if (pw > SERVOMAX) pw = SERVOMAX;
-	if (pw < SERVOMIN) pw = SERVOMIN;
-	return (int16_t)pw;
+	if (pw > SERVOMAX)
+    return (int16_t)SERVOMAX;
+  else if (pw < SERVOMIN)
+    return (int16_t)SERVOMIN;
+  else
+    return (int16_t)pw;
 }
+int16_t udb_servo_pulsesat_cam ( int32_t pw )
+{
+	if (pw > SERVOMAX_CAM)
+    return (int16_t)SERVOMAX_CAM;
+  else if (pw < SERVOMIN_CAM)
+    return (int16_t)SERVOMIN_CAM;
+  else
+    return (int16_t)pw;
+}
+
 
 void calculate_analog_sensor_values(void)
 {
@@ -262,4 +283,9 @@ void calculate_analog_sensor_values(void)
 	else
 		rc_signal_strength = (uint8_t)rssi_accum._.W1;
 #endif
+
+#if (ANALOG_AIRSPEED_INPUT_CHANNEL != CHANNEL_UNUSED)
+  setAirspeedUsingAdcValue(udb_analogInputs[ANALOG_AIRSPEED_INPUT_CHANNEL-1].value);
+#endif
 }
+

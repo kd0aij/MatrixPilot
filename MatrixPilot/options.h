@@ -136,7 +136,7 @@
 // in the altitude controls, and will trim the throttle and pitch to maintain air speed.
 // Define DESIRED_SPEED to be the air speed that you want, in meters/second.
 #define SPEED_CONTROL                       0
-#define DESIRED_SPEED                       10.0    // meters/second
+#define DESIRED_SPEED                       20.0    // meters/second
 
 // Inverted flight
 // Set these to 1 to enable stabilization of inverted flight in stabilized and/or waypoint modes.
@@ -152,22 +152,13 @@
 
 // Camera Stabilization
 // Set this value to 1, for camera to be stabilized using camera options further below.
-#define USE_CAMERA_STABILIZATION            0
+#define USE_CAMERA_STABILIZATION            1
 
 // Define MAG_YAW_DRIFT to be 1 to use magnetometer for yaw drift correction.
 // Otherwise, if set to 0 the GPS will be used.
 // If you select this option, you also need to set magnetometer options in
 // the magnetometerOptions.h file, including declination and magnetometer type.
-#define MAG_YAW_DRIFT                       0
-
-// Define BAROMETER_ALTITUDE to be 1 to use barometer for altitude correction.
-// Otherwise, if set to 0 only the GPS will be used.
-// If you select this option, you also need to correctly set the LAUNCH_ALTITUDE
-// to your takeoff location altitude at the time of initialisation.
-#define BAROMETER_ALTITUDE                  0
-
-// Set your takeoff/launch/initialisation altitude in meters.
-#define LAUNCH_ALTITUDE                     300
+#define MAG_YAW_DRIFT                       1
 
 
 // Racing Mode
@@ -215,22 +206,23 @@
 //   1-4 enables only the first 1-4 of the 4 standard input channels
 //   5 also enables E8 as the 5th input channel
 // For UDB4 boards: Set to 1-8
-#define NUM_INPUTS                          5
+#define NUM_INPUTS                          6
 
 // Channel numbers for each input.
 // Use as is, or edit to match your setup.
 //   - If you're set up to use Rudder Navigation (like MatrixNav), then you may want to swap
 //     the aileron and rudder channels so that rudder is CHANNEL_1, and aileron is 5.
-#define THROTTLE_INPUT_CHANNEL              CHANNEL_3
-#define AILERON_INPUT_CHANNEL               CHANNEL_1
-#define ELEVATOR_INPUT_CHANNEL              CHANNEL_2
-#define RUDDER_INPUT_CHANNEL                CHANNEL_5
-#define MODE_SWITCH_INPUT_CHANNEL           CHANNEL_4
+#define THROTTLE_INPUT_CHANNEL              CHANNEL_6
+#define AILERON_INPUT_CHANNEL               CHANNEL_5
+#define ELEVATOR_INPUT_CHANNEL              CHANNEL_4
+#define RUDDER_INPUT_CHANNEL                CHANNEL_3
+
+#define PASSTHROUGH_A_INPUT_CHANNEL         CHANNEL_1 //gear switch
+#define MODE_SWITCH_INPUT_CHANNEL			CHANNEL_1
 #define CAMERA_PITCH_INPUT_CHANNEL          CHANNEL_UNUSED
 #define CAMERA_YAW_INPUT_CHANNEL            CHANNEL_UNUSED
 #define CAMERA_MODE_INPUT_CHANNEL           CHANNEL_UNUSED
 #define OSD_MODE_SWITCH_INPUT_CHANNEL       CHANNEL_UNUSED
-#define PASSTHROUGH_A_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_B_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_C_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_D_INPUT_CHANNEL         CHANNEL_UNUSED
@@ -243,7 +235,7 @@
 //   6 also enables E4 as the 6th output channel
 //   NOTE: If USE_PPM_INPUT is enabled above, up to 9 outputs are available.)
 // For UDB4 boards: Set to 3-8 (or up to 10 using pins RA4 and RA1.)
-#define NUM_OUTPUTS                         4
+#define NUM_OUTPUTS                         6
 
 // Channel numbers for each output
 // Use as is, or edit to match your setup.
@@ -255,14 +247,15 @@
 // NOTE: If your board is powered from your ESC through the throttle cable, make sure to
 // connect THROTTLE_OUTPUT_CHANNEL to one of the built-in Outputs (1, 2, or 3) to make
 // sure your board gets power.
-//
-#define THROTTLE_OUTPUT_CHANNEL             CHANNEL_3
+// 
+#define THROTTLE_OUTPUT_CHANNEL             CHANNEL_4
 #define AILERON_OUTPUT_CHANNEL              CHANNEL_1
 #define ELEVATOR_OUTPUT_CHANNEL             CHANNEL_2
-#define RUDDER_OUTPUT_CHANNEL               CHANNEL_4
+#define RUDDER_OUTPUT_CHANNEL               CHANNEL_3
 #define AILERON_SECONDARY_OUTPUT_CHANNEL    CHANNEL_UNUSED
-#define CAMERA_PITCH_OUTPUT_CHANNEL         CHANNEL_UNUSED
-#define CAMERA_YAW_OUTPUT_CHANNEL           CHANNEL_UNUSED
+#define CAMERA_PITCH_OUTPUT_CHANNEL         CHANNEL_5
+#define CAMERA_YAW_OUTPUT_CHANNEL           CHANNEL_6
+
 #define TRIGGER_OUTPUT_CHANNEL              CHANNEL_UNUSED
 #define PASSTHROUGH_A_OUTPUT_CHANNEL        CHANNEL_UNUSED
 #define PASSTHROUGH_B_OUTPUT_CHANNEL        CHANNEL_UNUSED
@@ -275,11 +268,11 @@
 // For any of these that are set to 1, that servo will be sent reversed controls.
 // Note that your servo reversing settings here should match what you set on your transmitter.
 #define AILERON_CHANNEL_REVERSED            0
-#define ELEVATOR_CHANNEL_REVERSED           0
-#define RUDDER_CHANNEL_REVERSED             0
+#define ELEVATOR_CHANNEL_REVERSED           1
+#define RUDDER_CHANNEL_REVERSED             1
 #define AILERON_SECONDARY_CHANNEL_REVERSED  0
 #define THROTTLE_CHANNEL_REVERSED           0
-#define CAMERA_PITCH_CHANNEL_REVERSED       0
+#define CAMERA_PITCH_CHANNEL_REVERSED       1
 #define CAMERA_YAW_CHANNEL_REVERSED         0
 
 // Set this to 1 if you need to switch the left and right elevon or vtail surfaces
@@ -308,7 +301,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // The Failsafe Channel is the RX channel that is monitored for loss of signal
 // Make sure this is set to a channel you actually have plugged into the UAV Dev Board!
-//
+// 
 // For a receiver that remembers a failsafe value for when it loses the transmitter signal,
 // like the Spektrum AR6100, you can program the receiver's failsafe value to a value below
 // the normal low value for that channel.  Then set the FAILSAFE_INPUT_MIN value to a value
@@ -319,7 +312,7 @@
 // FAILSAFE_INPUT_MIN and _MAX define the range within which we consider the radio on.
 // Normal signals should fall within about 2000 - 4000.
 #define FAILSAFE_INPUT_CHANNEL              THROTTLE_INPUT_CHANNEL
-#define FAILSAFE_INPUT_MIN                  1500
+#define FAILSAFE_INPUT_MIN                  2100    //phil: DX-7 THROTTLE values: 3800 (up), 2260 (down), 1900 (off)
 #define FAILSAFE_INPUT_MAX                  4500
 
 // FAILSAFE_TYPE controls the UDB's behavior when in failsafe mode due to loss of transmitter
@@ -360,11 +353,13 @@
 // SERIAL_MAVLINK is only supported on the UDB4 to ensure that sufficient RAM is available.
 // Note that SERIAL_MAVLINK defaults to using a baud rate of 57600 baud (other formats default to 19200)
 
-#define SERIAL_OUTPUT_FORMAT                SERIAL_NONE
+//#define SERIAL_OUTPUT_FORMAT                SERIAL_NONE
+#define SERIAL_OUTPUT_FORMAT                SERIAL_UDB_EXTRA
+//#define SERIAL_OUTPUT_FORMAT                SERIAL_MAVLINK     //phil: turn this on for mavelous and qground control
 
 // MAVLink requires an aircraft Identifier (I.D) as it is deaigned to control multiple aircraft
 // Each aircraft in the sky will need a unique I.D. in the range from 0-255
-#define MAVLINK_SYSID                       55
+#define MAVLINK_SYSID                       1
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +373,7 @@
 //   2 also enables Radio In 2 as another analog Input
 //   NOTE: Can only be set this higher than 0 if USE_PPM_INPUT is enabled above.
 // For UDB4 boards: Set to 0-4.  Analog pins are AN15 - AN18.
-#define NUM_ANALOG_INPUTS                   0
+#define NUM_ANALOG_INPUTS                   1
 
 // Channel numbers for each analog input
 //   - Only assign each channel number to one analog sensor
@@ -405,6 +400,7 @@
 #define ANALOG_CURRENT_INPUT_CHANNEL        CHANNEL_UNUSED
 #define ANALOG_VOLTAGE_INPUT_CHANNEL        CHANNEL_UNUSED
 #define ANALOG_RSSI_INPUT_CHANNEL           CHANNEL_UNUSED
+#define ANALOG_AIRSPEED_INPUT_CHANNEL       CHANNEL_1
 
 // RSSI - RC Receiver signal strength
 #define RSSI_MIN_SIGNAL_VOLTAGE             0.5     // Voltage when RSSI should show 0%
@@ -468,8 +464,8 @@
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
 #define ROLLKP                              0.20
 #define ROLLKD                              0.05
-#define YAWKP_AILERON                       0.10
-#define YAWKD_AILERON                       0.05
+#define YAWKP_AILERON                       0.14
+#define YAWKD_AILERON                       0.095
 #define AILERON_BOOST                       1.00
 
 // Elevator/Pitch Control Gains
@@ -496,9 +492,9 @@
 // MANUAL_AILERON_RUDDER_MIX is the fraction of manual aileron control to mix into the rudder when
 // in stabilized or waypoint mode.  This mainly helps aileron-initiated turning while in stabilized.
 // RUDDER_BOOST is the additional gain multiplier for the manually commanded rudder deflection
-#define YAWKP_RUDDER                        0.05
-#define YAWKD_RUDDER                        0.05
-#define ROLLKP_RUDDER                       0.06
+#define YAWKP_RUDDER                        0.069	//was 0.05 --- 0.065 worked well
+#define YAWKD_RUDDER                        0.02	//was 0.00 (which worked fine), 0.05
+#define ROLLKP_RUDDER                       0.055	//was 0.06  --- 0.055 worked well
 #define ROLLKD_RUDDER                       0.05
 #define MANUAL_AILERON_RUDDER_MIX           0.00
 #define RUDDER_BOOST                        1.00
@@ -563,21 +559,26 @@
 // The result, as an integer, will be 4390. Change the angle, 15, for whatever angle you would like.
 // Note that CAM_TAN_PITCH_IN_STABILIZED_MODE should not exceed 32767 (integer overflows to negative).
 
-#define CAM_TAN_PITCH_IN_STABILIZED_MODE    1433    // 1443 is 5 degrees of pitch. Example: 15 degrees is 4389
+// SERVOSAT_CAM limits servo throw by controlling pulse width saturation.
+// set it to 1.0 if you want full servo throw (for 1ms to 2ms pulse widths). increase or decrease to change the max and min pulse widths.
+#define SERVOSAT_CAM                                1.8
+
+#define CAM_TAN_PITCH_IN_STABILIZED_MODE    0    // 1443 is 5 degrees of pitch. Example: 15 degrees is 4389
 #define CAM_YAW_IN_STABILIZED_MODE          0       // in degrees relative to the plane's yaw axis.    Example: 0
 
 // All number should be integers
-#define CAM_PITCH_SERVO_THROW               95      // Camera lens rotation at maximum PWM change (2000 to 4000), in degrees.          
-#define CAM_PITCH_SERVO_MAX                 85      // Max pitch up that plane can tilt and keep camera level, in degrees.  
-#define CAM_PITCH_SERVO_MIN                -22      // Max pitch down that plane can tilt and keep camera level, in degrees. 
-#define CAM_PITCH_OFFSET_CENTRED            38      // Offset in degrees of servo that results in a level camera.           
+#define CAM_PITCH_SERVO_THROW               90      // Camera lens rotation at maximum PWM change (2000 to 4000), in degrees.          
+#define CAM_PITCH_SERVO_MAX                 90      // Max pitch up that plane can tilt and keep camera level, in degrees.  
+#define CAM_PITCH_SERVO_MIN                -90      // Max pitch down that plane can tilt and keep camera level, in degrees. 
+#define CAM_PITCH_OFFSET_CENTRED            0      // Offset in degrees of servo that results in a level camera.           
                                                     // Example: 30 would mean that a centered pitch servo points the camera
                                                     // 30 degrees down from horizontal when looking to the front of the plane.
 
-#define CAM_YAW_SERVO_THROW                 350     // Camera yaw movement for maximum yaw PWM change (2000 to 4000) in Degrees. 
-#define CAM_YAW_SERVO_MAX                   130     // Max positive yaw of camera relative to front of plane in Degrees.              
-#define CAM_YAW_SERVO_MIN                  -130     // Min reverse  yaw of camera relative to front of plane in Degrees.   
-#define CAM_YAW_OFFSET_CENTRED              11      // Yaw offset in degrees that results in camera pointing forward. 
+#define CAM_YAW_SERVO_THROW                 90     // Camera yaw movement for maximum yaw PWM change (2000 to 4000) in Degrees. 
+#define CAM_YAW_SERVO_MAX                   930     // Max positive yaw of camera relative to front of plane in Degrees.              
+#define CAM_YAW_SERVO_MIN                  -90     // Min reverse  yaw of camera relative to front of plane in Degrees.   
+#define CAM_YAW_OFFSET_CENTRED              0      // Yaw offset in degrees that results in camera pointing forward. 
+
 
 // Camera test mode will move the yaw from + 90 degrees to + 90 degrees every 5 seconds. (180 degree turn around)
 // That will show whether the CAM_PITCH_SERVO_THROW value is set correctly for your servo.
@@ -591,7 +592,7 @@
 // Set this to 1 to ignore camera target data from the flightplan, and instead use camera target data coming in on the serial port.
 // This data can be generated by another UDB running MatrixPilot, using SERIAL_CAM_TRACK.
 // NOTE: When using camera tracking, both UDBs must be set to use the same fixed origin location.
-#define CAM_USE_EXTERNAL_TARGET_DATA        0
+#define CAM_USE_EXTERNAL_TARGET_DATA        1
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -599,7 +600,7 @@
 // These settings are only used when Altitude Hold is enabled above.
 
 // Min and Max target heights in meters.  These only apply to stabilized mode.
-#define HEIGHT_TARGET_MIN                    25.0
+#define HEIGHT_TARGET_MIN                    30.0 //was 25.0
 #define HEIGHT_TARGET_MAX                    100.0
 
 // The range of altitude within which to linearly vary the throttle
@@ -631,7 +632,7 @@
 // it is used to increase speed (and wind penetration) during a return to launch.
 // set it to zero if you do not want to use this feature.
 // This only takes effect when entering RTL mode, which only happens when the plane loses the transmitter signal.
-#define RTL_PITCH_DOWN                        0.0
+#define RTL_PITCH_DOWN                        5.0 //wwas 0.0
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -642,7 +643,7 @@
 // now 38400.  Make sure the X-Plane plugin's Setup file has its speed set to match.
 #define HILSIM                              0
 #define HILSIM_USB                          0           // AUAV3 only
-#define HILSIM_BAUD                         38400
+#define HILSIM_BAUD                         57600 //match with value in HILSIMSetup.txt
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -671,8 +672,8 @@
 // Set this to either FP_WAYPOINTS or FP_LOGO
 // The Waypoint definitions and options are located in the waypoints.h file.
 // The Logo flight plan definitions and options are located in the flightplan-logo.h file.
-#define FLIGHT_PLAN_TYPE                    FP_WAYPOINTS
-
+//#define FLIGHT_PLAN_TYPE                    FP_WAYPOINTS
+#define FLIGHT_PLAN_TYPE                      FP_LOGO
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Vehicle and Pilot Identification
@@ -691,9 +692,9 @@
 //#define ID_VEHICLE_REGISTRATION "TW2-PDH-UK"
 //#define ID_LEAD_PILOT "Pete Hollands"
 //#define ID_DIY_DRONES_URL "http://www.diydrones.com/profile/PeterHollands"
-#define ID_VEHICLE_MODEL_NAME               "Not Defined"
-#define ID_VEHICLE_REGISTRATION             "Not Defined"
-#define ID_LEAD_PILOT                       "Not Defined"
+#define ID_VEHICLE_MODEL_NAME               "CrashAndBuuuuurrrrn"
+#define ID_VEHICLE_REGISTRATION             "SkyWalker X8"
+#define ID_LEAD_PILOT                       "Phil Giaclaone"
 #define ID_DIY_DRONES_URL                   "http://www.diydrones.com"
 
 
@@ -795,3 +796,36 @@
 
 // Set this to 1 to enable the Mass Storage Driver support over USB on AUAV3
 #define USE_MSD                             0
+
+
+////////////////////////////////////////////////////////////////////////////////
+// TCP/UDP/IP protocols with Network interface
+// Enable a network interface over SPI for internet access.
+// WiFi is for short range use. For testing use the home WiFi and then a cell phone hotspot on-board.
+// For Ethernet a wired router with a high-gain WiFi antenna can work quite far with a directional basestation antenna
+// For additional IP tweaks see TCPIPConfig.h, HardwareProfile.h, MyIpOptions.h and edit MyTelemetry[]
+// Select a network interface by defining one of these options:
+// NETWORK_INTERFACE_NONE
+// NETWORK_INTERFACE_WIFI_MRF24WG           // 802.11g 54 MBit
+// NETWORK_INTERFACE_ETHERNET_ENC624J600    // 10/100 MBit
+// NETWORK_INTERFACE_ETHERNET_ENC28J60      // 10 MBit
+#define NETWORK_INTERFACE               (NETWORK_INTERFACE_ETHERNET_ENC624J600)
+
+// Select which Network modules you would like to Enable. Set 1 (1) to enable
+#define NETWORK_USE_UART1               (0) // Forward UART1 data
+#define NETWORK_USE_UART2               (1) // Forward UART2 data
+#define NETWORK_USE_FLYBYWIRE           (0) // Joystick -> flight surfaces (over the internet!)
+#define NETWORK_USE_MAVLINK             (0) // Forward MAVLink data
+#define NETWORK_USE_DEBUG               (0) // Debug - Simple Telnet in ASCII
+#define NETWORK_USE_ADSB                (0)
+#define NETWORK_USE_LOGO                (0)
+#define NETWORK_USE_CAM_TRACKING        (0) // Camera Tracking, also set CAM_USE_EXTERNAL_TARGET_DATA=1
+#define NETWORK_USE_GPSTEST             (0) // GPS spoof testing
+#define NETWORK_USE_PWMREPORT           (0) // PWM pin states
+#define NETWORK_USE_XPLANE              (0) // Talk directly to Xplane without a plug. Weeee!!!!!
+#define NETWORK_USE_TELEMETRY_EXTRA     (0) // Same data as what SERIAL_UDB_EXTRA generates in telemetry.c
+#define NETWORK_USE_GROUND_STATION      (0) // Reduced binary telemetry data for ground stations - proprietary
+#define NETWORK_USE_AIRCRAFT_CONFIG     (1) // read/write the config of the system such as options.h and set select values like PIDs
+
+
+

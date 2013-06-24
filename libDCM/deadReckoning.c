@@ -61,6 +61,16 @@ union longww IMUlocationx =  { 0 };
 union longww IMUlocationy =  { 0 };
 union longww IMUlocationz =  { 0 };
 
+//		velocity, as estimated by dead-reckoning (virtual GPS)
+int16_t DRvelocityx = 0 ;
+int16_t DRvelocityy = 0 ;
+int16_t DRvelocityz = 0 ;
+
+//		location, as estimated by dead-reckoning (virtual GPS)
+union longww DRlocationx =  { 0 } ;
+union longww DRlocationy =  { 0 } ;
+union longww DRlocationz =  { 0 } ;
+
 //	integral of acceleration
 union longww IMUintegralAccelerationx = { 0 };
 union longww IMUintegralAccelerationy = { 0 };
@@ -76,6 +86,70 @@ fractional velocityErrorEarth[] = { 0 , 0 , 0 };
 
 extern int16_t errorYawground[];
 
+
+// determine whether or not to use the virtual GPS
+// instead of the real one. For now, for testing purposes,
+// control this by turning the radio on/off.
+// later, this is where the logic will be for assessing GPS health
+boolean use_virtual_gps()
+{
+	if ( udb_flags._.radio_on == 1 )
+	{
+		return false ;
+	}
+	else
+	{
+		return true ;
+	}
+}
+
+void compute_virtual_gps()
+{
+	union longww accum ;
+	if ( use_virtual_gps() ){
+
+		accum.WW = - ( __builtin_mulus ( air_speed_3DGPS , rmat[1] ) << 2 ) ;
+		DRvelocityx = accum._.W1 + estimatedWind[0] ;
+
+		accum.WW =  ( __builtin_mulus ( air_speed_3DGPS , rmat[4] ) << 2 ) ;
+		DRvelocityy = accum._.W1 + estimatedWind[1] ;
+
+		//	integrate DR horizontal velocity to update the DR horizontal location	
+		DRlocationx.WW += ( __builtin_mulss( ((int16_t)(VELOCITY2LOCATION)) ,  DRvelocityx )>>4 ) ;
+		DRlocationy.WW += ( __builtin_mulss( ((int16_t)(VELOCITY2LOCATION)) ,  DRvelocityy )>>4 ) ;
+	
+		DRlocationz._.W1 = GPSlocation.z ;
+		DRlocationz._.W0 = 0 ;
+		DRvelocityz = GPSvelocity.z ;
+	}
+	else {
+		DRlocationx._.W1 = GPSlocation.x ;
+		DRlocationy._.W1 = GPSlocation.y ;
+		DRlocationz._.W1 = GPSlocation.z ;
+
+		DRlocationx._.W0 = 0 ;
+		DRlocationy._.W0 = 0 ;
+		DRlocationz._.W0 = 0 ;
+
+		DRvelocityx = GPSvelocity.x ;
+		DRvelocityy = GPSvelocity.y ;
+		DRvelocityz = GPSvelocity.z ;
+	}
+}
+
+int16_t gps_imu_location_offset[3] = { 0 , 0 , 0 } ;
+int16_t gps_imu_location_offset_previous[3] = { 0 , 0 , 0 } ; 
+int16_t gps_imu_location_offset_rate[3] = { 0 , 0 , 0 } ; 
+int16_t gps_imu_location_offset_rate_previous[3] = { 0 , 0 , 0 } ; 
+
+int16_t gps_imu_velocity_offset[3] = { 0 , 0 , 0 } ;
+int16_t gps_imu_velocity_offset_previous[3] = { 0 , 0 , 0 } ;
+
+int16_t gps_location_noise[3] = { 0 , 0 , 0 } ;
+int16_t gps_velocity_noise[3] = { 0 , 0 , 0 } ;
+int16_t gps_location_noise_total = 0 ;
+int16_t gps_velocity_noise_total = 0 ;
+
 void dead_reckon(void)
 {
 	if (dcm_flags._.dead_reckon_enable == 1)  // wait for startup of GPS
@@ -89,6 +163,8 @@ void dead_reckon(void)
 		IMUlocationx.WW += (__builtin_mulss(((int16_t)(VELOCITY2LOCATION)) ,  IMUintegralAccelerationx._.W1)>>4);
 		IMUlocationy.WW += (__builtin_mulss(((int16_t)(VELOCITY2LOCATION)) ,  IMUintegralAccelerationy._.W1)>>4);
 		IMUlocationz.WW += (__builtin_mulss(((int16_t)(VELOCITY2LOCATION)) ,  IMUintegralAccelerationz._.W1)>>4);
+
+		compute_virtual_gps();
 
 		if (dead_reckon_clock > 0)
 		//	apply drift adjustments only while valid GPS data is in force.
@@ -127,13 +203,42 @@ void dead_reckon(void)
 			dcm_flags._.reckon_req = 0;
 			dead_reckon_clock = DR_PERIOD;
 	
-			locationErrorEarth[0] = GPSlocation.x - IMUlocationx._.W1;
-			locationErrorEarth[1] = GPSlocation.y - IMUlocationy._.W1;
-			locationErrorEarth[2] = GPSlocation.z - IMUlocationz._.W1;
+			locationErrorEarth[0] = DRlocationx._.W1 - IMUlocationx._.W1 ;
+			locationErrorEarth[1] = DRlocationy._.W1 - IMUlocationy._.W1 ;
+			locationErrorEarth[2] = DRlocationz._.W1 - IMUlocationz._.W1 ;
 
-			velocityErrorEarth[0] = GPSvelocity.x - IMUintegralAccelerationx._.W1;
-			velocityErrorEarth[1] = GPSvelocity.y - IMUintegralAccelerationy._.W1;
-			velocityErrorEarth[2] = GPSvelocity.z - IMUintegralAccelerationz._.W1;
+			velocityErrorEarth[0] = DRvelocityx - IMUintegralAccelerationx._.W1 ;
+			velocityErrorEarth[1] = DRvelocityy - IMUintegralAccelerationy._.W1 ;
+			velocityErrorEarth[2] = DRvelocityz - IMUintegralAccelerationz._.W1 ;
+
+//			GPS health check computations
+
+			gps_imu_location_offset[0] = GPSlocation.x - IMUlocationx._.W1 ;
+			gps_imu_location_offset[1] = GPSlocation.y - IMUlocationy._.W1 ;
+			gps_imu_location_offset[2] = GPSlocation.z - IMUlocationz._.W1 ;
+
+			VectorSubtract( 3 , gps_imu_location_offset_rate , gps_imu_location_offset , gps_imu_location_offset_previous ) ;
+
+			gps_location_noise[0] += ( gps_imu_location_offset_rate[0] - gps_imu_location_offset_rate_previous[0] ) - ( ( gps_location_noise[0] ) >> 2 ) ;
+			gps_location_noise[1] += ( gps_imu_location_offset_rate[1] - gps_imu_location_offset_rate_previous[1] ) - ( ( gps_location_noise[1] ) >> 2 ) ;
+			gps_location_noise[2] += ( gps_imu_location_offset_rate[2] - gps_imu_location_offset_rate_previous[2] ) - ( ( gps_location_noise[2] ) >> 2 ) ;
+
+			VectorCopy ( 3 , gps_imu_location_offset_previous , gps_imu_location_offset ) ;
+			VectorCopy ( 3 , gps_imu_location_offset_rate_previous , gps_imu_location_offset_rate ) ;
+
+			gps_imu_velocity_offset[0] = GPSvelocity.x - IMUvelocityx._.W1 ;
+			gps_imu_velocity_offset[1] = GPSvelocity.y - IMUvelocityy._.W1 ;
+			gps_imu_velocity_offset[2] = GPSvelocity.z - IMUvelocityz._.W1 ;
+
+			gps_velocity_noise[0] += ( gps_imu_velocity_offset[0] - gps_imu_velocity_offset_previous[0] ) - ( ( gps_velocity_noise[0] ) >> 2 ) ;
+			gps_velocity_noise[1] += ( gps_imu_velocity_offset[1] - gps_imu_velocity_offset_previous[1] ) - ( ( gps_velocity_noise[1] ) >> 2 ) ;
+			gps_velocity_noise[2] += ( gps_imu_velocity_offset[2] - gps_imu_velocity_offset_previous[2] ) - ( ( gps_velocity_noise[2] ) >> 2 ) ;	
+
+			VectorCopy ( 3 , gps_imu_velocity_offset_previous , gps_imu_velocity_offset ) ;
+
+			gps_location_noise_total = abs( gps_location_noise[0] ) + abs( gps_location_noise[1] ) +abs( gps_location_noise[2] ) ;
+			gps_velocity_noise_total = abs( gps_velocity_noise[0] ) + abs( gps_velocity_noise[1] ) +abs( gps_velocity_noise[2] ) ;
+		
 		}
 	}
 	else
