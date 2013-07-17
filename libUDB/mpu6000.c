@@ -55,24 +55,20 @@ void MPU6000_init16(void)
 // MPU-6000 maximum SPI clock is specified as 1 MHz for all registers
 //    however the datasheet states that the sensor and interrupt registers
 //    may be read using an SPI clock of 20 Mhz
-//    NOTE!!: the SPI limit on the dsPIC is 10 Mhz
+// Warning: the SPI limit on the dsPIC is 10 Mhz
 
 // Primary prescaler options   1:1/4/16/64
 // Secondary prescaler options 1:1 to 1:8
 
-// As these register accesses are one time only during initial setup lets be
-//    conservative and only run the SPI bus at half the maximum specified speed <-- Does not work reliability
-// In testing... any init speed less than 1MHz does not work at 16/32/64 MIPS, both 1 MHz and 2 MHz work
-
 #if (MIPS == 64)
-	// set prescaler for FCY/64 = 1 MHz at 64 MIPS
-	initMPUSPI_master16(SEC_PRESCAL_4_1, PRI_PRESCAL_16_1);
+	// set prescaler for FCY/96 = 667 kHz at 64MIPS
+	initMPUSPI_master16(SEC_PRESCAL_6_1, PRI_PRESCAL_16_1);
 #elif (MIPS == 32)
-	// set prescaler for FCY/32 = 1 MHz at 32 MIPS
-	initMPUSPI_master16(SEC_PRESCAL_2_1, PRI_PRESCAL_16_1);
+	// set prescaler for FCY/48 = 667 kHz at 32 MIPS
+	initMPUSPI_master16(SEC_PRESCAL_3_1, PRI_PRESCAL_16_1);
 #elif (MIPS == 16)
-	// set prescaler for FCY/16 = 1 MHz at 16 MIPS
-	initMPUSPI_master16(SEC_PRESCAL_1_1, PRI_PRESCAL_16_1);
+	// set prescaler for FCY/24 = 667 kHz at 16MIPS
+	initMPUSPI_master16(SEC_PRESCAL_6_1, PRI_PRESCAL_4_1);
 #else
 #error Invalid MIPS Configuration
 #endif // MIPS
@@ -129,7 +125,8 @@ void MPU6000_init16(void)
 	writeMPUSPIreg16(MPUREG_INT_ENABLE, BIT_DATA_RDY_EN); // INT: Raw data ready
 
 // Bump the SPI clock up towards 20 MHz for ongoing sensor and interrupt register reads
-//    NOTE!!: the SPI limit on the dsPIC is 10 Mhz
+// Warning: the SPI limit on the dsPIC is 10 Mhz
+
 // Primary prescaler options   1:1/4/16/64
 // Secondary prescaler options 1:1 to 1:8
 
@@ -155,7 +152,7 @@ void MPU6000_init16(void)
 	_INT1IE = 1; // Enable INT1 Interrupt Service Routine 
 #elif (MPU_SPI == 2)
 	_INT3EP = 1; // Setup INT3 pin to interrupt on falling edge
-	_INT1IP = INT_PRI_INT3;
+	_INT3IP = INT_PRI_INT3;
 	_INT3IF = 0; // Reset INT3 interrupt flag
 	_INT3IE = 1; // Enable INT3 Interrupt Service Routine 
 #endif
