@@ -24,6 +24,17 @@
 #include "interrupt.h"
 #include "heartbeat.h"
 
+#if (USE_I2C1_DRIVER == 1)
+#include "I2C.h"
+#endif
+
+// Include the NV memory services if required
+#if (USE_NV_MEMORY == 1)
+#include "NV_memory.h"
+#include "data_storage.h"
+#include "data_services.h"
+#endif
+
 //#define CPU_LOAD_PERCENT  1678  // = ((65536 * 100) / ((32000000 / 2) / (16 * 256)))
 //#define CPU_LOAD_PERCENT  839   // = ((65536 * 100) / ((64000000 / 2) / (16 * 256)))
 //      65536 to move result into upper 16 bits of 32 bit word
@@ -68,9 +79,11 @@ void udb_init_clock(void)   // initialize timers
 	_T1IE = 1;              // enable the interrupt
 	T1CONbits.TON = 1;      // turn on timer 1
 
-	// Timer 5 is used to measure time spent per second in interrupt routines
-	// which enables the calculation of the CPU loading.
-	// Timer 5 will be turned on in interrupt routines and turned off in main()
+	// Timer 5 is used to measure CPU usage
+	// Two techniques are supported, depending on whether USE_MCU_IDLE is selected
+	//   Timer 5 free runs until stopped during CPU idle
+	// else
+	//   Timer 5 will be turned on in interrupt routines and turned off in main()
 	TMR5 = 0;               // initialize timer
 	PR5 = 16*256;           // measure instructions in groups of 16*256 
 	_cpu_timer = 0;         // initialize the load counter
