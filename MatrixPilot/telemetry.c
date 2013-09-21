@@ -66,18 +66,19 @@ char serial_buffer[SERIAL_BUFFER_SIZE+1];
 int16_t sb_index = 0;
 int16_t end_index = 0;
 
-void init_serial(void)
+void init_serial()
 {
 #if (SERIAL_OUTPUT_FORMAT == SERIAL_OSD_REMZIBI)
 	dcm_flags._.nmea_passthrough = 1;
 #endif
 
-#ifndef SERIAL_BAUDRATE
-#define SERIAL_BAUDRATE 19200 // default
-#warning SERIAL_BAUDRATE set to default value of 19200 bps
-#endif
-
-	udb_serial_set_rate(SERIAL_BAUDRATE);
+	udb_serial_set_rate(19200);
+//	udb_serial_set_rate(38400);
+//	udb_serial_set_rate(57600);
+//	udb_serial_set_rate(115200);
+//	udb_serial_set_rate(230400);
+//	udb_serial_set_rate(460800);
+//	udb_serial_set_rate(921600); // yes, it really will work at this rate
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -340,7 +341,7 @@ void serial_output(char* format, ...)
 
 	va_list arglist;
 	va_start(arglist, format);
-
+	
 	int16_t len = vsnprintf(telebuf, sizeof(telebuf), format, arglist);
 
 //	static int maxlen = 0;
@@ -373,9 +374,9 @@ void serial_output(char* format, ...)
 void serial_output(char* format, ...)
 {
 	va_list arglist;
-
+	
 	va_start(arglist, format);
-
+	
 	int16_t start_index = end_index;
 	int16_t remaining = SERIAL_BUFFER_SIZE - start_index;
 
@@ -410,19 +411,12 @@ int16_t udb_serial_callback_get_byte_to_send(void)
 	return -1;
 }
 
-static int16_t telemetry_counter = 8;
-
-void restart_telemetry(void)
-{
-	telemetry_counter = 8;
-}
-
 #if (SERIAL_OUTPUT_FORMAT == SERIAL_DEBUG)
 
 void serial_output_8hz(void)
 {
 	serial_output("lat: %li, long: %li, alt: %li\r\nrmat: %i, %i, %i, %i, %i, %i, %i, %i, %i\r\n",
-	    lat_gps.WW, lon_gps.WW, alt_sl_gps.WW,
+	    lat_gps.WW, long_gps.WW, alt_sl_gps.WW,
 	    rmat[0], rmat[1], rmat[2],
 	    rmat[3], rmat[4], rmat[5],
 	    rmat[6], rmat[7], rmat[8]);
@@ -489,7 +483,7 @@ void serial_output_8hz(void)
 	{
 		serial_output("!!!LAT:%li,LON:%li,SPD:%.2f,CRT:%.2f,ALT:%li,ALH:%i,CRS:%.2f,BER:%i,WPN:%i,DST:%i,BTV:%.2f***\r\n"
 		              "+++THH:%i,RLL:%li,PCH:%li,STT:%i,***\r\n",
-		    lat_gps.WW / 10, lon_gps.WW / 10, (float)(sog_gps.BB / 100.0), (float)(climb_gps.BB / 100.0),
+		    lat_gps.WW / 10, long_gps.WW / 10, (float)(sog_gps.BB / 100.0), (float)(climb_gps.BB / 100.0),
 		    (alt_sl_gps.WW - alt_origin.WW) / 100, desiredHeight, (float)(cog_gps.BB / 100.0), desired_dir_deg,
 		    waypointIndex, tofinish_line, (float)(voltage_milis.BB / 100.0), 
 		    (int16_t)((udb_pwOut[THROTTLE_OUTPUT_CHANNEL] - udb_pwTrim[THROTTLE_OUTPUT_CHANNEL])/20),
@@ -509,7 +503,7 @@ extern int16_t waypointIndex;
 
 void serial_output_8hz(void)
 {
-//	static int16_t telemetry_counter = 8;
+	static int16_t telemetry_counter = 8;
 	static int toggle = 0;
 #if (SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA)
 	// SERIAL_UDB_EXTRA expected to be used with the OpenLog which can take greater transfer speeds than Xbee
@@ -529,8 +523,8 @@ void serial_output_8hz(void)
 			serial_output("\r\nF14:WIND_EST=%i:GPS_TYPE=%i:DR=%i:BOARD_TYPE=%i:AIRFRAME=%i:"
 			              "RCON=0x%X:TRAP_FLAGS=0x%X:TRAP_SOURCE=0x%lX:ALARMS=%i:"  \
 			              "CLOCK=%i:FP=%d:\r\n",
-			    WIND_ESTIMATION, GPS_TYPE, DEADRECKONING, BOARD_TYPE, AIRFRAME_TYPE,
-			    get_reset_flags(), trap_flags, trap_source, osc_fail_count,
+			    WIND_ESTIMATION, GPS_TYPE, DEADRECKONING, BOARD_TYPE, AIRFRAME_TYPE, 
+			    get_reset_flags(), trap_flags, trap_source, osc_fail_count, 
 			    CLOCK_CONFIG, FLIGHT_PLAN_TYPE);
 			break;
 		case 7:
@@ -577,7 +571,7 @@ void serial_output_8hz(void)
 			serial_output("F2:T%li:S%d%d%d:N%li:E%li:A%li:W%i:a%i:b%i:c%i:d%i:e%i:f%i:g%i:h%i:i%i:c%u:s%i:cpu%u:bmv%i:"
 			              "as%i:wvx%i:wvy%i:wvz%i:\r\n",
 			    tow.WW, udb_flags._.radio_on, dcm_flags._.nav_capable, flags._.GPS_steering,
-			    lat_gps.WW, lon_gps.WW, alt_sl_gps.WW, waypointIndex,
+			    lat_gps.WW, long_gps.WW, alt_sl_gps.WW, waypointIndex,
 			    rmat[0], rmat[1], rmat[2],
 			    rmat[3], rmat[4], rmat[5],
 			    rmat[6], rmat[7], rmat[8],
@@ -601,7 +595,7 @@ void serial_output_8hz(void)
 				              "c%u:s%i:cpu%u:bmv%i:"
 				              "as%u:wvx%i:wvy%i:wvz%i:ma%i:mb%i:mc%i:svs%i:hd%i:",
 				    tow.WW, udb_flags._.radio_on, dcm_flags._.nav_capable, flags._.GPS_steering,
-				    lat_gps.WW, lon_gps.WW, alt_sl_gps.WW, waypointIndex,
+				    lat_gps.WW, long_gps.WW, alt_sl_gps.WW, waypointIndex,
 				    rmat[0], rmat[1], rmat[2],
 				    rmat[3], rmat[4], rmat[5],
 				    rmat[6], rmat[7], rmat[8],
@@ -634,7 +628,7 @@ void serial_output_8hz(void)
 				for (i= 1; i <= NUM_OUTPUTS; i++)
 					serial_output("p%io%i:",i,pwOut_save[i]);
 				serial_output("imx%i:imy%i:imz%i:lex%i:ley%i:lez%i:fgs%X:ofc%i:tx%i:ty%i:tz%i:G%d,%d,%d:",IMUlocationx._.W1,IMUlocationy._.W1,IMUlocationz._.W1,
-				    locationErrorEarth[0], locationErrorEarth[1], locationErrorEarth[2],
+				    locationErrorEarth[0], locationErrorEarth[1], locationErrorEarth[2], 
 				    flags.WW, osc_fail_count,
 				    IMUvelocityx._.W1, IMUvelocityy._.W1, IMUvelocityz._.W1, goal.x, goal.y, goal.height);
 //				serial_output("tmp%i:prs%li:alt%li:agl%li:",
@@ -653,7 +647,7 @@ void serial_output_8hz(void)
 #if (SERIAL_OUTPUT_FORMAT == SERIAL_UDB_EXTRA)
 				if (udb_heartbeat_counter % 10 != 0) return;
 #endif
-				serial_output("F13:week%i:origN%li:origE%li:origA%li:\r\n", week_no, lat_origin.WW, lon_origin.WW, alt_origin);
+				serial_output("F13:week%i:origN%li:origE%li:origA%li:\r\n", week_no, lat_origin.WW, long_origin.WW, alt_origin);
 				flags._.f13_print_req = 0;
 			}
 			break;
@@ -669,8 +663,6 @@ void serial_output_8hz(void)
 }
 
 #elif (SERIAL_OUTPUT_FORMAT == SERIAL_OSD_REMZIBI)
-
-#warning SERIAL_OSD_REMZIBI undergoing merge to trunk
 
 void serial_output_8hz(void)
 {
@@ -694,7 +686,7 @@ extern int16_t I2ERROR;
 extern int16_t I2messages;
 extern int16_t I2interrupts;
 
-#if (BOARD_TYPE == UDB4_BOARD || BOARD_TYPE == UDB5_BOARD)
+#if (BOARD_TYPE == UDB4_BOARD)
 #define I2CCONREG I2C2CON
 #define I2CSTATREG I2C2STAT
 #else
@@ -759,11 +751,9 @@ void serial_output_8hz(void)
 
 #else // If SERIAL_OUTPUT_FORMAT is set to SERIAL_NONE, or is not set
 
-#if (USE_OSD != OSD_MINIM) && (USE_OSD != OSD_REMZIBI)
 void serial_output_8hz(void)
 {
 }
-#endif // USE_OSD
 
 #endif
 #endif // (SERIAL_OUTPUT_FORMAT != SERIAL_MAVLINK)

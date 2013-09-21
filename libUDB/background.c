@@ -24,6 +24,17 @@
 #include "interrupt.h"
 #include "heartbeat.h"
 
+#if (USE_I2C1_DRIVER == 1)
+#include "I2C.h"
+#endif
+
+// Include the NV memory services if required
+#if (USE_NV_MEMORY == 1)
+#include "NV_memory.h"
+#include "data_storage.h"
+#include "data_services.h"
+#endif
+
 //#define CPU_LOAD_PERCENT  1678  // = ((65536 * 100) / ((32000000 / 2) / (16 * 256)))
 //#define CPU_LOAD_PERCENT  839   // = ((65536 * 100) / ((64000000 / 2) / (16 * 256)))
 //      65536 to move result into upper 16 bits of 32 bit word
@@ -72,7 +83,7 @@ void udb_init_clock(void)   // initialize timers
 	// Two techniques are supported, depending on whether USE_MCU_IDLE is selected
 	//   Timer 5 free runs until stopped during CPU idle
 	// else
-	// Timer 5 will be turned on in interrupt routines and turned off in main()
+	//   Timer 5 will be turned on in interrupt routines and turned off in main()
 	TMR5 = 0;               // initialize timer
 	PR5 = 16*256;           // measure instructions in groups of 16*256 
 	_cpu_timer = 0;         // initialize the load counter
@@ -88,14 +99,14 @@ void udb_init_clock(void)   // initialize timers
 	T5CONbits.TON = 0;      // turn off timer 5 until we enter an interrupt
 #endif // USE_MCU_IDLE
 
-	// The Timer7 interrupt is used to trigger background tasks such as
+	// The Timer7 interrupt is used to trigger background tasks such as 
 	// navigation processing after binary data is received from the GPS.
 	_T7IP = INT_PRI_T7;     // set interrupt priority
 	_T7IF = 0;              // clear the interrupt
 	_T7IE = 1;              // enable the interrupt
 
-	// Enable the interrupt, but not the timer. This is used as a trigger from
-	// the high priority heartbeat ISR to start all the HEARTBEAT_HZ processing
+	// Enable the interrupt, but not the timer. This is used as a trigger from 
+	// the high priority heartbeat ISR to start all the HEARTBEAT_HZ processing 
 	// at a lower priority.
 	_T6IP = INT_PRI_T6;     // set interrupt priority
 	_T6IF = 0;              // clear the PWM interrupt
@@ -183,8 +194,6 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _T6Interrupt(void)
 
 	_T6IF = 0; // clear the interrupt
 
-	LED_BLUE = LED_OFF;     // indicates logfile activity
-
 #if (NORADIO != 1)
 	// 20Hz testing of radio link
 	if ((udb_heartbeat_counter % (HEARTBEAT_HZ/20)) == 1)
@@ -235,7 +244,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _T6Interrupt(void)
 	nv_memory_service_trigger();
 	storage_service_trigger();
 	data_services_trigger();
-#endif
+#endif	
 
 #if (USE_FLEXIFUNCTION_MIXING == 1)
 	flexiFunctionServiceTrigger();

@@ -59,10 +59,8 @@ void cmd_ver(void)
 
 void cmd_format(void)
 {
-#if (BOARD_TYPE == AUAV3_BOARD)
 	printf("formatting dataflash\r\n");
 	AT45D_FormatFS();
-#endif // BOARD_TYPE
 }
 
 void cmd_start(void)

@@ -24,7 +24,6 @@
 #include "magnetometer.h"
 #include "magnetometerOptions.h"
 #include <stdio.h>
-#include <stdlib.h>
 
 int16_t udb_magFieldBody[3];                    // magnetic field in the body frame of reference 
 int16_t udb_magOffset[3] = { 0 , 0 , 0 };       // magnetic offset in the body frame of reference
@@ -55,10 +54,10 @@ int16_t magMessage = 0;                         // message type
 #endif
 
 // local (static) variables
-static uint8_t hmc5883read_index[]  = { 0x03 }; // Address of the first register to read
+static uint8_t hmc5883read_index[] = { 0x03 };  // Address of the first register to read
 static uint8_t hmc5883write_index[] = { 0x00 }; // Address of the first register to read
 
-static uint8_t enableMagRead[]        = { 0x10 , 0x20 , 0x00 }; // Continous measurament
+static uint8_t enableMagRead[] =        { 0x10 , 0x20 , 0x00 }; // Continous measurament
 static uint8_t enableMagCalibration[] = { 0x11 , 0x20 , 0x01 }; // Positive bias (Self Test) and single measurament
 static uint8_t resetMagnetometer[]    = { 0x10 , 0x20 , 0x02 }; // Idle mode (Reset??)
 
@@ -77,7 +76,7 @@ static magnetometer_callback_funcptr magnetometer_callback = NULL;
 static void I2C_callback(boolean I2CtrxOK);
 
 
-void rxMagnetometer(magnetometer_callback_funcptr callback)     // service the magnetometer
+void rxMagnetometer(magnetometer_callback_funcptr callback)  // service the magnetometer
 {
 	magnetometer_callback = callback;
 
@@ -164,8 +163,6 @@ static void I2C_callback(boolean I2CtrxOK)
 			udb_magFieldBody[1] = MAG_Y_SIGN((__builtin_mulsu((magFieldRaw[MAG_Y_AXIS]), magGain[MAG_Y_AXIS]))>>14) - (udb_magOffset[1]>>1);
 			udb_magFieldBody[2] = MAG_Z_SIGN((__builtin_mulsu((magFieldRaw[MAG_Z_AXIS]), magGain[MAG_Z_AXIS]))>>14) - (udb_magOffset[2]>>1);
 
-//	printf("mag %u %u %u\r\n", udb_magFieldBody[0], udb_magFieldBody[1], udb_magFieldBody[2]);
-
 			if ((abs(udb_magFieldBody[0]) < MAGNETICMAXIMUM) &&
 			    (abs(udb_magFieldBody[1]) < MAGNETICMAXIMUM) &&
 			    (abs(udb_magFieldBody[2]) < MAGNETICMAXIMUM))
@@ -199,9 +196,8 @@ static void I2C_callback(boolean I2CtrxOK)
 	}
 }
 
-void HILSIM_MagData(magnetometer_callback_funcptr callback)
+void HILSIM_MagData(void)
 {
-	magnetometer_callback = callback;
 	magMessage = 7;     // indicate valid magnetometer data
 	I2C_callback(true); // run the magnetometer computations
 }

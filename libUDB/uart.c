@@ -19,6 +19,7 @@
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
 
+//#include "options.h"
 #include "defines.h"
 #include "oscillator.h"
 #include "uart.h"
@@ -77,6 +78,7 @@
 	#endif
 
 #endif // #if defined (__C30__)
+
 
 #define _INIT(x, y) \
 void Init(void) \

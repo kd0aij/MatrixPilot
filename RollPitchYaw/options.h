@@ -62,9 +62,9 @@
 //
 // The following 2 orientations are "knife edge" mountings
 // ORIENTATION_ROLLCW: board rolled 90 degrees clockwise,
-//      from point of view of the pilot
+//        from point of view of the pilot
 // ORIENTATION_ROLLCW180: board rolled 90 degrees clockwise,
-//      from point of view of the pilot, then rotate the board 180 around the Z axis of the plane,
+//        from point of view of the pilot, then rotate the board 180 around the Z axis of the plane,
 #define BOARD_ORIENTATION                   ORIENTATION_FORWARDS
 
 

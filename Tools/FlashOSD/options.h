@@ -22,9 +22,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // options.h
 // Bill Premerlani's UAV Dev Board
-//
+// 
 // This file includes all of the user-configuration for this firmware,
-//
+// 
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@
 // receiver. (Totally autonomous.)  This is just meant for debugging.  It is not recommended that
 // you actually use this since there is no automatic landing code yet, and you'd have no manual
 // control to fall back on if things go wrong.  It may not even be legal in your area.
-#define NORADIO                             1
+#define NORADIO								1
 
 
 ////////////////////////////////////////////////////////////////////////////////

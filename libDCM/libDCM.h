@@ -69,7 +69,6 @@ boolean gps_nav_valid(void);
 // Should navigation be based on a "virtual GPS" instead of the real GPS
 boolean use_virtual_gps(void);
 
-/*
 // Rotation utility functions
 int16_t cosine(int8_t angle);
 int16_t sine(int8_t angle);
@@ -93,7 +92,6 @@ uint16_t vector3_mag(int16_t, int16_t, int16_t);
 uint16_t vector2_normalize(int16_t result[], int16_t input[]);
 uint16_t vector3_normalize(int16_t result[], int16_t input[]);
 int32_t long_scale(int32_t arg1, int16_t arg2);
- */
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vars
@@ -123,7 +121,7 @@ extern int16_t gps_data_age;
 extern uint16_t ground_velocity_magnitudeXY;
 extern uint16_t air_speed_magnitudeXY;
 
-extern union longbbbb lat_gps,    lon_gps,    alt_sl_gps;
-extern union longbbbb lat_origin, lon_origin, alt_origin;
+extern union longbbbb lat_gps, long_gps, alt_sl_gps;
+extern union longbbbb lat_origin, long_origin, alt_origin;
 
 #endif // LIB_DCM_H

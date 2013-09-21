@@ -28,13 +28,6 @@
 #include "mode_switch.h"
 #endif
 
-// Select which Input Capture pin the PPM device is connected to
-// changing this can be useful when using PPM and fitting a UDB into
-// very tight airframes, as it allows alternative input pins to be
-// assigned for connection to the receiver.
-// If not using PPM, then this must be left set to '1'
-#define PPM_IC 1
-#define IC_PIN IC_PIN1
 
 #if (MIPS == 64)
 #define TMR_FACTOR 4
@@ -50,13 +43,13 @@
 //#define DEBUG_FAILSAFE_MIN_MAX
 
 
-// Measure the pulse widths of the servo channel inputs from the radio.
-// The dsPIC makes this rather easy to do using its capture feature.
+//	Measure the pulse widths of the servo channel inputs from the radio.
+//	The dsPIC makes this rather easy to do using its capture feature.
 
-// One of the channels is also used to validate pulse widths to detect loss of radio.
+//	One of the channels is also used to validate pulse widths to detect loss of radio.
 
-// The pulse width inputs can be directly converted to units of pulse width outputs to control
-// the servos by simply dividing by 2. (need to check validity of this statement - RobD)
+//	The pulse width inputs can be directly converted to units of pulse width outputs to control
+//	the servos by simply dividing by 2. (need to check validity of this statement - RobD)
 
 int16_t udb_pwIn[NUM_INPUTS+1];     // pulse widths of radio inputs
 int16_t udb_pwTrim[NUM_INPUTS+1];   // initial pulse widths for trimming
@@ -64,15 +57,6 @@ int16_t udb_pwTrim[NUM_INPUTS+1];   // initial pulse widths for trimming
 int16_t failSafePulses = 0;
 int16_t noisePulses = 0;
 
-
-void udb_servo_record_trims(void)
-{
-	int16_t i;
-	for (i = 0; i <= NUM_INPUTS; i++)
-	{
-		udb_pwTrim[i] = udb_pwIn[i];
-	}
-}
 
 void udb_init_capture(void)
 {
@@ -84,7 +68,7 @@ void udb_init_capture(void)
 	{	
 		for (i = 0; i <= NUM_INPUTS; i++)
 	#if (FIXED_TRIMPOINT == 1)
-			if (i == THROTTLE_OUTPUT_CHANNEL)
+			if(i == THROTTLE_OUTPUT_CHANNEL)
 				udb_pwTrim[i] = udb_pwIn[i] = THROTTLE_TRIMPOINT;
 			else
 				udb_pwTrim[i] = udb_pwIn[i] = CHANNEL_TRIMPOINT;
@@ -108,7 +92,7 @@ void udb_init_capture(void)
 #define REGTOK1 N1
 #define REGTOK2 N2
 #define IC1VAL 0x0401
-#else // UDB4 or 5
+#else
 #define REGTOK1 N
 #define REGTOK2 N
 #define IC1VAL 0x0081
@@ -125,7 +109,7 @@ void udb_init_capture(void)
 }
 #define IC_INIT(x, y, z) _IC_INIT(x, y, z)
 
-	if (NUM_INPUTS > 0) IC_INIT(PPM_IC, REGTOK1, REGTOK2);
+	if (NUM_INPUTS > 0) IC_INIT(1, REGTOK1, REGTOK2);
 #if (USE_PPM_INPUT == 0)
 	if (NUM_INPUTS > 1) IC_INIT(2, REGTOK1, REGTOK2);
 	if (NUM_INPUTS > 2) IC_INIT(3, REGTOK1, REGTOK2);
@@ -230,32 +214,8 @@ IC_HANDLER(8, REGTOK1, IC_PIN8);
 #define PPM_PULSE_VALUE 1
 #endif
 
-//#if (BOARD_TYPE == AUAV3_BOARD)
-//#define ICBNE(x) IC##x##CON1bits.ICBNE
-//#else
-//#define ICBNE(x) IC##x##CONbits.ICBNE
-//#endif
-
-//#define REGTOK1 N1
-#define ICBNE(x, y) IC##x##CO##y##bits.ICBNE
-
-#define _IC_TIME(x, y) \
-static inline uint16_t ic_time(void) \
-{ \
-	uint16_t time = 0; \
-	_IC##x##IF = 0; \
-	while (ICBNE(x, y)) time = IC##x##BUF; \
-	return time; \
-}
-#define IC_TIME(x, y) _IC_TIME(x, y)
-
-IC_TIME(PPM_IC, REGTOK1);
-
-#define _IC_INTERRUPT(x) _IC##x##Interrupt(void)
-#define IC_INTERRUPT(x) _IC_INTERRUPT(x)
-
 // PPM Input on Channel 1
-void __attribute__((__interrupt__,__no_auto_psv__)) IC_INTERRUPT(PPM_IC)
+void __attribute__((__interrupt__,__no_auto_psv__)) _IC1Interrupt(void)
 {
 	indicate_loading_inter;
 	interrupt_save_set_corcon;
@@ -264,10 +224,17 @@ void __attribute__((__interrupt__,__no_auto_psv__)) IC_INTERRUPT(PPM_IC)
 	static uint8_t ppm_ch = 0;
 	uint16_t time = 0;
 
-	time = ic_time();
-
+	_IC1IF = 0;
+#if (BOARD_TYPE == AUAV3_BOARD)
+	while (IC1CON1bits.ICBNE)
+#else
+	while (IC1CONbits.ICBNE)
+#endif
+	{
+		time = IC1BUF;
+	}
 #if (USE_PPM_INPUT == 1)
-	if (IC_PIN == PPM_PULSE_VALUE)
+	if (IC_PIN1 == PPM_PULSE_VALUE)
 	{
 		uint16_t pulse = time - rise_ppm;
 		rise_ppm = time;
@@ -292,7 +259,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) IC_INTERRUPT(PPM_IC)
 	uint16_t pulse = time - rise_ppm;
 	rise_ppm = time;
 
-	if (IC_PIN == PPM_PULSE_VALUE)
+	if (IC_PIN1 == PPM_PULSE_VALUE)
 	{
 		if (pulse > MIN_SYNC_PULSE_WIDTH)
 		{

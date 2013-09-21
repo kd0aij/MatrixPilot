@@ -21,7 +21,6 @@
 #include "options.h"
 #include "USB/usb.h"
 #include "USB/usb_function_cdc.h"
-#include "usb_cdc.h"
 
 void BlinkUSBStatus(void);
 
