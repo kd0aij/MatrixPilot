@@ -40,7 +40,7 @@ extern int16_t waggle;
 //#define WAGGLE_SIZE 300
 
 struct flag_bits {
-	uint16_t unused                     : 4;
+	uint16_t unused                     : 5;
 	uint16_t save_origin                : 1;
 	uint16_t GPS_steering               : 1;
 	uint16_t pitch_feedback             : 1;
@@ -51,7 +51,6 @@ struct flag_bits {
 	uint16_t home_req                   : 1;
 	uint16_t rtl_hold                   : 1;
 	uint16_t f13_print_req              : 1;
-	uint16_t disable_throttle           : 1;
 	uint16_t update_autopilot_state_asap: 1;
 };
 
@@ -72,11 +71,7 @@ void yawCntrl(void);
 void altitudeCntrl(void);
 void setTargetAltitude(int16_t targetAlt);
 
-void init_yawCntrl(void);
-void init_rollCntrl(void);
-void init_pitchCntrl(void);
-void init_altitudeCntrl(void);
-void init_altitudeCntrlVariable(void);
+void init_yawCntrl(void);void init_rollCntrl(void);void init_pitchCntrl(void);
 
 
 // wind gain adjustment
@@ -123,12 +118,7 @@ int32_t cam_yawServoLimit(int32_t pwm_pulse);
 
 ////////////////////////////////////////////////////////////////////////////////
 // navigation.c
-void init_navigation(void);
-#ifdef USE_EXTENDED_NAV
-void set_goal(struct relative3D_32 fromPoint, struct relative3D_32 toPoint);
-#else
 void set_goal(struct relative3D fromPoint , struct relative3D toPoint);
-#endif // USE_EXTENDED_NAV
 void update_goal_alt(int16_t z);
 void compute_bearing_to_goal (void);
 void process_flightplan(void);
@@ -248,22 +238,15 @@ void camera_live_received_byte(uint8_t inbyte);
 void camera_live_commit(void);
 void camera_live_commit_values(const struct relative3D target);
 
-//#define CAM_VIEW_LAUNCH     { 0, 0, 0 }
+#define CAM_VIEW_LAUNCH     { 0, 0, 0 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // mp_osd.c
 void osd_run_step(void);
 
-//#define OSD_NTSC            0
-//#define OSD_PAL             1
-
-// new OSD types
-//#define OSD_NONE            0   // OSD disabled
-//#define OSD_NATIVE          1   // native OSD
-//#define OSD_REMZIBI         2   // Output data formatted to use as input to a Remzibi OSD
-//#define OSD_MINIM           3   // Output data formatted for minim OSD
-
+#define OSD_NTSC            0
+#define OSD_PAL             1
 
 #include "gain_variables.h"
 

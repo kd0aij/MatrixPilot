@@ -32,6 +32,24 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Set Up Board Type
+// See the MatrixPilot wiki for more details on different board types.
+#ifdef UDB4
+#define BOARD_TYPE                          UDB4_BOARD
+#endif
+#ifdef UDB5
+#define BOARD_TYPE                          UDB5_BOARD
+#endif
+#ifdef AUAV3
+#define BOARD_TYPE                          AUAV3_BOARD
+#endif
+
+#ifndef BOARD_TYPE
+#define BOARD_TYPE                          UDB5_BOARD
+#endif
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Use board orientation to change the mounting direction of the board.
 // Note:
 //      For UDB4, X arrow points to the front, GPS connectors are on the front.
@@ -50,7 +68,6 @@
 //        from point of view of the pilot
 // ORIENTATION_ROLLCW180: board rolled 90 degrees clockwise,
 //        from point of view of the pilot, then rotate the board 180 around the Z axis of the plane,
-//        so that the GPS connector points toward the tail of the plane
 #define BOARD_ORIENTATION                   ORIENTATION_FORWARDS
 
 
@@ -59,16 +76,13 @@
 //    AIRFRAME_STANDARD         Elevator, and Ailerons and/or Rudder control
 //    AIRFRAME_VTAIL            Ailerons(optional), and Elevator and Rudder as V-tail controls
 //    AIRFRAME_DELTA            Aileron and Elevator as Elevons, and Rudder(optional)
-//    AIRFRAME_HELI             Not currently supported
-//    AIRFRAME_QUAD             Under development
 // (Note that although AIRFRAME_HELI is also recognized, the code for this airframe type is not ready.)
 #define AIRFRAME_TYPE                       AIRFRAME_STANDARD
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Set this value to your GPS type.  (Set to GPS_STD, GPS_UBX_2HZ, GPS_UBX_4HZ, GPS_MTEK, GPS_NMEA, or GPS_NONE)
+// Set this value to your GPS type.  (Set to GPS_STD, GPS_UBX_2HZ, GPS_UBX_4HZ, or GPS_MTEK)
 #define GPS_TYPE                            GPS_STD
-//#define DEFAULT_GPS_BAUD                    57600   // added for GPS_NMEA support
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -146,15 +160,6 @@
 // the magnetometerOptions.h file, including declination and magnetometer type.
 #define MAG_YAW_DRIFT                       0
 
-// Define BAROMETER_ALTITUDE to be 1 to use barometer for altitude correction.
-// Otherwise, if set to 0 only the GPS will be used.
-// If you select this option, you also need to correctly set the LAUNCH_ALTITUDE
-// to your takeoff location altitude at the time of initialisation.
-#define BAROMETER_ALTITUDE                  0
-
-// Set your takeoff/launch/initialisation altitude in meters.
-#define LAUNCH_ALTITUDE                     300
-
 
 // Racing Mode
 // Setting RACING_MODE to 1 will keep the plane at a set throttle value while in waypoint mode.
@@ -183,7 +188,7 @@
 //
 // For UDB4 boards:
 // Use a single PPM input connection from the RC receiver to the UDB on RC input channel 1.
-// The 8 standard output channels remain unaffected.  2 additional output channels are available
+// The 8 standard output channels remain unaffected.  2 additional output channels are available 
 // on pins RA4 and RA1.
 //
 // For all boards:
@@ -222,10 +227,13 @@
 #define PASSTHROUGH_D_INPUT_CHANNEL         CHANNEL_UNUSED
 
 // NUM_OUTPUTS:
+// For classic boards: Set to 3, 4, 5, or 6
+//   3 enables only the standard 3 output channels
+//   4 also enables E0 as the 4th output channel
+//   5 also enables E2 as the 5th output channel
+//   6 also enables E4 as the 6th output channel
 //   NOTE: If USE_PPM_INPUT is enabled above, up to 9 outputs are available.)
-// For UDB4/5 boards: Set to 3-8 (or up to 10 using pins RA4 and RA1.)
-// For AUAV3 boards:  Set to 3-8 (or up to 11 using pins RE1, RA6 and RA7.)
-//                               (this needs developing, so contact the list)
+// For UDB4 boards: Set to 3-8 (or up to 10 using pins RA4 and RA1.)
 #define NUM_OUTPUTS                         4
 
 // Channel numbers for each output
@@ -345,14 +353,6 @@
 
 #define SERIAL_OUTPUT_FORMAT                SERIAL_NONE
 
-////////////////////////////////////////////////////////////////////////////////
-// Serial Output BAUD rate for either standard telemetry streams or MAVLink
-//  19200, 38400, 57600, 115200, 230400, 460800, 921600 // yes, it really will work at this rate
-//#define SERIAL_BAUDRATE                     19200 // default
-
-
-////////////////////////////////////////////////////////////////////////////////
-
 // MAVLink requires an aircraft Identifier (I.D) as it is deaigned to control multiple aircraft
 // Each aircraft in the sky will need a unique I.D. in the range from 0-255
 #define MAVLINK_SYSID                       55
@@ -361,11 +361,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 // On Screen Display
 // USE_OSD enables the OSD system.  Customize the OSD Layout in the osd_layout.h file.
-//#define USE_OSD                             0   // moved to osd.h
+#define USE_OSD                             0
 
 // NUM_ANALOG_INPUTS:
+// For classic boards: Set to 0, 1, or 2
+//   1 enables Radio In 1 as an analog Input
+//   2 also enables Radio In 2 as another analog Input
+//   NOTE: Can only be set this higher than 0 if USE_PPM_INPUT is enabled above.
 // For UDB4 boards: Set to 0-4.  Analog pins are AN15 - AN18.
-//#define NUM_ANALOG_INPUTS                   0 // moved to board specific config files
+#define NUM_ANALOG_INPUTS                   0
 
 // Channel numbers for each analog input
 //   - Only assign each channel number to one analog sensor
@@ -392,12 +396,6 @@
 #define ANALOG_CURRENT_INPUT_CHANNEL        CHANNEL_UNUSED
 #define ANALOG_VOLTAGE_INPUT_CHANNEL        CHANNEL_UNUSED
 #define ANALOG_RSSI_INPUT_CHANNEL           CHANNEL_UNUSED
-
-#define MAX_CURRENT                         900 // 90.0 Amps max for the sensor from SparkFun (in tenths of Amps)
-#define CURRENT_SENSOR_OFFSET               10  // Add 1.0 Amp to whatever value we sense
-
-#define MAX_VOLTAGE                         543 // 54.3 Volts max for the sensor from SparkFun (in tenths of Volts)
-#define VOLTAGE_SENSOR_OFFSET               0   // Add 0.0 Volts to whatever value we sense
 
 // RSSI - RC Receiver signal strength
 #define RSSI_MIN_SIGNAL_VOLTAGE             0.5     // Voltage when RSSI should show 0%
@@ -471,15 +469,15 @@
 // RUDDER_ELEV_MIX is the degree of elevator adjustment for rudder and banking
 // AILERON_ELEV_MIX is the degree of elevator adjustment for aileron
 // ELEVATOR_BOOST is the additional gain multiplier for the manually commanded elevator deflection
-#define PITCHGAIN                           0.10
-#define PITCHKD                             0.04
-#define RUDDER_ELEV_MIX                     0.20
-#define ROLL_ELEV_MIX                       0.05
-#define ELEVATOR_BOOST                      0.50
+#define PITCHGAIN                            0.10
+#define PITCHKD                              0.04
+#define RUDDER_ELEV_MIX                      0.20
+#define ROLL_ELEV_MIX                        0.05
+#define ELEVATOR_BOOST                       0.50
 
 // Neutral pitch angle of the plane (in degrees) when flying inverted
 // Use this to add extra "up" elevator while the plane is inverted, to avoid losing altitude.
-#define INVERTED_NEUTRAL_PITCH              8.0
+#define INVERTED_NEUTRAL_PITCH               8.0
 
 // Rudder/Yaw Control Gains
 // YAWKP_RUDDER is the proportional feedback gain for rudder navigation
@@ -639,6 +637,25 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Software In the Loop Simulation
+// Only set this to 1 when building for simulation directly on your computer instead of
+// running on a UDB.
+// See the MatrixPilot wiki for more info on using SILSIM.
+// Below are settings to configure the simulated UDB UARTs.
+// The SERIAL_RC_INPUT settings allow optionally talking over a serial port to a UDB
+// passing RC inputs through to the simulated UDB.
+#define SILSIM                              0
+#define SILSIM_GPS_RUN_AS_SERVER            0
+#define SILSIM_GPS_PORT                     14551       // default port to connect to XPlane HILSIM plugin
+#define SILSIM_GPS_HOST                     "127.0.0.1"
+#define SILSIM_TELEMETRY_RUN_AS_SERVER      0
+#define SILSIM_TELEMETRY_PORT               14550       // default port to connect to QGroundControl
+#define SILSIM_TELEMETRY_HOST               "127.0.0.1"
+#define SILSIM_SERIAL_RC_INPUT_DEVICE       ""          // i.e. "COM4" or "/dev/cu.usbserial-A600dP4v", or "" to disable
+#define SILSIM_SERIAL_RC_INPUT_BAUD         38400
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Flight Plan handling
 //
 // You can define your flightplan either using the UDB Waypoints format, or using UDB Logo
@@ -690,12 +707,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Optionally enable the new power saving idle mode of the MCU during mainloop
-#define USE_MCU_IDLE                        1
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Optionally enable experimental extended range navigation support (merged from ballon launch branch)
-//#define USE_EXTENDED_NAV
+#define USE_MCU_IDLE                        0
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -761,6 +773,7 @@
 #define GPS_PORT                            4
 #define TLM_PORT                            3
 #define DBG_PORT                            1
+
 
 // Set this to 1 to enable logging telemetry to dataflash on AUAV3
 #define USE_TELELOG                         0

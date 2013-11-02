@@ -147,27 +147,24 @@
 
 
 // UDB4
-#if ((NUM_ANALOG_INPUTS > 4) && (BOARD_TYPE != AUAV3_BOARD))
-	#error("Only 4 extra Analog Inputs are available the UDB.")
+#if (NUM_ANALOG_INPUTS > 4)
+	#error("Only 4 extra Analog Inputs are available the UDB4.")
 #endif
 
 // Check Analog Inputs
 #if (ANALOG_CURRENT_INPUT_CHANNEL > NUM_ANALOG_INPUTS)
-//	#error("ANALOG_CURRENT_INPUT_CHANNEL > NUM_ANALOG_INPUTS.")
+	#error("ANALOG_CURRENT_INPUT_CHANNEL > NUM_ANALOG_INPUTS.")
 #endif
 
 #if (ANALOG_VOLTAGE_INPUT_CHANNEL > NUM_ANALOG_INPUTS)
-//	#error("ANALOG_VOLTAGE_INPUT_CHANNEL > NUM_ANALOG_INPUTS.")
+	#error("ANALOG_VOLTAGE_INPUT_CHANNEL > NUM_ANALOG_INPUTS.")
 #endif
 
 #if (ANALOG_RSSI_INPUT_CHANNEL > NUM_ANALOG_INPUTS)
-//	#error("ANALOG_RSSI_INPUT_CHANNEL > NUM_ANALOG_INPUTS.")
+	#error("ANALOG_RSSI_INPUT_CHANNEL > NUM_ANALOG_INPUTS.")
 #endif
 
-#if (GPS_TYPE != GPS_STD && GPS_TYPE != GPS_UBX_2HZ && \
-     GPS_TYPE != GPS_UBX_4HZ && GPS_TYPE != GPS_MTEK && \
-     GPS_TYPE != GPS_NMEA && GPS_TYPE != GPS_NONE && \
-     GPS_TYPE != GPS_ALL)
+#if (GPS_TYPE != GPS_STD && GPS_TYPE != GPS_UBX_2HZ && GPS_TYPE != GPS_UBX_4HZ && GPS_TYPE != GPS_MTEK)
 	#error No valid GPS_TYPE specified.
 #endif
 
@@ -212,7 +209,7 @@
 	#error "max of 8 servo outputs currently supported for AUAV3"
 #endif
 
-#if ((CONSOLE_UART > 2) && (BOARD_TYPE != AUAV3_BOARD) && (SILSIM == 0))
+#if ((CONSOLE_UART > 2) && (BOARD_TYPE != AUAV3_BOARD))
 	#error("Console UART's greater than 2 only supported on AUAV3 board"
 #endif
 

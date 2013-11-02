@@ -31,7 +31,7 @@
 // HMC5883L_SF is the SparkFun HMC5883L
 
 //#define HMC5843
-#define HMC5883L
+//#define HMC5883L
 //#define HMC5883L_SF
 
 // Define magneticDeclination to be the magnectic declination, in degrees, measured

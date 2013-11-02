@@ -39,11 +39,18 @@
 // YAWKD_AILERON is the derivative feedback gain for ailerons in response to yaw rotation
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
 
-// MAVLINK, QGROUND CONTROL (Ground Control Station) can change these variables
-extern uint16_t rollkp;
-extern uint16_t rollkd;
-extern uint16_t yawkpail;
-extern uint16_t yawkdail;
+#if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || (GAINS_VARIABLE == 1) || (USE_CONFIGFILE == 1))
+   // MAVLINK, QGROUND CONTROL (Ground Control Station) can change these variables
+	extern uint16_t rollkp;
+	extern uint16_t rollkd;
+	extern uint16_t yawkpail;
+	extern uint16_t yawkdail;
+#else
+	extern const uint16_t rollkp;
+	extern const uint16_t rollkd;
+	extern const uint16_t yawkpail;
+	extern const uint16_t yawkdail;
+#endif
 //#define AILERON_BOOST                     1.0
 
 // Elevator/Pitch Control Gains
@@ -52,10 +59,17 @@ extern uint16_t yawkdail;
 // RUDDER_ELEV_MIX is the degree of elevator adjustment for rudder and banking
 // AILERON_ELEV_MIX is the degree of elevator adjustment for aileron
 // ELEVATOR_BOOST is the additional gain multiplier for the manually commanded elevator deflection
-extern uint16_t pitchgain;
-extern uint16_t pitchkd;
-extern uint16_t rudderElevMixGain;
-extern uint16_t rollElevMixGain;
+#if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || (GAINS_VARIABLE == 1) || (USE_CONFIGFILE == 1))
+	extern uint16_t pitchgain;
+	extern uint16_t pitchkd;
+	extern uint16_t rudderElevMixGain;
+	extern uint16_t rollElevMixGain;
+#else
+	extern const uint16_t pitchgain;
+	extern const uint16_t pitchkd;
+	extern const uint16_t rudderElevMixGain;
+	extern const uint16_t rollElevMixGain;
+#endif
 //#define ELEVATOR_BOOST                    0.5
 
 // Neutral pitch angle of the plane (in degrees) when flying inverted
@@ -70,10 +84,17 @@ extern uint16_t rollElevMixGain;
 // MANUAL_AILERON_RUDDER_MIX is the fraction of manual aileron control to mix into the rudder when
 // in stabilized or waypoint mode.  This mainly helps aileron-initiated turning while in stabilized.
 // RUDDER_BOOST is the additional gain multiplier for the manually commanded rudder deflection
-extern uint16_t yawkprud;
-extern uint16_t yawkdrud;
-extern uint16_t rollkprud;
-extern uint16_t rollkdrud;
+#if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || (GAINS_VARIABLE == 1) || (USE_CONFIGFILE == 1))
+	extern uint16_t yawkprud;
+	extern uint16_t yawkdrud;
+	extern uint16_t rollkprud;
+	extern uint16_t rollkdrud;
+#else
+	extern const uint16_t yawkprud;
+	extern const uint16_t yawkdrud;
+	extern const uint16_t rollkprud;
+	extern const uint16_t rollkdrud;
+#endif
 //extern uint16_t MANUAL_AILERON_RUDDER_MIX 0.20
 //#define RUDDER_BOOST                      1.0
 
@@ -91,12 +112,21 @@ extern uint16_t rollkdrud;
 // HOVER_NAV_MAX_PITCH_RADIUS is the radius around a waypoint in meters, within which the HOVER_PITCH_TOWARDS_WP
 //                            value is proportionally scaled down.
 
-extern uint16_t hoverrollkp;
-extern uint16_t hoverrollkd;
-extern uint16_t hoverpitchgain;
-extern uint16_t hoverpitchkd;
-extern uint16_t hoveryawkp;
-extern uint16_t hoveryawkd;
+#if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || (GAINS_VARIABLE == 1) || (USE_CONFIGFILE == 1))
+	extern uint16_t hoverrollkp;
+	extern uint16_t hoverrollkd;
+	extern uint16_t hoverpitchgain;
+	extern uint16_t hoverpitchkd;
+	extern uint16_t hoveryawkp;
+	extern uint16_t hoveryawkd;
+#else
+	extern const uint16_t hoverrollkp;
+	extern const uint16_t hoverrollkd;
+	extern const uint16_t hoverpitchgain;
+	extern const uint16_t hoverpitchkd;
+	extern const uint16_t hoveryawkp;
+	extern const uint16_t hoveryawkd;
+#endif
 
 //#define HOVER_PITCH_OFFSET                0.0 // + leans towards top, - leans towards bottom
 //#define HOVER_YAW_OFFSET                  0.0
