@@ -20,11 +20,11 @@
 
 
 #include "defines.h"
-#include "flightplan-waypoints.h"
 #include "../libDCM/libDCM_internal.h"
 #include "../libDCM/gpsParseCommon.h"
 #include "../libDCM/mathlibNAV.h"
 #include "../libUDB/osd.h"
+#include "flightplan.h"
 #include "osd_config.h"
 #include <stdlib.h>
 
@@ -341,7 +341,7 @@ static void update_flight_time(void)
 	serial_send_location(OSD_LOC_WP_NO);
 	if (mp_mode >= MODE_WAYPOINT)
 	{
-		serial_send_int(waypointIndex, 0, 0);
+		serial_send_int(flightplan_index_get(), 0, 0);
 	} 
 	else
 	{

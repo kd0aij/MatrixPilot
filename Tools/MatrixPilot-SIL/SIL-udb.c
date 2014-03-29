@@ -14,6 +14,7 @@
 
 #include "libUDB.h"
 #include "../../libUDB/magnetometer.h"
+#include "../../libUDB/barometer.h"
 #include "../../libUDB/heartbeat.h"
 #include "SIL-config.h"
 
@@ -73,6 +74,7 @@ inline int gettimeofday(struct timeval* p, void* tz /* IGNORED */)
 #endif // WIN
 
 #include "libUDB.h"
+#include "ADchannel.h"
 #include "magnetometer.h"
 #include "magnetometerOptions.h"
 #include "events.h"
@@ -338,7 +340,7 @@ void sleep_milliseconds(uint16_t ms)
 #endif
 }
 
-void sil_handle_seial_rc_input(uint8_t *buffer, int bytesRead)
+void sil_handle_serial_rc_input(uint8_t *buffer, int bytesRead)
 {
 	int i;
 
@@ -377,10 +379,58 @@ void sil_handle_seial_rc_input(uint8_t *buffer, int bytesRead)
 	}
 }
 
-#define BUFLEN 512
+#define GPS_LOGFILE  "gps_log.txt"
+#define TELE_LOGFILE "tele_log.txt"
+#define SIO_LOGFILE  "sio_log.txt"
+//#define LOG_GPS_DATA
+//#define LOG_TELE_DATA
+//#define LOG_SIO_DATA
 
+static void log_data(char* filename, uint8_t* buffer, int len)
+{
+	FILE* fp;
+	fp = fopen(filename, "a");
+	if (fp)
+	{
+		fwrite(buffer, 1, len, fp);
+		fclose(fp);
+	}
+}
+
+//#define SIM_READ
+#ifdef SIM_READ
 boolean handleUDBSockets(void)
 {
+#define BUFLEN 32
+	uint8_t buffer[BUFLEN];
+	int32_t bytesRead = 0;
+	int16_t i;
+	boolean didRead = false;
+
+	static FILE* fp = 0;
+	if (!fp) {
+		fp = fopen(GPS_LOGFILE, "r");
+		if (!fp) {
+			printf("ERROR: failed to open %s\r\n", GPS_LOGFILE);
+		}
+	}
+	if (fp) {
+		bytesRead = fread(buffer, 1, BUFLEN, fp);
+		if (!bytesRead) {
+			rewind(fp);
+			bytesRead = fread(buffer, 1, BUFLEN, fp);
+		}
+		for (i = 0; i < bytesRead; i++) {
+			udb_gps_callback_received_byte(buffer[i]);
+		}
+	}
+	if (bytesRead > 0) didRead = true;
+	return didRead;
+}
+#else
+boolean handleUDBSockets(void)
+{
+#define BUFLEN 512
 	uint8_t buffer[BUFLEN];
 	int32_t bytesRead;
 	int16_t i;
@@ -393,6 +443,9 @@ boolean handleUDBSockets(void)
 			UDBSocket_close(gpsSocket);
 			gpsSocket = NULL;
 		} else {
+#ifdef LOG_GPS_DATA
+			log_data(GPS_LOGFILE, buffer, bytesRead);
+#endif // LOG_GPS_DATA
 			for (i = 0; i < bytesRead; i++) {
 				udb_gps_callback_received_byte(buffer[i]);
 			}
@@ -406,10 +459,13 @@ boolean handleUDBSockets(void)
 			UDBSocket_close(telemetrySocket);
 			telemetrySocket = NULL;
 		} else {
+#ifdef LOG_TELE_DATA
+			log_data(TELE_LOGFILE, buffer, bytesRead);
+#endif // LOG_TELE_DATA
 			for (i = 0; i < bytesRead; i++) {
 				udb_serial_callback_received_byte(buffer[i]);
 			}
-			if (bytesRead>0) didRead = true;
+			if (bytesRead > 0) didRead = true;
 		}
 	}
 	// Handle optional Serial RC input Socket
@@ -419,14 +475,15 @@ boolean handleUDBSockets(void)
 			UDBSocket_close(serialSocket);
 			serialSocket = NULL;
 		} else {
-			if (bytesRead>0) {
-				sil_handle_seial_rc_input(buffer, bytesRead);
+			if (bytesRead > 0) {
+				sil_handle_serial_rc_input(buffer, bytesRead);
 				didRead = true;
 			}
 		}
 	}
 	return didRead;
 }
+#endif // SIM_READ
 
 #if (MAG_YAW_DRIFT == 1)
 
@@ -499,5 +556,17 @@ int16_t FindFirstBitFromLeft(int16_t val)
 	}
 	return i;
 }
+
+void vApplicationTickHook(void) {}
+void vApplicationIdleHook(void) {}
+
+//void *pvPortMalloc( size_t xWantedSize )
+//{
+//	return malloc(xWantedSize);
+//}
+//void vPortFree( void *pv )
+//{
+//	free(pv);
+//}
 
 #endif // (WIN == 1 || NIX == 1)

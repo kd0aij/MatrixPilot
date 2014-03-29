@@ -332,7 +332,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Serial Output Format (Can be SERIAL_NONE, SERIAL_DEBUG, SERIAL_ARDUSTATION, SERIAL_UDB,
-// SERIAL_UDB_EXTRA,SERIAL_MAVLINK, SERIAL_CAM_TRACK, SERIAL_OSD_REMZIBI, or SERIAL_UDB_MAG)
+// SERIAL_UDB_EXTRA,SERIAL_MAVLINK, SERIAL_CAM_TRACK, or SERIAL_OSD_REMZIBI)
 // This determines the format of the output sent out the spare serial port.
 // Note that SERIAL_OSD_REMZIBI only works with a ublox GPS.
 // SERIAL_UDB_EXTRA will add additional telemetry fields to those of SERIAL_UDB.
@@ -340,7 +340,6 @@
 // SERIAL_UDB_EXTRA may result in dropped characters if used with the XBEE wireless transmitter.
 // SERIAL_CAM_TRACK is used to output location data to a 2nd UDB, which will target its camera at this plane.
 // SERIAL_MAVLINK is a bi-directional binary format for use with QgroundControl, HKGCS or MAVProxy (Ground Control Stations.)
-// SERIAL_UDB_MAG outputs the automatically calculated offsets and raw magnetometer data.
 // Note that SERIAL_MAVLINK defaults to using a baud rate of 57600 baud (other formats default to 19200)
 
 #define SERIAL_OUTPUT_FORMAT                SERIAL_NONE
@@ -402,22 +401,6 @@
 // RSSI - RC Receiver signal strength
 #define RSSI_MIN_SIGNAL_VOLTAGE             0.5     // Voltage when RSSI should show 0%
 #define RSSI_MAX_SIGNAL_VOLTAGE             3.3     // Voltage when RSSI should show 100%
-
-
-////////////////////////////////////////////////////////////////////////////////
-// MAXBOTIX SONAR LANDING FLARE
-// Designed for use with the following device:-
-// http://www.maxbotix.com/Ultrasonic_Sensors/MB1230.htm
-// Can be used on INPUT 8 of the UDB4/5 if that is not used for a channel input.
-// Will return distance to ground in meters and compensate for roll subject to 
-// receiving a returned sonar signal.
-// This option is designed to be used with Logo Flight Planning.
-// Logo allows the user to Interrupt a Landing and flare, or Go Around,
-// based on sonar distance to ground.
-
-// Set USE_SONAR_INPUT to the input capture channel which the sensor
-// is connected to. Must be greater than the last used servo channel.
-#define USE_SONAR_INPUT                     0
 
 
 ////////////////////////////////////////////////////////////////////////////////

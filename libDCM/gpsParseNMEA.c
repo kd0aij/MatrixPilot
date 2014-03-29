@@ -22,6 +22,7 @@
 #include "libDCM_internal.h"
 #include "gpsParseCommon.h"
 
+
 #if (GPS_TYPE == GPS_NMEA || GPS_TYPE == GPS_ALL)
 
 //#define DEBUG_NMEA
@@ -54,9 +55,9 @@ void debug_gga(uint8_t ch)
 	}
 }
 #else
-//#define debug_rmc(a)
-//#define debug_rmc_send(int8_t ch)
-//#define debug_gga(a)
+#define debug_rmc(a)
+#define debug_rmc_send(a)
+#define debug_gga(a)
 #endif
 
 
@@ -103,14 +104,14 @@ void (*msg_parse)(uint8_t gpschar) = &msg_start;
 //const char set_BAUD_38400[]     = "$PMTK251,38400*27\r\n";
 //const char set_BAUD_57600[]     = "$PMTK251,57600*2C\r\n";
 //const char set_BAUD_115200[]    = "$PMTK251,115200*1F\r\n";
-//static const char set_FIX_1Hz[] = "$PMTK220,1000*1F\r\n";
+static const char set_FIX_1Hz[] = "$PMTK220,1000*1F\r\n";
 //const char set_FIX_2Hz[]        = "$PMTK220,500*2B\r\n";
 //const char set_FIX_3Hz[]        = "$PMTK220,333*2D\r\n";
 //const char set_FIX_4Hz[]        = "$PMTK220,250*29\r\n";
 //const char set_FIX_5Hz[]        = "$PMTK220,200*2C\r\n";
 //const char set_RMC[]            = "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n";
 //const char set_GGA_RMC[]        = "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
-//static const char set_DEFAULT[] = "$PMTK314,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
+static const char set_DEFAULT[] = "$PMTK314,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 
 static uint16_t rmc_counter, gga_counter;
 static uint8_t id1, id2, XOR;
@@ -125,7 +126,6 @@ static uint8_t svs_;
 static uint8_t data_valid_, NS_, EW_;
 //static uint8_t hdop_;
 //static uint8_t day_of_week;
-static union longbbbb last_alt;
 
 //union longbbbb tow_;
 //union longbbbb date_gps_, time_gps_;
@@ -148,16 +148,16 @@ void gps_startup_sequence(int16_t gpscount)
 		udb_gps_set_rate(DEFAULT_GPS_BAUD);
 		#else
 		udb_gps_set_rate(38400);
-		#warning "Default GPS BAUD not specified, now set at 38400"
+#pragma warning "Default GPS BAUD not specified, now set at 38400"
 		#endif
 	}
 	else if (gpscount == 50)
 	{
-//		gpsoutline(set_FIX_1Hz);
+		gpsoutline(set_FIX_1Hz);
 	}
 	else if (gpscount == 20)
 	{
-//		gpsoutline(set_DEFAULT);
+		gpsoutline(set_DEFAULT);
 	}
 //	else if (gpscount == 850)
 //		gpsoutline(set_BAUD_9600);
@@ -169,9 +169,6 @@ static void msg_start(uint8_t gpschar)
 {
 	if (gpschar == '$')
 	{
-#ifdef DEBUG_NMEA
-//		udb_led_toggle(LED_BLUE ) ;
-#endif
 		msg_parse = &gps_G;                 // Wait for the $
 		rmc_counter = 0;
 		gga_counter = 0;
@@ -238,7 +235,6 @@ static void gps_id3(uint8_t gpschar)
 #ifdef DEBUG_NMEA
 //	msg_parse = &msg_start;	
 		strcpy(debug_RMC, "$GPRMC");
-		udb_led_toggle ( LED_BLUE ) ;
 		RMCpos = 6;
 #endif
 	}
@@ -309,11 +305,14 @@ static void gps_comma(uint8_t gpschar)
 	}
 	else
 	{
-		if (gpschar == '*')
+		if (gga_counter == 14 && gpschar == '*')
 		{
 			msg_parse = &gps_checksum;
 		}
-	
+		if (rmc_counter == 11 && gpschar == '*')
+		{
+			msg_parse = &gps_checksum;
+		}
 	}
 //	if (rmc_counter > 11)
 //	{
@@ -646,27 +645,40 @@ LED_RED = LED_OFF;
 
 void gps_commit_data(void)
 {
+	static union longbbbb last_alt = 0;
+
 	if (week_no.BB == 0)
 	{
 		week_no.BB = calculate_week_num(date_gps_.WW);
 	}
 	tow.WW = calculate_time_of_week(time_gps_.WW);
-
 	lat_gps      = lat_gps_;
 	lon_gps      = lon_gps_;
 	alt_sl_gps   = alt_sl_gps_;             // Altitude
 	sog_gps      = sog_gps_;                // Speed over ground
 	cog_gps      = cog_gps_;                // Course over ground
-
 	climb_gps.BB = (alt_sl_gps_.WW - last_alt.WW) * GPS_RATE;
 	hdop         = hdop_._.B0;
 	svs          = svs_;
-
 	last_alt     = alt_sl_gps_;
 }
 
 void init_gps_nmea(void)
 {
 }
+
+#if (HILSIM == 1)
+void commit_bodyrate_data(void)
+{
+}
+
+void HILSIM_set_gplane(void)
+{
+}
+
+void HILSIM_set_omegagyro(void)
+{
+}
+#endif // HILSIM
 
 #endif // (GPS_TYPE == GPS_NMEA || GPS_TYPE == GPS_ALL)

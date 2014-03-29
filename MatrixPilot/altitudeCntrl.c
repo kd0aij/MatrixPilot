@@ -20,9 +20,6 @@
 
 
 #include "defines.h"
-#include "navigate.h"
-#include "behaviour.h"
-#include "../libDCM/deadReckoning.h"
 #if (USE_CONFIGFILE == 1)
 #include "config.h"
 #include "redef.h"
@@ -83,21 +80,6 @@ void init_altitudeCntrl(void)
 	desiredSpeed          = DESIRED_SPEED * 10; // Stored in 10ths of meters per second
 }
 
-#if (USE_CONFIGFILE == 1)
-void save_altitudeCntrl(void)
-{
-//	gains.YawKDAileron = yawkdail / (SCALEGYRO*RMAX);
-	gains.HeightTargetMax = height_target_max;
-	gains.HeightTargetMin = height_target_min;
-	gains.AltHoldThrottleMin = alt_hold_throttle_min / RMAX;
-	gains.AltHoldThrottleMax = alt_hold_throttle_max / RMAX;
-	gains.AltHoldPitchMin = alt_hold_pitch_min;
-	gains.AltHoldPitchMax = alt_hold_pitch_max;
-	gains.AltHoldPitchHigh = alt_hold_pitch_high;
-//	desiredSpeed / 10;
-}
-#endif // USE_CONFIGFILE
-
 #if (SPEED_CONTROL == 1)  // speed control loop
 
 static int32_t excess_energy_height(void) // computes (1/2gravity)*(actual_speed^2 - desired_speed^2)
@@ -107,6 +89,7 @@ static int32_t excess_energy_height(void) // computes (1/2gravity)*(actual_speed
 	int32_t equivalent_energy_ground_speed = equivalent_energy_air_speed;
 	int16_t speed_component;
 	union longww accum;
+	union longww forward_ground_speed;
 
 	speed_component = IMUvelocityx._.W1 - estimatedWind[0];
 	accum.WW = __builtin_mulsu(speed_component, 37877);
@@ -120,9 +103,16 @@ static int32_t excess_energy_height(void) // computes (1/2gravity)*(actual_speed
 	accum.WW = __builtin_mulsu(speed_component, 37877);
 	equivalent_energy_air_speed += __builtin_mulss(accum._.W1, accum._.W1);
 
-	// if we are going forward, add the energy, otherwise, subract it
-	accum.WW = __builtin_mulsu(forward_ground_speed, 37877);
-	if (forward_ground_speed > 0)
+	//	compute the projection of the ground speed in the forward direction
+
+	forward_ground_speed.WW = ((__builtin_mulss(-IMUvelocityx._.W1, rmat[1])
+	                          + __builtin_mulss(IMUvelocityy._.W1, rmat[4])) << 2);
+
+	//	if we are going forward, add the energy, otherwise, subract it
+
+	accum.WW = __builtin_mulsu(forward_ground_speed._.W1, 37877);
+
+	if (forward_ground_speed._.W1 > 0)
 	{
 		equivalent_energy_ground_speed += __builtin_mulss(accum._.W1, accum._.W1);
 	}
@@ -131,8 +121,9 @@ static int32_t excess_energy_height(void) // computes (1/2gravity)*(actual_speed
 		equivalent_energy_ground_speed -= __builtin_mulss(accum._.W1, accum._.W1);
 	}
 
-	// return the smaller of the energies of ground and air speed
-	// to keep both of them from getting too small
+//	return the smaller of the energies of ground and air speed
+//	to keep both of them from getting too small
+
 	if (equivalent_energy_ground_speed < equivalent_energy_air_speed)
 	{
 		return equivalent_energy_ground_speed;
@@ -159,9 +150,6 @@ int16_t desiredSpeed = (DESIRED_SPEED*10);
 
 void altitudeCntrl(void)
 {
-#if (USE_SONAR_INPUT != 0)
-//	calculate_sonar_height_above_ground();
-#endif
 	if (canStabilizeHover() && current_orientation == F_HOVER)
 	{
 		hoverAltitudeCntrl();
@@ -175,7 +163,6 @@ void altitudeCntrl(void)
 static void set_throttle_control(int16_t throttle)
 {
 	int16_t throttleIn;
-	int16_t temp;
 
 	if (flags._.altitude_hold_throttle || flags._.altitude_hold_pitch || filterManual)
 	{
@@ -187,7 +174,9 @@ static void set_throttle_control(int16_t throttle)
 		{
 			throttleIn = udb_pwTrim[THROTTLE_INPUT_CHANNEL];
 		}
-		temp = throttleIn + REVERSE_IF_NEEDED(THROTTLE_CHANNEL_REVERSED, throttle);
+
+		int16_t temp = throttleIn + REVERSE_IF_NEEDED(THROTTLE_CHANNEL_REVERSED, throttle);
+
 		if (THROTTLE_CHANNEL_REVERSED)
 		{
 			if (temp > udb_pwTrim[THROTTLE_INPUT_CHANNEL]) throttle = throttleIn - udb_pwTrim[THROTTLE_INPUT_CHANNEL];
@@ -271,7 +260,7 @@ if (ALTITUDEHOLD_STABILIZED == AH_PITCH_ONLY) {
 		}
 		else
 		{
-			heightError._.W1 = -desiredHeight;
+			heightError._.W1 = - desiredHeight;
 			heightError.WW = (heightError.WW + IMUlocationz.WW + speed_height) >> 13;
 			if (heightError._.W0 < (-(int16_t)(HEIGHT_MARGIN*8.0)))
 			{

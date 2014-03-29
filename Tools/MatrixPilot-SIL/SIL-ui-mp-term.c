@@ -10,7 +10,7 @@
 
 #include "SIL-udb.h"
 #include "defines.h"
-#include "flightplan-waypoints.h"
+#include "flightplan.h"
 #include <stdio.h>
 
 #define BUFLEN 512
@@ -35,9 +35,7 @@ void print_help(void)
 	printf("z       = zero the sticks\n");
 	printf("L       = toggle LEDs\n");
 	printf("0       = toggle RC Radio connection on/off\n");
-#if (FLIGHT_PLAN_TYPE == FP_LOGO)
 	printf("xN      = execute LOGO subroutine N(0-9)\n");
-#endif
 	printf("r       = reset\n");
 	printf("?       = show this help message\n");
 }
@@ -206,11 +204,9 @@ void sil_handle_key_input(char c)
 					}
 					break;
 
-#if (FLIGHT_PLAN_TYPE == FP_LOGO)
 				case 'x':
 					inputState = 1;
 					break;
-#endif
 
 				case 'r':
 					printf("\nReally reset? (y/N)");

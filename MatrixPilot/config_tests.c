@@ -27,6 +27,10 @@
 // with the user's configuration settings.
 
 
+#if (CONSOLE_UART == 9 && HILSIM_USB != 0)
+	#error("CONSOLE_USB and HILSIM_USB cannot be defined in the same build.")
+#endif
+
 // Check RC Inputs
 // UDB4
 #if (USE_PPM_INPUT == 0 && NUM_INPUTS > 8)

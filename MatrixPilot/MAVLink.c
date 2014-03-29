@@ -52,11 +52,19 @@
 //#include "../libDCM/libDCM_internal.h" // Needed for access to internal DCM value
 #include "../libDCM/rmat.h" // Needed for access to internal DCM value
 #include "../libDCM/gpsParseCommon.h"
-#include "../libDCM/deadReckoning.h"
 #include "../libDCM/mathlibNAV.h"
+#include "../MatrixPilot/euler_angles.h"
 #include "../libUDB/events.h"
-#include "euler_angles.h"
-#include "config.h"
+#if (USE_FLEXIFUNCTION_MIXING == 1)
+#ifdef MAVLINK_MSG_ID_FLEXIFUNCTION_SET
+#include "../libflexifunctions/flexifunctionservices.h"
+#else
+#error(" Flexifunctions must be defined in MAVlink to use them")
+#endif // MAVLINK_MSG_ID_FLEXIFUNCTION_SET
+#endif // (USE_FLEXIFUNCTION_MIXING == 1)
+#if (USE_NV_MEMORY == 1)
+#include "data_services.h"
+#endif // (USE_NV_MEMORY == 1)
 #include <string.h>
 #include <stdarg.h>
 #include <math.h>
@@ -80,16 +88,18 @@ mavlink_status_t r_mavlink_status;
 	if (!(exp)) \
 	{ \
 		printf("MAVLink Test Fail: " \
-		       "at %s, line %d.\r\n", __FILE__, __LINE__); \
+		"at %s, line %d.\r\n", __FILE__, __LINE__); \
 		mavlink_tests_fail++; \
 	} else { \
 		mavlink_tests_pass++; \
 	}
 
+#endif // (MAVLINK_TEST_ENCODE_DECODE == 1)
+
+#if (MAVLINK_TEST_ENCODE_DECODE == 1)
 #include "../MAVLink/include/matrixpilot/testsuite.h"
 #endif // (MAVLINK_TEST_ENCODE_DECODE == 1)
 
-mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 
 #define	SERIAL_BUFFER_SIZE  MAVLINK_MAX_PACKET_LEN
 #define	BYTE_CIR_16_TO_RAD  ((2.0 * 3.14159265) / 65536.0) // Convert 16 bit byte circular to radians
@@ -123,13 +133,12 @@ inline void preflight_storage_complete_callback(boolean success);
 
 void init_mavlink(void)
 {
-	int16_t index;
-
 	mavlink_process_message_handle = register_event_p(&handleMessage, EVENT_PRIORITY_MEDIUM);
 	mavlink_system.sysid = MAVLINK_SYSID; // System ID, 1-255, ID of your Plane for GCS
 	mavlink_system.compid = 1; // Component/Subsystem ID,  (1-255) MatrixPilot on UDB is component 1.
 
 	// Fill stream rates array with zeros to default all streams off;
+	int16_t index;
 	for (index = 0; index < MAV_DATA_STREAM_ENUM_END; index++)
 		streamRates[index] = 0;
 
@@ -145,7 +154,7 @@ void init_serial(void)
 {
 #ifndef SERIAL_BAUDRATE
 #define SERIAL_BAUDRATE 57600 // default
-#pragma warning "SERIAL_BAUDRATE set to default value of 57600 bps for MAVLink"
+#warning SERIAL_BAUDRATE set to default value of 57600 bps for MAVLink
 #endif
 	udb_serial_set_rate(SERIAL_BAUDRATE);
 	init_mavlink();
@@ -172,22 +181,14 @@ int16_t udb_serial_callback_get_byte_to_send(void)
 int16_t mavlink_serial_send(mavlink_channel_t UNUSED(chan), uint8_t buf[], uint16_t len)
 // Note: Channel Number, chan, is currently ignored.
 {
-	int16_t start_index;
-	int16_t remaining;
-
-#if (USE_TELELOG == 1)
-//printf("calling log_telemetry with %u bytes\r\n", len);
-	log_telemetry(buf, len);
-#endif // USE_TELELOG
-
 	// Note at the moment, all channels lead to the one serial port
 	if (serial_interrupt_stopped == 1)
 	{
 		sb_index = 0;
 		end_index = 0;
 	}
-	start_index = end_index;
-	remaining = SERIAL_BUFFER_SIZE - start_index;
+	int16_t start_index = end_index;
+	int16_t remaining = SERIAL_BUFFER_SIZE - start_index;
 
 //	printf("%u\r\n", remaining);
 
@@ -210,16 +211,15 @@ int16_t mavlink_serial_send(mavlink_channel_t UNUSED(chan), uint8_t buf[], uint1
 	return (1);
 }
 
-void mav_printf(const char* format, ...)
+void mav_printf(const char * format, ...)
 {
 	char buf[200];
-	va_list arglist;
 
+	va_list arglist;
 	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf), format, arglist);
-	// mavlink_msg_statustext_send(MAVLINK_COMM_1, severity, text);
-	// severity: Severity of status, 0 = info message, 255 = critical fault (uint8_t)
-	mavlink_msg_statustext_send(MAVLINK_COMM_0, 0, buf);
+	int16_t len = vsnprintf(buf, sizeof(buf), format, arglist);
+	printf("%s", buf);
+//	mavlink_serial_send(0, (uint8_t)buf, len);
 	va_end(arglist);
 }
 
@@ -230,7 +230,6 @@ void serial_output(char* format, ...)
 	int16_t remaining = 0;
 	int16_t wrote = 0;
 	va_list arglist;
-
 	va_start(arglist, format);
 	remaining = MAVLINK_TEST_MESSAGE_SIZE;
 	wrote = vsnprintf((char*)(&mavlink_test_message_buffer[0]), (size_t)remaining, format, arglist);
@@ -265,7 +264,6 @@ void mp_mavlink_transmit(uint8_t ch)
 void send_text(uint8_t text[])
 {
 	uint16_t index = 0;
-
 	while (text[index++] != 0 && index < 80)
 	{
 		; // Do nothing, just measuring the length of the text
@@ -353,45 +351,75 @@ static void command_ack(uint16_t command, uint16_t result)
 	}
 }
 
-void MAVLinkRequestDataStream(mavlink_message_t* handle_msg) // MAVLINK_MSG_ID_REQUEST_DATA_STREAM
+// Portions of the following code in handlesmessage() are templated off source code written by James Goppert for the
+// ArdupilotMega, and are used by his kind permission and also in accordance with the GPS V3 licensing
+// of that code.
+
+static void handleMessage(void)
+// This is the main routine for taking action against a parsed message from the GCS
 {
-	int16_t freq = 0; // packet frequency
-	mavlink_request_data_stream_t packet;
-	mavlink_msg_request_data_stream_decode(handle_msg, &packet);
-
-	DPRINT("MAVLINK_MSG_ID_REQUEST_DATA_STREAM %u\r\n", handle_msg->msgid);
-	//send_text((const uint8_t*) "Action: Request data stream\r\n");
-	// QgroundControl sends data stream request to component ID 1, which is not our component for UDB.
-	if (packet.target_system != mavlink_system.sysid) return;
-
-	if (packet.start_stop == 0) freq = 0; // stop sending
-	else if (packet.start_stop == 1) freq = packet.req_message_rate; // start sending
-	else return;
-	if (packet.req_stream_id == MAV_DATA_STREAM_ALL)
+//	send_text((uint8_t*) "Handling message ID 0x");
+//	send_uint8(handle_msg->msgid);
+//	send_text((uint8_t*) "\r\n");
+	mavlink_message_t* handle_msg;
+	if (mavlink_message_index == 0)
 	{
-		// Warning: mavproxy automatically sets all.  Do not include all here, it will overide defaults.
-		streamRates[MAV_DATA_STREAM_RAW_SENSORS] = freq;
-		streamRates[MAV_DATA_STREAM_RC_CHANNELS] = freq;
+		handle_msg = &msg[1];
 	}
 	else
 	{
-		if (packet.req_stream_id < MAV_DATA_STREAM_ENUM_END)
-			streamRates[packet.req_stream_id] = freq;
+		handle_msg = &msg[0];
 	}
-}
 
-void MAVLinkCommandLong(mavlink_message_t* handle_msg) // MAVLINK_MSG_ID_COMMAND_LONG
-{
-	mavlink_command_long_t packet;
-	mavlink_msg_command_long_decode(handle_msg, &packet);
+	handling_of_message_completed |= MAVParamsHandleMessage(handle_msg);
+	handling_of_message_completed |= MAVMissionHandleMessage(handle_msg);
+	handling_of_message_completed |= MAVFlexiFunctionsHandleMessage(handle_msg);
 
-	DPRINT("MAVLINK_MSG_ID_COMMAND_LONG %u\r\n", handle_msg->msgid);
-	//if (mavlink_check_target(packet.target, packet.target_component) == false) break;
+	if (handling_of_message_completed == true)
 	{
-		switch (packet.command)
+		return;
+	}
+
+	switch (handle_msg->msgid)
+	{
+		case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
 		{
+			// decode
+			mavlink_request_data_stream_t packet;
+			mavlink_msg_request_data_stream_decode(handle_msg, &packet);
+			//send_text((const uint8_t*) "Action: Request data stream\r\n");
+			// QgroundControl sends data stream request to component ID 1, which is not our component for UDB.
+			if (packet.target_system != mavlink_system.sysid) break;
+
+			int16_t freq = 0; // packet frequency
+
+			if (packet.start_stop == 0) freq = 0; // stop sending
+			else if (packet.start_stop == 1) freq = packet.req_message_rate; // start sending
+			else break;
+			if (packet.req_stream_id == MAV_DATA_STREAM_ALL)
+			{
+				// Warning: mavproxy automatically sets all.  Do not include all here, it will overide defaults.
+				streamRates[MAV_DATA_STREAM_RAW_SENSORS] = freq;
+				streamRates[MAV_DATA_STREAM_RC_CHANNELS] = freq;
+			}
+			else
+			{
+				if (packet.req_stream_id < MAV_DATA_STREAM_ENUM_END)
+					streamRates[packet.req_stream_id] = freq;
+			}
+			break;
+		}
+		case MAVLINK_MSG_ID_COMMAND_LONG:
+		{
+			mavlink_command_long_t packet;
+			mavlink_msg_command_long_decode(handle_msg, &packet);
+			//if (mavlink_check_target(packet.target, packet.target_component) == false) break;
+//			send_text((uint8_t*) "Command ID 0x");
+//			send_uint8(packet.command);
+//			send_text((uint8_t*) "\r\n");
+			switch (packet.command)
+			{
 			case MAV_CMD_PREFLIGHT_CALIBRATION:
-				DPRINT("MAV_CMD_PREFLIGHT_CALIBRATION %u\r\n", packet.command);
 				if (packet.param1 == 1)
 				{
 #if (USE_NV_MEMORY ==1)
@@ -414,7 +442,6 @@ void MAVLinkCommandLong(mavlink_message_t* handle_msg) // MAVLINK_MSG_ID_COMMAND
 				break;
 #if (USE_NV_MEMORY == 1)
 			case MAV_CMD_PREFLIGHT_STORAGE:
-				DPRINT("MAV_CMD_PREFLIGHT_STORAGE %u\r\n", packet.command);
 				if (packet.param1 == MAV_PFS_CMD_WRITE_ALL)
 				{
 					if (packet.param2 == MAV_PFS_CMD_WRITE_ALL)
@@ -432,8 +459,8 @@ void MAVLinkCommandLong(mavlink_message_t* handle_msg) // MAVLINK_MSG_ID_COMMAND
 				else
 					command_ack(packet.command, MAV_CMD_ACK_ERR_NOT_SUPPORTED);
 				break;
+
 			case MAV_CMD_PREFLIGHT_STORAGE_ADVANCED:
-				DPRINT("MAV_CMD_PREFLIGHT_STORAGE_ADVANCED %u\r\n", packet.command);
 				switch ((uint16_t)packet.param1)
 				{
 					case MAV_PFS_CMD_CLEAR_SPECIFIC:
@@ -451,201 +478,132 @@ void MAVLinkCommandLong(mavlink_message_t* handle_msg) // MAVLINK_MSG_ID_COMMAND
 				}
 				break;
 #endif // (USE_NV_MEMORY == 1)
-			case 245:
-				switch ((uint16_t)packet.param1)
-				{
-					case 0: // Read
-						DPRINT("Read (ROM)\r\n");
-						init_config();
-						break;
-					case 1: // Write
-						DPRINT("Write (ROM)\r\n");
-						save_config();
-						break;
-					default:
-						DPRINT("245 packet.param1 %f packet.param2 %f\r\n", (double)packet.param1, (double)packet.param2);
-						break;
-				}
-				break;
-			case 246: // halt
-				DPRINT("Halt - packet.command %u\r\n", packet.command);
-				break;
-			case 22: // start
-				DPRINT("Start - packet.command %u\r\n", packet.command);
-				break;
-			case 252: // land
-				DPRINT("Land - packet.command %u\r\n", packet.command);
-				break;
 			default:
-				DPRINT("packet.command %u\r\n", packet.command);
 				command_ack(packet.command, MAV_CMD_ACK_ERR_NOT_SUPPORTED);
 				break;
-		}
-	}
-}
-
-void MAVLinkSetMode(mavlink_message_t* handle_msg) // MAVLINK_MSG_ID_SET_MODE:
-{
-	mavlink_set_mode_t packet;
-
-	DPRINT("MAVLINK_MSG_ID_SET_MODE %u\r\n", handle_msg->msgid);
-	// send_text((uint8_t*) "Action: Specific Action Required\r\n");
-	// decode
-	mavlink_msg_set_mode_decode(handle_msg, &packet);
-//	if (mavlink_check_target(packet.target_system, packet.target_component) == false) break;
-	{
-		switch (packet.base_mode)
-		{
-			case 192: // Manual
-				DPRINT("Manual %u\r\n", packet.base_mode);
-				break;
-			case 208: // Manual/Stabilised
-				DPRINT("Manual/Stabilised %u\r\n", packet.base_mode);
-				break;
-			case 216: // Manual/Guided
-				DPRINT("Manual/Guided %u\r\n", packet.base_mode);
-				break;
-			case 156: // Auto
-				DPRINT("Auto %u\r\n", packet.base_mode);
-				break;
-			case 65: // Disarm System
-				DPRINT("Disarm System %u\r\n", packet.base_mode);
-				break;
-/*
-			case MAV_ACTION_LAUNCH:
-				//send_text((uint8_t*) "Action: Launch !\r\n");
-				//DPRINT("Action: Launch !\r\n");
-				//set_mode(TAKEOFF);
-				break;
-			case MAV_ACTION_RETURN:
-				//send_text((uint8_t*) "Action: Return !\r\n");
-				//DPRINT("Action: Return !\r\n");
-				//set_mode(RTL);
-				break;
-			case MAV_ACTION_EMCY_LAND:
-				//send_text((uint8_t*) "Action: Emergency Land !\r\n");
-				//DPRINT("Action: Emergency Land !\r\n");
-				//set_mode(LAND);
-				break;
-			case MAV_ACTION_HALT:
-				//send_text((uint8_t*) "Action: Halt !\r\n");
-				//DPRINT("Action: Halt !\r\n");
-				//loiter_at_location();
-				break;
-			case MAV_ACTION_MOTORS_START:
-			case MAV_ACTION_CONFIRM_KILL:
-			case MAV_ACTION_EMCY_KILL:
-			case MAV_ACTION_MOTORS_STOP:
-			case MAV_ACTION_SHUTDOWN:
-				//set_mode(MANUAL);
-				break;
-			case MAV_ACTION_CONTINUE:
-				//process_next_command();
-				break;
-			case MAV_ACTION_SET_MANUAL:
-				//set_mode(MANUAL);
-				break;
-			case MAV_ACTION_SET_AUTO:
-				//set_mode(AUTO);
-				break;
-			case MAV_ACTION_STORAGE_READ:
-				//send_text((uint8_t*)"Action: Storage Read\r\n");
-				//DPRINT("Action: Storage Read\r\n");
-				break;
-			case MAV_ACTION_STORAGE_WRITE:
-				//send_text((uint8_t*)"Action: Storage Write\r\n");
-				//DPRINT("Action: Storage Write\r\n");
-				break;
-			case MAV_ACTION_CALIBRATE_RC:
-				//send_text((uint8_t*)"Action: Calibrate RC\r\n");
-				//DPRINT("Action: Calibrate RC\r\n");
-				break;
-			case MAV_ACTION_CALIBRATE_GYRO:
-			case MAV_ACTION_CALIBRATE_MAG:
-			case MAV_ACTION_CALIBRATE_ACC:
-			case MAV_ACTION_CALIBRATE_PRESSURE:
-			case MAV_ACTION_REBOOT:
-				//startup_IMU_ground();
-				break;
-			case MAV_ACTION_REC_START: break;
-			case MAV_ACTION_REC_PAUSE: break;
-			case MAV_ACTION_REC_STOP: break;
-			case MAV_ACTION_TAKEOFF:
-				//send_text((uint8_t*)"Action: Take Off !\r\n");
-				//DPRINT("Action: Take Off !\r\n");
-				//set_mode(TAKEOFF);
-				break;
-			case MAV_ACTION_NAVIGATE:
-				// send_text((uint8_t*)"Action: Navigate !\r\n");
-				// DPRINT("Action: Navigate !\r\n");
-				//set_mode(AUTO);
-				break;
-			case MAV_ACTION_LAND:
-				//set_mode(LAND);
-				break;
-			case MAV_ACTION_LOITER:
-				//set_mode(LOITER);
-				break;
- */
-			default:
-				DPRINT("action: Specific Action Required %u\r\n", packet.base_mode);
-				break;
-		}
-	}
-}	
-
-// Portions of the following code in handlesmessage() are templated off source code written by James Goppert for the
-// ArdupilotMega, and are used by his kind permission and also in accordance with the GPS V3 licensing
-// of that code.
-
-// This is the main routine for taking action against a parsed message from the GCS
-static void handleMessage(void)
-{
-	mavlink_message_t* handle_msg;
-
-	if (mavlink_message_index == 0)
-	{
-		handle_msg = &msg[1];
-	}
-	else
-	{
-		handle_msg = &msg[0];
-	}
-
-	DPRINT("MAV MSG 0x%x\r\n", handle_msg->msgid);
-
-	handling_of_message_completed |= MAVParamsHandleMessage(handle_msg);
-	handling_of_message_completed |= MAVMissionHandleMessage(handle_msg);
-	handling_of_message_completed |= MAVFlexiFunctionsHandleMessage(handle_msg);
-
-	if (handling_of_message_completed == true)
-	{
-		return;
-	}
-
-	switch (handle_msg->msgid)
-	{
-		case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
-			MAVLinkRequestDataStream(handle_msg);
+			}
 			break;
-		case MAVLINK_MSG_ID_COMMAND_LONG:
-			MAVLinkCommandLong(handle_msg);
-			break;
+
 //		case MAVLINK_MSG_ID_COMMAND:
-//			DPRINT("MAVLINK_MSG_ID_COMMAND %u\r\n", handle_msg->msgid);
 //			break;
-//		case MAVLINK_MSG_ID_ACTION:
-//			DPRINT("MAVLINK_MSG_ID_ACTION %u\r\n", handle_msg->msgid);
-//		case 11:
+/*
+		case MAVLINK_MSG_ID_ACTION:
+			// send_text((uint8_t*) "Action: Specific Action Required\r\n");
+			DPRINT("action: Specific Action Required\r\n");
+			// decode
+			mavlink_action_t packet;
+			mavlink_msg_action_decode(handle_msg, &packet);
+			if (mavlink_check_target(packet.target, packet.target_component) == false) break;
+
+			switch (packet.action)
+			{
+				case MAV_ACTION_LAUNCH:
+					//send_text((uint8_t*) "Action: Launch !\r\n");
+					//DPRINT("Action: Launch !\r\n");
+					//set_mode(TAKEOFF);
+					break;
+
+				case MAV_ACTION_RETURN:
+					//send_text((uint8_t*) "Action: Return !\r\n");
+					//DPRINT("Action: Return !\r\n");
+					//set_mode(RTL);
+					break;
+
+				case MAV_ACTION_EMCY_LAND:
+					//send_text((uint8_t*) "Action: Emergency Land !\r\n");
+					//DPRINT("Action: Emergency Land !\r\n");
+					//set_mode(LAND);
+					break;
+
+				case MAV_ACTION_HALT:
+					//send_text((uint8_t*) "Action: Halt !\r\n");
+					//DPRINT("Action: Halt !\r\n");
+					//loiter_at_location();
+					break;
+
+				case MAV_ACTION_MOTORS_START:
+				case MAV_ACTION_CONFIRM_KILL:
+				case MAV_ACTION_EMCY_KILL:
+				case MAV_ACTION_MOTORS_STOP:
+				case MAV_ACTION_SHUTDOWN:
+					//set_mode(MANUAL);
+					break;
+
+				case MAV_ACTION_CONTINUE:
+					//process_next_command();
+					break;
+
+				case MAV_ACTION_SET_MANUAL:
+					//set_mode(MANUAL);
+					break;
+
+				case MAV_ACTION_SET_AUTO:
+					//set_mode(AUTO);
+					break;
+
+				case MAV_ACTION_STORAGE_READ:
+					//send_text((uint8_t*)"Action: Storage Read\r\n");
+					//DPRINT("Action: Storage Read\r\n");
+					break;
+
+				case MAV_ACTION_STORAGE_WRITE:
+					//send_text((uint8_t*)"Action: Storage Write\r\n");
+					//DPRINT("Action: Storage Write\r\n");
+					break;
+
+				case MAV_ACTION_CALIBRATE_RC:
+					//send_text((uint8_t*)"Action: Calibrate RC\r\n");
+					//DPRINT("Action: Calibrate RC\r\n");
+					break;
+
+				case MAV_ACTION_CALIBRATE_GYRO:
+				case MAV_ACTION_CALIBRATE_MAG:
+				case MAV_ACTION_CALIBRATE_ACC:
+				case MAV_ACTION_CALIBRATE_PRESSURE:
+				case MAV_ACTION_REBOOT:
+					//startup_IMU_ground();
+					break;
+
+				case MAV_ACTION_REC_START: break;
+				case MAV_ACTION_REC_PAUSE: break;
+				case MAV_ACTION_REC_STOP: break;
+
+				case MAV_ACTION_TAKEOFF:
+					//send_text((uint8_t*)"Action: Take Off !\r\n");
+					//DPRINT("Action: Take Off !\r\n");
+					//set_mode(TAKEOFF);
+					break;
+
+				case MAV_ACTION_NAVIGATE:
+					// send_text((uint8_t*)"Action: Navigate !\r\n");
+					// DPRINT("Action: Navigate !\r\n");
+					//set_mode(AUTO);
+					break;
+
+				case MAV_ACTION_LAND:
+					//set_mode(LAND);
+					break;
+
+				case MAV_ACTION_LOITER:
+					//set_mode(LOITER);
+					break;
+
+				default: break;
+			}
+			break;
+*/
+		}
+
 		case MAVLINK_MSG_ID_SET_MODE:
-			MAVLinkSetMode(handle_msg);
+			DPRINT("MAVLINK_MSG_ID_SET_MODE %u\r\n", handle_msg->msgid);
 			break;
+
 		default:
-			DPRINT("handle_msg->msgid %u NOT HANDLED\r\n", handle_msg->msgid);
+			DPRINT("handle_msg->msgid %u\r\n", handle_msg->msgid);
 			break;
-	}
+	} // end switch
 	handling_of_message_completed = true;
-}
+} // end handle mavlink
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -670,7 +628,6 @@ inline void preflight_storage_complete_callback(boolean success)
 // MAIN MAVLINK CODE FOR SENDING COMMANDS TO THE GROUND CONTROL STATION
 //
 
-#if (MAVLINK_TEST_ENCODE_DECODE != 1)
 const uint8_t mavlink_freq_table[] = {0, 40, 20, 13, 10, 8, 7, 6, 5, 4, 4};
 
 static boolean is_this_the_moment_to_send(uint8_t counter, uint8_t max_counter)
@@ -723,7 +680,6 @@ static boolean mavlink_frequency_send(uint8_t frequency, uint8_t counter)
 		return false; // should never reach this line
 	}
 }
-#endif // (MAVLINK_TEST_ENCODE_DECODE != 1)
 
 void mavlink_output_40hz(void)
 #if (MAVLINK_TEST_ENCODE_DECODE == 1)
@@ -908,8 +864,8 @@ void mavlink_output_40hz(void)
 	spread_transmission_load = 14;
 	if (mavlink_frequency_send(streamRates[MAV_DATA_STREAM_POSITION], mavlink_counter_40hz + spread_transmission_load))
 	{
-		int16_t pwOut_max = 4000;
 		mavlink_heading = get_geo_heading_angle();
+		int16_t pwOut_max = 4000;
 		if (THROTTLE_CHANNEL_REVERSED == 1) pwOut_max = 2000;
 		mavlink_msg_vfr_hud_send(MAVLINK_COMM_0, (float)(air_speed_3DIMU / 100.0), (float)(ground_velocity_magnitudeXY / 100.0), (int16_t)mavlink_heading,
 		    (uint16_t)(((float)((udb_pwOut[THROTTLE_OUTPUT_CHANNEL]) - udb_pwTrim[THROTTLE_INPUT_CHANNEL]) * 100.0) / (float)(pwOut_max - udb_pwTrim[THROTTLE_INPUT_CHANNEL])),
@@ -1028,9 +984,6 @@ void mavlink_output_40hz(void)
 		mavlink_msg_command_ack_send(MAVLINK_COMM_0, mavlink_command_ack_command, mavlink_command_ack_result);
 		mavlink_send_command_ack = false;
 	}
-#if (USE_TELELOG == 1)
-	log_swapbuf();
-#endif
 }
 #endif // (MAVLINK_TEST_ENCODE_DECODE == 1)
 

@@ -23,10 +23,12 @@
 
 
 #include "../libDCM/libDCM.h"
+#include "../libDCM/gpsParseCommon.h"
 #include "../libUDB/heartbeat.h"
 
 // Used for serial debug output
 #include <stdio.h>
+
 
 char debug_buffer[128];
 int db_index = 0;

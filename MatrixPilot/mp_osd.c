@@ -265,13 +265,13 @@ static void osd_update_values(void)
 
 #if (OSD_LOC_AP_MODE != OSD_LOC_DISABLED)
 			osd_spi_write_location(OSD_LOC_AP_MODE);
-			if (!flags._.pitch_feedback)
+			if (!state_flags._.pitch_feedback)
 				osd_spi_write(0x7, 0x97);                   // M : Manual Mode
-			else if (!flags._.GPS_steering)
+			else if (!state_flags._.GPS_steering)
 				osd_spi_write(0x7, 0x9D);                   // S : Stabilized Mode
-			else if (udb_flags._.radio_on && !flags._.rtl_hold)
+			else if (udb_flags._.radio_on && !mode_switch_rtl_hold_chk())
 				osd_spi_write(0x7, 0xA1);                   // W : Waypoint Mode
-			else if (flags._.rtl_hold && udb_flags._.radio_on)
+			else if (udb_flags._.radio_on && mode_switch_rtl_hold_chk())
 				osd_spi_write(0x7, 0x92);                   // H : RTL Hold, has signal
 			else
 				osd_spi_write(0x7, 0x9C);                   // R : RTL Mode, lost signal
@@ -289,7 +289,7 @@ static void osd_update_values(void)
 			curHeading.y = rmat[4];
 			earth_yaw = rect_to_polar(&curHeading);  // 0-255 (0=East,  ccw)
 
-			if (flags._.GPS_steering)
+			if (state_flags._.GPS_steering)
 			{
 				dir_to_goal = desired_dir - earth_yaw;
 				dist_to_goal = abs(tofinish_line);
@@ -299,7 +299,7 @@ static void osd_update_values(void)
 				struct relative2D toGoal;
 				toGoal.x = 0 - IMUlocationx._.W1;
 				toGoal.y = 0 - IMUlocationy._.W1;
-				dir_to_goal = rect_to_polar (&toGoal) - earth_yaw;
+				dir_to_goal = rect_to_polar(&toGoal) - earth_yaw;
 				dist_to_goal = toGoal.x;
 			}
 
@@ -443,7 +443,7 @@ static void osd_update_values(void)
 
 #if (OSD_LOC_VERTICAL_WIND_SPEED != OSD_LOC_DISABLED)
 			osd_spi_write_location(OSD_LOC_VERTICAL_WIND_SPEED);
-			osd_spi_write_number(estimatedWind[2]/10, 4, 1, NUM_FLAG_SIGNED, 0, 0); // vertical wind speed in m/s
+			osd_spi_write_number(estimatedWind.z/10, 4, 1, NUM_FLAG_SIGNED, 0, 0); // vertical wind speed in m/s
 #endif
 
 #if (OSD_LOC_TOTAL_ENERGY != OSD_LOC_DISABLED)

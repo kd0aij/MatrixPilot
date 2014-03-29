@@ -19,7 +19,9 @@
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "defines.h"
+//#include "defines.h"
+#include "libUDB_internal.h"
+
 #include "oscillator.h"
 #include "uart.h"
 
@@ -116,8 +118,8 @@ char GetChar(void) \
 #define _PUTCHAR(x) \
 void PutChar(char ch) \
 { \
-	U##x##TXREG = ch; \
 	while (U##x##STAbits.TRMT == 0); \
+	U##x##TXREG = ch; \
 }
 
 #define _CLRERROR(x) \
@@ -189,12 +191,22 @@ Input: Pointer to a null terminated character string.
 Output: None.
 
 *******************************************************************************/
-void PrintString(char *str)
+void PrintString(const char *str)
 {
 	unsigned char c;
 
 	while ((c = *str++))
 		PutChar(c);
+}
+
+void Puts(const char *str)
+{
+	unsigned char c;
+
+	while ((c = *str++))
+		PutChar(c);
+//	PutChar('\r');
+//	PutChar('\n');
 }
 
 /*******************************************************************************

@@ -95,7 +95,7 @@ void udb_init_capture(void)
 			udb_pwTrim[i] = udb_pwIn[i] = 0;
 	#endif
 	}
-	
+
 	TMR2 = 0;               // initialize timer
 #if (MIPS == 64)
 	T2CONbits.TCKPS = 2;    // prescaler = 64 option
@@ -128,20 +128,25 @@ void udb_init_capture(void)
 }
 #define IC_INIT(x, y, z) _IC_INIT(x, y, z)
 
-	if (NUM_INPUTS > 0) IC_INIT(PPM_IC, REGTOK1, REGTOK2);
+//	if (NUM_INPUTS > 0) IC_INIT(PPM_IC, REGTOK1, REGTOK2);
 #if (USE_PPM_INPUT == 0)
+	if (NUM_INPUTS > 0) IC_INIT(1, REGTOK1, REGTOK2);
 	if (NUM_INPUTS > 1) IC_INIT(2, REGTOK1, REGTOK2);
 	if (NUM_INPUTS > 2) IC_INIT(3, REGTOK1, REGTOK2);
 	if (NUM_INPUTS > 3) IC_INIT(4, REGTOK1, REGTOK2);
 	if (NUM_INPUTS > 4) IC_INIT(5, REGTOK1, REGTOK2);
 	if (NUM_INPUTS > 5) IC_INIT(6, REGTOK1, REGTOK2);
 	if (NUM_INPUTS > 6) IC_INIT(7, REGTOK1, REGTOK2);
-
+#if (USE_SONAR_INPUT != 8)
 	if (NUM_INPUTS > 7) IC_INIT(8, REGTOK1, REGTOK2);
+#endif // USE_SONAR_INPUT
+#else
+	if (NUM_INPUTS > 0) IC_INIT(PPM_IC, REGTOK1, REGTOK2);
 #endif // USE_PPM_INPUT
 #endif // NORADIO
 }
 
+// called from heartbeat pulse at 20Hz
 void radioIn_failsafe_check(void)
 {
 	// check to see if at least one valid pulse has been received,
@@ -164,6 +169,7 @@ void radioIn_failsafe_check(void)
 	failSafePulses = 0;
 }
 
+// called from heartbeat pulse at 1Hz
 void radioIn_failsafe_reset(void)
 {
 	noisePulses = 0;
@@ -310,6 +316,8 @@ IC_TIME(PPM_IC, REGTOK1);
 #define _IC_PIN(x) IC_PIN##x
 #define __IC_PIN(x) _IC_PIN(x)
 
+extern int one_hertz_flag;
+
 // PPM Input on Channel PPM_IC
 void __attribute__((__interrupt__,__no_auto_psv__)) IC_INTERRUPT(PPM_IC)
 {
@@ -330,10 +338,20 @@ void __attribute__((__interrupt__,__no_auto_psv__)) IC_INTERRUPT(PPM_IC)
 
 		if (pulse > MIN_SYNC_PULSE_WIDTH)
 		{
+//			if (one_hertz_flag)
+//			{
+//				one_hertz_flag = 0;
+//				DPRINT("**: %u %u\r\n", pulse, MIN_SYNC_PULSE_WIDTH);
+//			}
 			ppm_ch = 1;
 		}
 		else
 		{
+//			if (one_hertz_flag)
+//			{
+//				one_hertz_flag = 0;
+//				DPRINT("--: %u\r\n", pulse);
+//			}
 			if (ppm_ch > 0 && ppm_ch <= PPM_NUMBER_OF_CHANNELS)
 			{
 				if (ppm_ch <= NUM_INPUTS)
@@ -343,6 +361,14 @@ void __attribute__((__interrupt__,__no_auto_psv__)) IC_INTERRUPT(PPM_IC)
 				ppm_ch++;
 			}
 		}
+	}
+	else
+	{
+//		if (one_hertz_flag)
+//		{
+//			one_hertz_flag = 0;
+//			DPRINT("DIS %u\r\n", time);
+//		}
 	}
 #elif  (USE_PPM_INPUT == 2)
 	uint16_t pulse = time - rise_ppm;

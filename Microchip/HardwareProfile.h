@@ -10,16 +10,17 @@
 // This library currently only supports a single physical interface layer at a time
 
 //#if defined(__dsPIC33E__)   // AUAV3 Board
-#define USE_AT45D_FLASH
+//#define USE_AT45D_FLASH
 //#else
 // Description: Macro used to enable the SD-SPI physical layer (SD-SPI.c and .h)
-//#define USE_SD_INTERFACE_WITH_SPI
-// Description: Macro used to enable the CF-PMP physical layer (CF-PMP.c and .h)
-//#define USE_CF_INTERFACE_WITH_PMP
-// Description: Macro used to enable the CF-Manual physical layer (CF-Bit transaction.c and .h)                                                                
-//#define USE_MANUAL_CF_INTERFACE
-// Description: Macro used to enable the USB Host physical layer (USB host MSD library)
-//#define USE_USB_INTERFACE
+#define USE_SD_INTERFACE_WITH_SPI
+
+//// Description: Macro used to enable the CF-PMP physical layer (CF-PMP.c and .h)
+////#define USE_CF_INTERFACE_WITH_PMP
+//// Description: Macro used to enable the CF-Manual physical layer (CF-Bit transaction.c and .h)                                                                
+////#define USE_MANUAL_CF_INTERFACE
+//// Description: Macro used to enable the USB Host physical layer (USB host MSD library)
+////#define USE_USB_INTERFACE
 //#endif
 
 
@@ -248,10 +249,12 @@
 //            #define SD_CS_TRIS          TRISBbits.TRISB9
             #define SD_CS               LATDbits.LATD2
             #define SD_CS_TRIS          TRISDbits.TRISD2
-//            #define SD_CD               PORTAbits.RA12
-//            #define SD_CD_TRIS          TRISAbits.TRISA12
-//            #define SD_WE               PORTGbits.RG1
-//            #define SD_WE_TRIS          TRISGbits.TRISG1
+            #define SD_CS_ANSEL         ANSELDbits.ANSD2
+            
+//            #define SD_CD               PORTAbits.RA6
+//            #define SD_CD_TRIS          TRISAbits.TRISA6
+//            #define SD_WE               PORTAbits.RA7
+//            #define SD_WE_TRIS          TRISAbits.TRISA7
 
             #define SPICON1             SPI3CON1
             #define SPISTAT             SPI3STAT
@@ -276,20 +279,22 @@
 //            #define SD_CS_TRIS          TRISBbits.TRISB9
             #define SD_CS_TRIS          TRISBbits.TRISB2
 
-		    // Description: SD-SPI Analog/Digital Select ANSEL bit
-//            #define SD_CS_ANSEL			ANSELBbits.ANSB9
+            // Description: SD-SPI Analog/Digital Select ANSEL bit
+            #define SD_CS_ANSEL         ANSELBbits.ANSB2
             
             // Description: SD-SPI Card Detect Input bit
-            #define SD_CD               PORTAbits.RA12
+//            #define SD_CD               PORTAbits.RA12
+            #define SD_CD               PORTGbits.RG0
             // Description: SD-SPI Card Detect TRIS bit
-            #define SD_CD_TRIS          TRISAbits.TRISA12
+//            #define SD_CD_TRIS          TRISAbits.TRISA12
+            #define SD_CD_TRIS          TRISGbits.TRISG0
 
             // Description: SD-SPI Write Protect Check Input bit
             #define SD_WE               PORTGbits.RG1
             // Description: SD-SPI Write Protect Check TRIS bit
             #define SD_WE_TRIS          TRISGbits.TRISG1
 
-		    // Description: SD-SPI Analog/Digital Select ANSEL bit
+            // Description: SD-SPI Analog/Digital Select ANSEL bit
 //            #define SD_SCK_ANSEL	ANSELGbits.ANSG6
 //            #define SD_SDI_ANSEL	ANSELGbits.ANSG7
 //            #define SD_SDO_ANSEL	ANSELGbits.ANSG8

@@ -36,68 +36,176 @@
 #if (WIN == 1 || NIX == 1)
 #define LOGFILE_ENABLE_PIN 0
 #else
+#if defined( __dsPIC33E__ )
 //#define LOGFILE_ENABLE_PIN PORTBbits.RB0  // PGD
 //#define LOGFILE_ENABLE_PIN PORTBbits.RB1  // PGC
 #define LOGFILE_ENABLE_PIN PORTAbits.RA6  // DIG2
+#elif defined( __dsPIC33F__ )
+//#define LOGFILE_ENABLE_PIN PORTAbits.RA5
+#define LOGFILE_ENABLE_PIN 1 // don't force logfile open
+#else
+#error unknown processor family
 #endif
 
+#endif
+
+boolean log_enabled(void)
+{
+	return (LOGFILE_ENABLE_PIN ? false : true);
+}
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 #define LOGBUF_BUFFER_SIZE 512
 
-static char logbuf1[LOGBUF_BUFFER_SIZE+1];  // TODO: added 1 byte until buffer overflow confirmed good
-static char logbuf2[LOGBUF_BUFFER_SIZE+1];  // TODO: added 1 byte until buffer overflow confirmed good
-static int lb1_end_index = 0;
-static int lb2_end_index = 0;
-static int lb_in_use = 1;
+static char logbuf1[LOGBUF_BUFFER_SIZE];
+static char logbuf2[LOGBUF_BUFFER_SIZE];
+static volatile int lb1_end_index = 0;
+static volatile int lb2_end_index = 0;
+static volatile int lb_in_use = 1;
+static volatile int lb_flush = 0;
 static char logfile_name[13];
 static FSFILE* fsp = NULL;
 
-
-static int16_t log_append(char* logbuf, int index, char* data, int len)
+int log_file_counter = 0;
+#if 0
+static int16_t log_append(char* logbuf, int index, const uint8_t* data, int len, int dbg)
 {
 	int16_t end_index = 0;
-	int16_t remaining = LOGBUF_BUFFER_SIZE - index;
 
-	if (remaining < len) {
-//		printf("LOGBUF discarding %u bytes\r\n", len - remaining);
-	}
-	if (remaining > 1)
+	log_file_counter += len;
+
+//	assert(len <= (LOGBUF_BUFFER_SIZE - index));
+
+	if (len <= (LOGBUF_BUFFER_SIZE - index))
 	{
-//		printf("start_index %u, remaining %u, len %u min %u\r\n", start_index, remaining, len, MIN(remaining, len));
-		strncpy((char*)(&logbuf[index]), data, MIN(remaining, len));
-		end_index = index + MIN(remaining, len);
-		logbuf[end_index] = '\0';
-
 	}
+	else
+	{
+		printf("%u: index %u, len %u, remaining %i\r\n", dbg, index, len, (LOGBUF_BUFFER_SIZE - index));
+		return end_index; // dump characters to avoid buffer overflow
+	}
+	strncpy((char*)(&logbuf[index]), data, len);
+	end_index = index + len;
+	logbuf[end_index] = '\0'; // TODO: i don't think we really want this...
 	return end_index;
 }
+#else
+static int16_t log_append(char* logbuf, int index, const uint8_t* data, int len, int dbg)
+{
+//	int16_t end_index = 0;
 
+	log_file_counter += len;
+
+//	assert(len <= (LOGBUF_BUFFER_SIZE - index));
+
+	if (len <= (LOGBUF_BUFFER_SIZE - index))
+	{
+//		strncpy((char*)(&logbuf[index]), data, len);
+		memcpy(&logbuf[index], data, len);
+//		end_index = index + len;
+//		logbuf[index + len] = '\0'; // TODO: i don't think we really want this...
+		return (index + len);
+	}
+	printf("%u: index %u, len %u, remaining %i\r\n", dbg, index, len, (LOGBUF_BUFFER_SIZE - index));
+	// dump data to avoid buffer overflow
+	return index;
+}
+#endif
 // called from telemetry module at interrupt level to buffer new log data
+/*
 void log_telemetry(char* data, int len)
 {
+	int16_t remaining;
+
+	if (fsp == NULL)
+	{
+		return;
+	}
+
 	if (lb_in_use == 1)
 	{
-		lb1_end_index = log_append(logbuf1, lb1_end_index, data, len);
+		remaining = LOGBUF_BUFFER_SIZE - lb1_end_index;
+		if (remaining <= len) { // TODO: just changed this to debug earlier problem, maybe need to revert to only <
+			lb1_end_index = log_append(logbuf1, lb1_end_index, data, remaining, 1);
+			data += remaining;
+			len -= remaining;
+			lb_in_use = 2;
+			if (lb_flush != 0)
+			{
+				printf("ERROR: buffer %u still busy\r\n", lb_flush);
+			}
+			lb_flush = 1;
+			lb2_end_index = log_append(logbuf2, lb2_end_index, data, len, 2);
+		} else {
+			lb1_end_index = log_append(logbuf1, lb1_end_index, data, len, 3);
+		}
 	}
 	else
 	{
-		lb2_end_index = log_append(logbuf2, lb2_end_index, data, len);
+		remaining = LOGBUF_BUFFER_SIZE - lb2_end_index;
+		if (remaining <= len) {
+			lb2_end_index = log_append(logbuf2, lb2_end_index, data, remaining, 4);
+			data += remaining;
+			len -= remaining;
+			lb_in_use = 1;
+			if (lb_flush != 0)
+			{
+				printf("ERROR: buffer %u still busy\r\n", lb_flush);
+			}
+			lb_flush = 2;
+			lb1_end_index = log_append(logbuf1, lb1_end_index, data, len, 5);
+		} else {
+			lb2_end_index = log_append(logbuf2, lb2_end_index, data, len, 6);
+		}
 	}
 }
-
-// called from telemetry module at interrrupt level to manage the log data buffers
-void log_swapbuf(void)
+ */
+void log_telemetry(const uint8_t* data, int len)
 {
+	int16_t remaining;
+
+	if (fsp == NULL)
+	{
+		return;
+	}
+
 	if (lb_in_use == 1)
 	{
-		lb_in_use = 2;
+		remaining = LOGBUF_BUFFER_SIZE - lb1_end_index;
+		if (remaining <= len) { // TODO: just changed this to debug earlier problem, maybe need to revert to only <
+			lb1_end_index = log_append(logbuf1, lb1_end_index, data, remaining, 1);
+			data += remaining;
+			len -= remaining;
+			lb_in_use = 2;
+			if (lb_flush != 0) // logbuf2 is still being written?
+			{
+				printf("ERROR: buffer %u still busy\r\n", lb_flush);
+			}
+			lb_flush = 1;
+			lb2_end_index = log_append(logbuf2, lb2_end_index, data, len, 2);
+		} else {
+			lb1_end_index = log_append(logbuf1, lb1_end_index, data, len, 3);
+		}
 	}
 	else
 	{
-		lb_in_use = 1;
+		remaining = LOGBUF_BUFFER_SIZE - lb2_end_index;
+		if (remaining <= len) {
+			lb2_end_index = log_append(logbuf2, lb2_end_index, data, remaining, 4);
+			data += remaining;
+			len -= remaining;
+			lb_in_use = 1;
+			if (lb_flush != 0) // logbuf1 is still being written?
+			{
+				printf("ERROR: buffer %u still busy\r\n", lb_flush);
+			}
+			lb_flush = 2;
+			lb1_end_index = log_append(logbuf1, lb1_end_index, data, len, 5);
+		} else {
+			lb2_end_index = log_append(logbuf2, lb2_end_index, data, len, 6);
+		}
 	}
 }
 
@@ -159,7 +267,7 @@ static void log_open(void)
 	fsp = FSfopen(logfile_name, "a");
 	if (fsp != NULL)
 	{
-		lb1_end_index = 0;  // empty the logfile ping-pong buffers
+		lb1_end_index = 0;  // purge the logfile ping-pong buffers
 		lb2_end_index = 0;
 		restart_telemetry();// signal telemetry to send startup data again
 		printf("%s opened\r\n", logfile_name);
@@ -216,6 +324,7 @@ static void log_check(void)
 
 static void log_write(char* str, int len)
 {
+//	printf("log_write() %u bytes\r\n", len);
 	if (fsp)
 	{
 		LED_BLUE = LED_ON;
@@ -228,23 +337,23 @@ static void log_write(char* str, int len)
 }
 
 // called from mainloop at background priority to write telemetry log data to log file
-void telemetry_log(void)
+void telemetry_log_service(void)
 {
-	if (lb_in_use == 1)
-	{
-		if (lb2_end_index)
-		{
-			log_write(logbuf2, lb2_end_index);
-			lb2_end_index = 0;
-		}
-	}
-	else
-	{
-		if (lb1_end_index)
-		{
-			log_write(logbuf1, lb1_end_index);
-			lb1_end_index = 0;
-		}
-	}
 	log_check();
+
+//	if (lb_flush == 1)
+	if (lb1_end_index >= LOGBUF_BUFFER_SIZE)
+	{
+		log_write(logbuf1, lb1_end_index);
+		lb1_end_index = 0;
+		lb_flush = 0;
+	}
+
+//	if (lb_flush == 2)
+	if (lb2_end_index >= LOGBUF_BUFFER_SIZE)
+	{
+		log_write(logbuf2, lb2_end_index);
+		lb2_end_index = 0;
+		lb_flush = 0;
+	}
 }

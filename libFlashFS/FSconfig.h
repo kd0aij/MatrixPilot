@@ -52,7 +52,7 @@
 
 
 // Uncomment this to use the FindFirst, FindNext, and FindPrev
-//#define ALLOW_FILESEARCH
+#define ALLOW_FILESEARCH
 
 // Comment this line out if you don't intend to write data to the card
 #define ALLOW_WRITES

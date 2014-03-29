@@ -291,6 +291,26 @@ void UDBSocket_close(UDBSocket socket)
 	}
 }
 
+static VOID PrintErrorMessage(IN DWORD dwError)
+{
+    LPTSTR szError;
+
+    if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                          FORMAT_MESSAGE_IGNORE_INSERTS |
+                          FORMAT_MESSAGE_FROM_SYSTEM,
+                      NULL,
+                      dwError,
+                      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                      (LPTSTR)&szError,
+                      0,
+                      NULL) != 0)
+    {
+//        _tprintf(_T("%s"), szError);
+        printf("%s", szError);
+        LocalFree((HLOCAL)szError);
+    }
+}
+
 int UDBSocket_read(UDBSocket socket, unsigned char* buffer, int bufferLength)
 {
 	switch (socket->type)
@@ -332,8 +352,6 @@ int UDBSocket_read(UDBSocket socket, unsigned char* buffer, int bufferLength)
 		case UDBSocketSerial:
 		{
 			unsigned long bytesTransferred = 0;
-			//DWORD dwRetFlag;
-			//char ErrorString[80];
 
 			if (socket->hComms != INVALID_HANDLE_VALUE)
 			{
@@ -343,10 +361,15 @@ int UDBSocket_read(UDBSocket socket, unsigned char* buffer, int bufferLength)
 					COMSTAT comStat;
 					unsigned long dwErrors;
 
+//					unsigned long lastError = GetLastError();
+//					printf("ReadFile Error = %d\r\n", lastError);
+//					PrintErrorMessage(lastError);
+
 					//sprintf(ErrorString, "ReadFile Error = %d", GetLastError());
 					//ShowMessage(ErrorString);
 					snprintf(UDBSocketLastError, LAST_ERR_BUF_SIZE, "ReadFile() failed");
 					ClearCommError(socket->hComms, &dwErrors, &comStat);
+//					printf("ClearCommError = %lu\r\n", dwErrors);
 					return -1;
 				}
 			}

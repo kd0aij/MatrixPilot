@@ -20,6 +20,7 @@
 
 
 #include "defines.h"
+#include "servoMix.h"
 
 // Perform control based on the airframe type.
 // Use the radio to determine the baseline pulse widths if the radio is on.
@@ -46,7 +47,7 @@ void servoMix(void)
 	}
 
 	// Apply boosts if in a stabilized mode
-	if (udb_flags._.radio_on && flags._.pitch_feedback)
+	if (udb_flags._.radio_on && state_flags._.pitch_feedback)
 	{
 		pwManual[AILERON_INPUT_CHANNEL] += ((pwManual[AILERON_INPUT_CHANNEL] - udb_pwTrim[AILERON_INPUT_CHANNEL]) * aileronbgain) >> 3;
 		pwManual[ELEVATOR_INPUT_CHANNEL] += ((pwManual[ELEVATOR_INPUT_CHANNEL] - udb_pwTrim[ELEVATOR_INPUT_CHANNEL]) * elevatorbgain) >> 3;

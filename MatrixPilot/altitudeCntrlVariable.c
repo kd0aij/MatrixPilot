@@ -22,14 +22,13 @@
 
 
 #include "defines.h"
-#include "behaviour.h"
 #include "airspeedCntrl.h"
 #if (USE_CONFIGFILE == 1)
 #include "config.h"
 #include "redef.h"
 #endif // USE_CONFIGFILE
 
-#if (ALTITUDE_GAINS_VARIABLE == 1)
+#if(ALTITUDE_GAINS_VARIABLE == 1)
 
 
 #define THROTTLEFILTSHIFT 12
@@ -105,23 +104,6 @@ void init_altitudeCntrlVariable(void)
 	speed_control = SPEED_CONTROL;
 }
 
-#if (USE_CONFIGFILE == 1)
-void save_altitudeCntrlVariable(void)
-{
-	gains.HeightTargetMax = height_target_max;
-	gains.HeightTargetMin = height_target_min;
-//	height_margin;
-	gains.AltHoldThrottleMin = alt_hold_throttle_min / RMAX;
-	gains.AltHoldThrottleMax = alt_hold_throttle_max / RMAX;
-	gains.AltHoldPitchMin = alt_hold_pitch_min;
-	gains.AltHoldPitchMax = alt_hold_pitch_max;
-	gains.AltHoldPitchHigh = alt_hold_pitch_high;
-//	rtl_pitch_down;
-//	desiredSpeed / 10;
-//	speed_control;
-}
-#endif // USE_CONFIGFILE
-
 static int32_t excess_energy_height(int16_t targetAspd, int16_t acutalAirspeed) // computes (1/2gravity)*(actual_speed^2 - desired_speed^2)
 {
 	union longww accum;
@@ -143,9 +125,6 @@ static int32_t excess_energy_height(int16_t targetAspd, int16_t acutalAirspeed) 
 
 void altitudeCntrl(void)
 {
-#if (USE_SONAR_INPUT != 0)
-	calculate_sonar_height_above_ground();
-#endif
 	if (canStabilizeHover() && current_orientation == F_HOVER)
 	{
 		hoverAltitudeCntrl();
@@ -271,17 +250,17 @@ static void normalAltitudeCntrl(void)
 			}
 			else
 			{
-				desiredHeight = goal.fromHeight + (((goal.height - goal.fromHeight) * (int32_t)progress_to_goal)>>12);
+				desiredHeight = goal.fromHeight + (((goal.height - goal.fromHeight) * (int32_t)progress_to_goal)>>12) ;
 			}
 		}
 		else
 		{
 #if (ALTITUDEHOLD_STABILIZED == AH_PITCH_ONLY)
 			// In stabilized mode using pitch-only altitude hold, use desiredHeight as
-			// set from the state machine upon entering stabilized mode in ent_stabilizedS()
+			// set from the state machine upon entering stabilized mode in ent_stabilizedS().
 #elif ((ALTITUDEHOLD_STABILIZED == AH_FULL) || (ALTITUDEHOLD_STABILIZED == AH_THROTTLE_ONLY))
 			// In stabilized mode using full altitude hold, use the throttle stick value to determine desiredHeight,
-			desiredHeight = ((__builtin_mulss(height_throttle_gain, throttleInOffset - ((int16_t)(DEADBAND)))) >> 11)
+			desiredHeight =((__builtin_mulss(height_throttle_gain, throttleInOffset - ((int16_t)(DEADBAND)))) >> 11) 
 			                + height_target_min;
 #endif
 			if (desiredHeight < (int16_t)(height_target_min)) desiredHeight = (int16_t)(height_target_min);
@@ -295,6 +274,7 @@ static void normalAltitudeCntrl(void)
 		}
 		else
 		{
+
 			heightError._.W1 = - desiredHeight;
 			heightError.WW = (heightError.WW + IMUlocationz.WW + speed_height) >> 13;
 			if (heightError._.W0 < -height_marginx8)

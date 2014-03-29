@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 #include "navigate.h"
-#include "airspeedCntrl.h"
+#include "../libCntrl/airspeedCntrl.h"
 
 #if (USE_CONFIGFILE == 1)
 
@@ -320,7 +320,7 @@ void save_config(void)
 	save_rollCntrl();
 	save_pitchCntrl();
 
-//	save_navigation();
+	save_navigation();
 //	save_airspeedCntrl();
 #if (ALTITUDE_GAINS_VARIABLE == 1)
 	save_altitudeCntrlVariable();

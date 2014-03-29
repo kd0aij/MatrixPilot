@@ -43,12 +43,7 @@ inline uint8_t udb_cpu_load(void)
 
 inline void init_heartbeat(void)
 {
-//#ifdef USE_MPU_HEARTBEAT
-//#if (HEARTBEAT_HZ != 200)
-//#error HEARTBEAT_HZ must be set to 200 when using the MPU6000 as a heartbeat
-//#endif
-//#endif
-
+#ifndef USE_FREERTOS
 #if (BOARD_TYPE != UDB4_BOARD && HEARTBEAT_HZ == 200)
 
 	// MPU6000 interrupt is used as the HEARTBEAT_HZ heartbeat of libUDB.
@@ -60,6 +55,8 @@ inline void init_heartbeat(void)
 	_T1IF = 0;              // clear the interrupt
 	_T1IE = 1;              // enable the interrupt
 
+	// TODO: can we use timer1 to determine the error between the mcu and the mpu 200Hz?
+
 #else // use Timer1 as the HEARTBEAT source
 
 #if (HEARTBEAT_HZ < 150)
@@ -67,7 +64,6 @@ inline void init_heartbeat(void)
 #else
 #define TMR1_PRESCALE 8
 #endif
-
 	// Initialize timer1, used as the HEARTBEAT_HZ heartbeat of libUDB.
 	TMR1 = 0;
 #if (TMR1_PRESCALE == 8)
@@ -84,8 +80,8 @@ inline void init_heartbeat(void)
 	_T1IF = 0;              // clear the interrupt
 	_T1IE = 1;              // enable the interrupt
 	T1CONbits.TON = 1;      // turn on timer 1
-
 #endif // (BOARD_TYPE != UDB4_BOARD && HEARTBEAT_HZ == 200)
+#endif // USE_FREERTOS
 }
 
 static inline void init_cpu_timer(void)
@@ -146,6 +142,9 @@ void udb_init_clock(void)   // initialize timers
 	init_callback_2();
 }
 
+#ifdef USE_FREERTOS
+void T1Interrupt(void) {}
+#else
 // This interrupt is the Heartbeat of libUDB.
 void __attribute__((__interrupt__,__no_auto_psv__)) _T1Interrupt(void)
 {
@@ -154,6 +153,22 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _T1Interrupt(void)
 	_T1IF = 0;              // clear the interrupt
 	heartbeat();
 	interrupt_restore_corcon;
+}
+#endif // USE_FREERTOS
+
+uint16_t rtos_ticks = 0;
+
+void vApplicationTickHook(void) // 1000 Hz
+{
+#ifdef USE_FREERTOS
+//	static int16_t i = 0;
+
+	rtos_ticks++;
+//	if (++i > 25) {
+//		i = 0;
+//		T1Interrupt();  // 40 Hz
+//	}
+#endif // USE_FREERTOS
 }
 
 void __attribute__((__interrupt__,__no_auto_psv__)) _T5Interrupt(void)
@@ -174,7 +189,7 @@ void __attribute__((__interrupt__,__no_auto_psv__)) _T6Interrupt(void)
 	indicate_loading_inter;
 	interrupt_save_set_corcon;
 	_T6IF = 0;              // clear the interrupt
-//	pulse();
+	//pulse();
 	if (callback_fptr_1) callback_fptr_1();
 	interrupt_restore_corcon;
 }

@@ -19,23 +19,22 @@
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
 
+// TODO: rename this module to something such as MatrixPilot.c or FlightControl.c
+
 #include "defines.h"
 #include "navigate.h"
 #include "behaviour.h"
-#include "cameraCntrl.h"
+#include "../libCntrl/cameraCntrl.h"
 #include "../libUDB/heartbeat.h"
 #include "../libUDB/osd.h"
 #include "mode_switch.h"
-#include "airspeedCntrl.h"
-#include "flightplan-waypoints.h"
+#include "../libCntrl/airspeedCntrl.h"
 
 int16_t pitch_control;
 int16_t roll_control;
 int16_t yaw_control;
 int16_t throttle_control;
 uint16_t wind_gain;
-
-void manualPassthrough(void);
 
 void init_servoPrepare(void) // initialize the PWM
 {
@@ -60,6 +59,7 @@ void init_servoPrepare(void) // initialize the PWM
 #if (FIXED_TRIMPOINT == 1)
 		udb_pwOut[i] = ((i == THROTTLE_OUTPUT_CHANNEL) ? THROTTLE_TRIMPOINT : CHANNEL_TRIMPOINT);
 #else
+		// initialise the throttle channel to zero, all others to servo midpoint
 		udb_pwOut[i] = ((i == THROTTLE_OUTPUT_CHANNEL) ? 0 : 3000);
 #endif
 	}
@@ -69,47 +69,46 @@ void init_servoPrepare(void) // initialize the PWM
 #endif
 }
 
-// Called at HEARTBEAT_HZ
-//void dcm_servo_callback_prepare_outputs(void)
-void dcm_heartbeat_callback(void)
+inline static void flight_controller(void)
 {
-	if (dcm_flags._.calib_finished)
+	if (udb_heartbeat_counter % (HEARTBEAT_HZ/40) == 0)
 	{
-		if (udb_heartbeat_counter % (HEARTBEAT_HZ/40) == 0)
-		{
-			flight_mode_switch_2pos_poll(); // we always want this called at 40Hz
-		}
+		mode_switch_2pos_poll(); // we always want this called at 40Hz
+	}
 #if (DEADRECKONING == 1)
-		process_flightplan();
+	navigate_process_flightplan();
 #endif
 #if (ALTITUDE_GAINS_VARIABLE == 1)
-		airspeedCntrl();
+	airspeedCntrl();
 #endif // ALTITUDE_GAINS_VARIABLE
-		updateBehavior();
-		wind_gain = wind_gain_adjustment();
-		rollCntrl();
-		yawCntrl();
-		altitudeCntrl();
-		pitchCntrl();
-		servoMix();
-		cameraCntrl();
-		cameraServoMix();
-		updateTriggerAction();
-	}
-	else
-	{
-		// otherwise, there is not anything to do
-		manualPassthrough();                // Allow manual control while starting up
-	}
-	
-	if (dcm_flags._.calib_finished)         // start telemetry after calibration
-	{
-#if (SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK)
-		if (udb_heartbeat_counter % (HEARTBEAT_HZ/40) == 0)
-		{
-			mavlink_output_40hz();
-		}
+	updateBehavior();
+	wind_gain = wind_gain_adjustment();
+	rollCntrl();
+	yawCntrl();
+	altitudeCntrl();
+	pitchCntrl();
+	servoMix();
+	cameraCntrl();
+	cameraServoMix();
+	updateTriggerAction();
+}
+
+inline static void manualPassthrough(void)
+{
+	roll_control = pitch_control = yaw_control = throttle_control = 0;
+	servoMix();
+}
+
+// Called at HEARTBEAT_HZ
+void dcm_heartbeat_callback(void)   // was called dcm_servo_callback_prepare_outputs()
+{
+#if (AIRFRAME_TYPE == AIRFRAME_QUAD)
+	quad_heartbeat_callback();      // this was called dcm_servo_callback_prepare_outputs();
 #else
+	if (dcm_flags._.calib_finished)
+	{
+		flight_controller();
+#if (SERIAL_OUTPUT_FORMAT != SERIAL_MAVLINK)
 		// This is a simple check to send telemetry at 8hz
 		if (udb_heartbeat_counter % (HEARTBEAT_HZ/8) == 0)
 		{
@@ -118,12 +117,17 @@ void dcm_heartbeat_callback(void)
 		}
 #endif // SERIAL_OUTPUT_FORMAT
 	}
-
+	else
+	{
+		// otherwise, there is not anything to do
+		manualPassthrough();        // Allow manual control while starting up
+	}
+#if (SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK)
+	if (udb_heartbeat_counter % (HEARTBEAT_HZ/40) == 0)
+	{
+		mavlink_output_40hz();
+	}
+#endif // SERIAL_OUTPUT_FORMAT
 	osd_run_step();
-}
-
-void manualPassthrough(void)
-{
-	roll_control = pitch_control = yaw_control = throttle_control = 0;
-	servoMix();
+#endif // AIRFRAME_TYPE
 }

@@ -31,6 +31,7 @@ USB_HANDLE USBOutHandle = 0;  // Needs to be initialized to 0 at startup.
 USB_HANDLE USBInHandle = 0;   // Needs to be initialized to 0 at startup.
 BOOL blinkStatusValid = TRUE;
 
+void console_inbyte(char ch);
 
 void CDCTasks(void)
 {
@@ -83,23 +84,36 @@ void CDCTasks(void)
 
 			for (i = 0; i < numBytesRead; i++)
 			{
-				switch (USB_Out_Buffer[i])
-				{
-					case 0x0A:
-					case 0x0D:
-						USB_In_Buffer[i] = USB_Out_Buffer[i];
-						break;
-					default:
-						USB_In_Buffer[i] = USB_Out_Buffer[i] + 1;
-						break;
-				}
+				console_inbyte(USB_Out_Buffer[i]);
+//				switch (USB_Out_Buffer[i])
+//				{
+//					case 0x0A:
+//					case 0x0D:
+//						USB_In_Buffer[i] = USB_Out_Buffer[i];
+//						break;
+//					default:
+//						USB_In_Buffer[i] = USB_Out_Buffer[i] + 1;
+//						break;
+//				}
 			}
-			putUSBUSART(USB_In_Buffer, numBytesRead);
+//			putUSBUSART(USB_In_Buffer, numBytesRead);
 		}
 	}
 #endif
 	CDCTxService();
 }
+
+#if (CONSOLE_UART == 9)
+char GetChar(void)
+{
+}
+void PutChar(char ch)
+{
+}
+//char IsPressed(void)
+//{
+//}
+#endif
 
 #define LED_BLUE            LATBbits.LATB2
 #define LED_ORANGE          LATBbits.LATB5

@@ -23,6 +23,9 @@
 #include "oscillator.h"
 #include "interrupt.h"
 
+volatile uint16_t uart2_tx_count = 0;
+volatile uint16_t uart2_rx_count = 0;
+
 // Baud Rate Generator -- See section 19.3.1 of datasheet.
 // Fcy = FREQOSC / CLK_PHASES
 // UXBRG = (Fcy/(16*BaudRate))-1
@@ -210,6 +213,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U2TXInterrupt(void)
 	if (txchar != -1)
 	{
 		U2TXREG = (uint8_t)txchar;
+		uart2_tx_count++;
 	}
 	interrupt_restore_corcon;
 }
@@ -224,6 +228,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U2RXInterrupt(void)
 	{
 		uint8_t rxchar = U2RXREG;
 		udb_serial_callback_received_byte(rxchar);
+		uart2_rx_count++;
 	}
 	U2STAbits.OERR = 0;
 	interrupt_restore_corcon;

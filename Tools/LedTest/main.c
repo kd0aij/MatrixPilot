@@ -21,7 +21,9 @@
 
 #include "../../libUDB/libUDB.h"
 #include "../../libUDB/libUDB_internal.h"
+#include "../../libUDB/eeprom_udb4.h"
 #include "../../libUDB/heartbeat.h"
+#include "../../libUDB/ADchannel.h"
 #include "../../libUDB/mpu6000.h"
 #include <libpic30.h>
 
@@ -51,6 +53,7 @@ int main(void)
 #if (BOARD_TYPE != AUAV3_BOARD)
 	udb_eeprom_init();  // using legacy eeprom driver
 #endif
+	DPRINT("MatrixPilot LedTest\r\n");
 	while (1)
 	{
 		udb_run();
@@ -161,6 +164,10 @@ void udb_background_callback_triggered(void)
 	// Then test them
 	if (data[0] == 1 && data[1] == 2 && data[2] == 3 && data[3] == 4) {
 		eepromSuccess = 1;
+		DPRINT("eeprom test successful\r\n");
+	} else {
+		eepromSuccess = 0;
+		DPRINT("eeprom test failed\r\n");
 	}
 #endif
 }
@@ -189,6 +196,7 @@ void udb_heartbeat_callback(void)
 		udb_pwOut[Z_ACCEL_OUTPUT_CHANNEL] = 3000;
 	} else if (eepromSuccess == 0 && eepromFailureFlashCount) {
 		// eeprom failure!
+		DPRINT("eeprom failure!\r\n");
 		if (udb_heartbeat_counter % 6 == 0) {
 			udb_led_toggle(LED_RED);
 			udb_led_toggle(LED_GREEN);
