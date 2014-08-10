@@ -54,4 +54,5 @@
 	With current options settings, turn radius is too large. Maximum bank angle is
 	about 40 degrees. Increase ROLLKP from .1 to .2 and YAWKP_AILERON from .3 to .5
 	Test objective: show increased limit of bank angle to ~60 degrees and check for
-	oscillation due to ROLLKP increase.
+	oscillation due to ROLLKP increase. Also increase ROLL_ELEV_MIX from 1.0 to 2.0
+	Increase YAWKP_RUDDER to 0.5 and YAWKD_AILERON to 0.1.
