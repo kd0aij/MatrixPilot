@@ -54,5 +54,17 @@
 	With current options settings, turn radius is too large. Maximum bank angle is
 	about 40 degrees. Increase ROLLKP from .1 to .2 and YAWKP_AILERON from .3 to .5
 	Test objective: show increased limit of bank angle to ~60 degrees and check for
-	oscillation due to ROLLKP increase. Also increase ROLL_ELEV_MIX from 1.0 to 2.0
-	Increase YAWKP_RUDDER to 0.5 and YAWKD_AILERON to 0.1.
+	oscillation due to ROLLKP increase.
+
+10 August 2014: Also increase ROLL_ELEV_MIX from 1.0 to 2.0
+    Increase YAWKP_RUDDER to 0.5 and YAWKD_AILERON to 0.1.
+    Flight test: nav gains way too high; decease roll_elev mix back to 1.0
+    roll stab gain too high, decrease KP to .08
+    catapult launch in manual with motor running was just fast enough as set.
+    Flight test 2: first log: 00212, roll kp better, decrease to .05
+    still not turning enough in auto/stabilize, try increasing YAWKP_AILERON to 0.5
+    Bad cat launch: throttled up too soon and flew off cat before release...
+    Flight test 3: log214, cat launch (still in manual mode) banked too much, bounced
+    off ground about 30' from launcher, still flew. Better turn radius, still need
+    more turn authority, looks like yawkp_aileron can go up more. maybe too much
+    roll to elevator mix, seems to pitch up in sharp turns

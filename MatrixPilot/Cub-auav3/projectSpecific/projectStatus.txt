@@ -150,3 +150,12 @@
 	the log should show >17 degrees less than the actual bank angle at the end of the
 	sequence, and switching to stabilize should result in the same magnitude error
 	from level, with error decaying by 1/e every 10 seconds.
+    See log 212: flew steep left circles in manual for at least 30 sec, leveled
+    then switched to stabilize; no apparent roll error. Check to see if there was
+    a lot of skidding going on.
+    Test flight: stabilization rudder mix seems to be backwards, try taking it out and see
+    whether stabilized turns look more coordinated
+    Bomb drop run was off to the north and nav about the turns not as good as it
+    could be.
+    Next flight: log215? turn centip. comp. back on and do another bomb drop, also
+    turn yaw stab off to see if the skid tendency goes away in stabilize.
