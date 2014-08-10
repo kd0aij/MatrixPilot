@@ -488,8 +488,8 @@
 // YAWKP_AILERON is the proportional feedback gain for ailerons in response to yaw error
 // YAWKD_AILERON is the derivative feedback gain for ailerons in response to yaw rotation
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
-#define ROLLKP				0.2 //0.22
-#define ROLLKD				0.025 //0.02
+#define ROLLKP				0.05 //0.22
+#define ROLLKD				0.05 //0.02
 #define YAWKP_AILERON		0.5 // 0.05
 #define YAWKD_AILERON		0.1 //0.11 //0.05
 #define AILERON_BOOST		0.5
@@ -503,7 +503,7 @@
 #define PITCHGAIN			0.1 // 0.150
 #define PITCHKD				0.1 //0.015 // 0.075
 #define RUDDER_ELEV_MIX		0.2
-#define ROLL_ELEV_MIX		2.0
+#define ROLL_ELEV_MIX		1.0
 #define ELEVATOR_BOOST		0.5
 
 // Neutral pitch angle of the plane (in degrees) when flying inverted

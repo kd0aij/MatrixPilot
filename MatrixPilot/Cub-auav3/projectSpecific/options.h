@@ -38,7 +38,8 @@
 #undef USE_MAVLINK_DBGIO
 
 // define this to test alternate stabilization techniques
-#define DISABLE_CENTRIPETAL_COMP
+//#define DISABLE_CENTRIPETAL_COMP
+#undef DISABLE_CENTRIPETAL_COMP
 
 ////////////////////////////////////////////////////////////////////////////////
 // Set Up Board Type
@@ -102,7 +103,7 @@
 #define ROLL_STABILIZATION_AILERONS         1
 #define ROLL_STABILIZATION_RUDDER           0
 #define PITCH_STABILIZATION                 1
-#define YAW_STABILIZATION_RUDDER            1
+#define YAW_STABILIZATION_RUDDER            0
 #define YAW_STABILIZATION_AILERON           0
 
 // Aileron and Rudder Navigation
