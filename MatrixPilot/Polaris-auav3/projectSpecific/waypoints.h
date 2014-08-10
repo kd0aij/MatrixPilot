@@ -18,9 +18,6 @@
 // You should have received a copy of the GNU General Public License
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma message "Long Lake"
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // Waypoint handling
 
@@ -39,13 +36,75 @@
 // X is Logitude in degrees * 10^7
 // Y is Latitude in degrees * 10^7
 // Z is altitude above sea level, in meters, as a floating point value.
-// 
+//
 // If you are using waypoints for an autonomous landing, it is a good idea to set the altitude value
 // to be the altitude of the landing point, and then express the heights of all of the waypoints with
 // respect to the landing point.
 // If you are using OpenLog, an easy way to determine the altitude of your landing point is to
 // examine the telemetry after a flight, take a look in the .csv file, it will be easy to spot the
 // altitude, expressed in meters.
+
+// AAM West Field runway center  39°50'31.97"N  105°13'10.17"W (105.2194917, 39.842213889)
+#define USE_FIXED_ORIGIN		1
+#define FIXED_ORIGIN_LOCATION	{ -1052194917, 398422138, 1817.0 }
+
+#if 1
+#pragma message "West Field lefthand pattern"
+
+////////////////////////////////////////////////////////////////////////////////
+// This is a lefthand pattern for takeoff to the east
+
+#define USE_FIXED_ORIGIN		1
+
+const struct waypointDef waypoints[] = {
+	{ { 51, 3, 20 } , F_TAKEOFF , CAM_VIEW_LAUNCH } , //Waypoint 1
+	{ { 98, 2, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 2
+	{ { 109, 4, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 3
+	{ { 111, 18, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 4
+	{ { 110, 57, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 5
+	{ { 104, 62, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 6
+	{ { 94, 63, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 7
+	{ { -100, 68, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 8
+	{ { -109, 63, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 9
+	{ { -115, 50, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 10
+	{ { -114, 21, 20 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 11
+	{ { -109, 11, 20 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 12
+	{ { -99, 5, 20 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 13
+	{ { -84, 5, 10 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 14
+	{ { -67, 5, 10 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 15
+	{ { -51, 4, 10 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 16
+	{ { -28, 4, 10 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 17
+	{ { -10, 5, 10 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 18
+	{ { 9, 4, 10 } , F_CROSS_TRACK + F_TRIGGER , CAM_VIEW_LAUNCH } , //Waypoint 19
+};
+#else
+#pragma message "West Field righthand pattern"
+
+const struct waypointDef waypoints[] = {
+	{ { -54, 4, 20 } , F_TAKEOFF , CAM_VIEW_LAUNCH } , //Waypoint 1
+	{ { -91, 5, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 2
+	{ { -100, 13, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 3
+	{ { -102, 32, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 4
+	{ { -103, 69, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 5
+	{ { -95, 80, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 6
+	{ { -84, 81, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 7
+	{ { 79, 81, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 8
+	{ { 91, 76, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 9
+	{ { 97, 60, 35 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 10
+	{ { 98, 22, 20 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 11
+	{ { 98, 5, 20 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 12
+	{ { 89, 1, 20 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 13
+	{ { 74, 1, 20 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 14
+	{ { 58, 1, 10 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 15
+	{ { 40, 2, 10 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 16
+	{ { 14, 3, 10 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 17
+	{ { -13, 3, 10 } , F_CROSS_TRACK + F_TRIGGER , CAM_VIEW_LAUNCH } , //Waypoint 18
+};
+#endif
+
+#if 0
+#pragma message "Long Lake"
+
 
 #define USE_FIXED_ORIGIN		1
 //#define FIXED_ORIGIN_LOCATION	{ -1219950467, 374124664, 30.0 }	// A point in Baylands Park in Sunnyvale, CA
@@ -168,6 +227,7 @@ const struct waypointDef waypoints[] = {
 	{ { 59, 160, 50 } , F_NORMAL , CAM_VIEW_LAUNCH } , //Waypoint 3
 	{ { -22, 128, 50 } , F_NORMAL , CAM_VIEW_LAUNCH } , //Waypoint 4
 };
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // rtlWaypoints[]
