@@ -818,4 +818,14 @@
 // Set this to 1 to enable the Mass Storage Driver support over USB on AUAV3
 #define USE_MSD                             0
 
+// define this to enable catapult launch arming
+//#define CATAPULT_LAUNCH_ENABLE
+
+// replace gps altitude with pressure altitude in IMU location estimation
+//#define USE_PRESSURE_ALT
+
+// replace IMU altitude with pressure altitude in mavlink VFR_HUD record
+//#define TEST_BAROMETER_ALTITUDE
+#undef TEST_BAROMETER_ALTITUDE
+
 #endif

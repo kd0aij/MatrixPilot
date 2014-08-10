@@ -68,6 +68,13 @@ static void stabilizedS(void);
 static void waypointS(void);
 static void returnS(void);
 
+#ifdef CATAPULT_LAUNCH_ENABLE
+#define LAUNCH_DELAY (40)      // wait (x) * .25ms
+static int16_t launch_timer = LAUNCH_DELAY;
+static void cat_armedS(void) ;
+static void cat_delayS(void) ;
+#endif
+
 static void ent_returnS(void);
 
 //	Implementation of state machine.
@@ -218,6 +225,37 @@ static void ent_stabilizedS(void)
 	LED_RED = LED_ON;
 	stateS = &stabilizedS;
 }
+
+#ifdef CATAPULT_LAUNCH_ENABLE
+//  State: catapult launch armed
+//  entered from manual or stabilize if launch_enabled()
+
+static void ent_cat_armedS(void) {
+    DPRINT("ent_cat_armedS\r\n");
+
+    // this flag is only relevant in cat_armed state
+    // and is cleared here and in dcm_init
+    dcm_flags._.launch_detected = 0;
+
+    // must suppress throttle in cat_armed state
+    flags._.disable_throttle = 1;
+
+    LED_ORANGE = LED_ON;
+
+    stateS = &cat_armedS;
+}
+
+// State: catapult launch delay
+// entered from cat_armed if launch_detected()
+
+static void ent_cat_delayS(void) {
+    DPRINT("ent_cat_delayS\r\n");
+
+    launch_timer = LAUNCH_DELAY;
+    stateS = &cat_delayS;
+    delayCheck = 0;
+}
+#endif
 
 //	Same as the come home state, except the radio is on.
 //	Come home is commanded by the mode switch channel (defaults to channel 4).
@@ -375,10 +413,52 @@ static void acquiringS(void)
 	}
 }
 
+#ifdef CATAPULT_LAUNCH_ENABLE
+
+boolean launch_enabled(void) {
+    return (udb_pwIn[LAUNCH_ARM_INPUT_CHANNEL] > 3000);
+}
+//  State: catapult launch armed
+//  entered only from manualS iff (radio_on and gear_up and nav_capable and switch_home)
+
+static void cat_armedS(void) {
+    // transition to manual if flight_mode_switch no longer in waypoint mode
+    // or link lost or gps lost
+    if (flight_mode_switch_manual() | !udb_flags._.radio_on | !dcm_flags._.nav_capable) {
+        LED_ORANGE = LED_OFF;
+        ent_manualS();
+    }
+        // transition to waypointS iff launch detected
+    else if (dcm_flags._.launch_detected) {
+        LED_ORANGE = LED_OFF;
+        ent_cat_delayS();
+    }
+}
+// State: catapult launch delay
+// entered from cat_armedS when launch_detected
+
+static void cat_delayS(void) {
+    // transition to manual if flight_mode_switch no longer in waypoint mode
+    // or link lost or gps lost
+    if (flight_mode_switch_manual() | !udb_flags._.radio_on | !dcm_flags._.nav_capable) {
+        LED_ORANGE = LED_OFF;
+        ent_manualS();
+    } else if (--launch_timer == 0) {
+        DPRINT("delayCheck = %u\r\n", delayCheck);
+        ent_waypointS();
+    }
+}
+#endif
+
 static void manualS(void)
 {
 	if (udb_flags._.radio_on)
 	{
+#ifdef CATAPULT_LAUNCH_ENABLE
+		if ( launch_enabled() & flight_mode_switch_waypoints() & dcm_flags._.nav_capable )
+			ent_cat_armedS() ;
+                else
+#endif
 		if (flight_mode_switch_waypoints() & dcm_flags._.nav_capable)
 			ent_waypointS();
 		else if (flight_mode_switch_stabilize())
@@ -397,6 +477,12 @@ static void stabilizedS(void)
 {
 	if (udb_flags._.radio_on)
 	{
+#ifdef CATAPULT_LAUNCH_ENABLE
+		if ( launch_enabled() & flight_mode_switch_waypoints() & dcm_flags._.nav_capable )
+			ent_cat_armedS() ;
+                else
+#endif
+		if ( flight_mode_switch_waypoints() & dcm_flags._.nav_capable )
 		if (flight_mode_switch_waypoints() & dcm_flags._.nav_capable)
 			ent_waypointS();
 		else if (flight_mode_switch_manual())

@@ -71,8 +71,9 @@ class raw_mavlink_telemetry_file:
                       self.msg.get_type() == 'SERIAL_UDB_EXTRA_F15' or \
                       self.msg.get_type() == 'SERIAL_UDB_EXTRA_F17':
                             return self.msg                
-                elif  False and self.msg.get_type() == 'RAW_IMU':
+                elif True and self.msg.get_type() == 'RAW_IMU':
                     # hacked message is accel, magRaw, magBody instead of accel, gyro, mag
+                    # normal message is accel, gyro, mag(body)
                     print self.msg.xacc,",",self.msg.yacc,",",self.msg.zacc, ",", \
                           self.msg.xgyro,",",self.msg.ygyro,",",self.msg.zgyro, ",", \
                           self.msg.xmag,",",self.msg.ymag,",",self.msg.zmag

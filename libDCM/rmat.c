@@ -227,6 +227,14 @@ void read_accel(void) {
     gplane[2] = ZACCEL_VALUE;
 #endif
 
+#ifdef CATAPULT_LAUNCH_ENABLE
+	// Danger Will Robinson! forward acceleration is negative!
+	if (gplane[1] < -(GRAVITY / 2))
+	{
+		dcm_flags._.launch_detected = 1;
+	}
+#endif
+
     // transform gplane from body frame to earth frame
     // x component in earth frame is earth x unit vector (rmat[0,1,2]) dotted with gplane
     //FIXME: But why are the y and z components negated?
