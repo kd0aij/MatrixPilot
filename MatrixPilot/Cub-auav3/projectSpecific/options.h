@@ -373,14 +373,10 @@
 // SERIAL_MAVLINK is only supported on the UDB4 to ensure that sufficient RAM is available.
 // Note that SERIAL_MAVLINK defaults to using a baud rate of 57600 baud (other formats default to 19200)
 
-#ifdef DISABLE_CENTRIPETAL_COMP
-#define SERIAL_OUTPUT_FORMAT 	SERIAL_DEBUG
-#else
 #define SERIAL_OUTPUT_FORMAT 	SERIAL_MAVLINK
 //#define SERIAL_OUTPUT_FORMAT 	SERIAL_UDB_EXTRA
 //#define SERIAL_OUTPUT_FORMAT 	SERIAL_NMEA
 //#define SERIAL_OUTPUT_FORMAT 	SERIAL_MAGNETOMETER
-#endif
 
 // use ring buffer and software flow control for onboard openlog
 // **** not compatible with mavlink binary uplink ****

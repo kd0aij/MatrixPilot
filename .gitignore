@@ -1,0 +1,9 @@
+build
+dist
+*.mk
+*.properties
+private
+*.pyc
+*~
+flan_config
+

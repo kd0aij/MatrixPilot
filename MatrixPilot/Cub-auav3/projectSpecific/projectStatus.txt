@@ -135,3 +135,18 @@
 	based AHRS. Switching from manual to stabilized mode should be similar to
 	entering "panic" mode on AS3X. Try entering stabilized mode when inverted and
 	in a coordinated turn to test.
+
+10 August: Testing DISABLE_CENTRIPETAL_COMP:
+	Regarding the expected magnitude of the effect of coordinated turns:
+	since the roll/pitch drift integration time constant is on the order of 10 seconds (correct?)
+	a turn must be sustained roughly 10 seconds to observe 1/e times the average value
+	of reference vector displacement. That displacement is
+	atan(lateral acceleration / g) = 45 degrees for 1g lateral accel.
+	So, if my arithmetic is correct, I'll be looking for an error magnitude of 17 degrees
+	after a 10 second turn with 1g lateral acceleration. To achieve 1g lateral acceleration
+	with the Cub flying about 13 m/sec, turn radius needs to be about 17 meters,
+	and yaw rate would be about 45 deg/sec with a full circle taking 8.3 seconds.
+	So, if I can fly the Cub through several 360s at 45 deg/sec (about 7x standard rate)
+	the log should show >17 degrees less than the actual bank angle at the end of the
+	sequence, and switching to stabilize should result in the same magnitude error
+	from level, with error decaying by 1/e every 10 seconds.
