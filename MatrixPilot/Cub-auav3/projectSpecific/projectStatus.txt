@@ -159,3 +159,4 @@
     could be.
     Next flight: log215? turn centip. comp. back on and do another bomb drop, also
     turn yaw stab off to see if the skid tendency goes away in stabilize.
+	Bomb drop was very accurate this time; right on the runway.

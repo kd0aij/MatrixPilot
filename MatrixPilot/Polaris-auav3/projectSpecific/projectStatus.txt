@@ -68,3 +68,9 @@
     off ground about 30' from launcher, still flew. Better turn radius, still need
     more turn authority, looks like yawkp_aileron can go up more. maybe too much
     roll to elevator mix, seems to pitch up in sharp turns
+
+	Log00212.ods indicates est. Airspeed increasing by 4.5 m/sec in the first 1.5 seconds
+	of flight. This agrees well with the calculated initial speed of 4 m/sec with
+	a 3:1 stretch of two bands. Log00212_raw_imu.ods shows only 3/8 g accel at launch
+	which at 3.7 m/sec^2 is only 45% of the calculated peak acceleration. But this
+	is at a sample rate of only 2Hz and the peak accel will be of very short duration.
