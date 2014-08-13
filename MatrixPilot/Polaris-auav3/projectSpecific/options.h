@@ -232,6 +232,7 @@
 #define AILERON_INPUT_CHANNEL               CHANNEL_2
 #define ELEVATOR_INPUT_CHANNEL              CHANNEL_3
 #define RUDDER_INPUT_CHANNEL                CHANNEL_4
+#define LAUNCH_ARM_INPUT_CHANNEL            CHANNEL_5
 #define MODE_SWITCH_INPUT_CHANNEL           CHANNEL_6
 #define CAMERA_PITCH_INPUT_CHANNEL          CHANNEL_UNUSED
 #define CAMERA_YAW_INPUT_CHANNEL            CHANNEL_UNUSED
@@ -819,7 +820,7 @@
 #define USE_MSD                             0
 
 // define this to enable catapult launch arming
-//#define CATAPULT_LAUNCH_ENABLE
+#define CATAPULT_LAUNCH_ENABLE
 
 // replace gps altitude with pressure altitude in IMU location estimation
 //#define USE_PRESSURE_ALT
