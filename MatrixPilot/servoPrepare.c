@@ -112,9 +112,7 @@ void dcm_servo_callback_prepare_outputs(void) {
     if (dcm_flags._.calib_finished) // start telemetry after calibration
     {
 #if (SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK)
-        if (udb_heartbeat_counter % (HEARTBEAT_HZ / 40) == 0) {
-            mavlink_output_40hz();
-        }
+        mavlink_output();
 #elif (SERIAL_OUTPUT_FORMAT == SERIAL_DEBUG)
         //extern void serial_output_nmea();
         //                serial_output_nmea();
