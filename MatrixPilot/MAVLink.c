@@ -266,7 +266,7 @@ int16_t udb_serial_callback_get_byte_to_send(void)
 #include "ring_buffer.h"
 
 // to be used with OpenLog for software flow control
-// Warning: imcompatible with mavlink binary uplink
+// Warning: incompatible with mavlink binary uplink
 extern boolean pauseSerial;
 #define SOFTWARE_FLOW_CONTROL 0
 

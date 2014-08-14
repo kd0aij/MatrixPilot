@@ -190,3 +190,9 @@ Bug??? using COF linker output format, linking with static lib VectorMatrix.a do
 	to skip call to adj_accel if defined. This eliminates use of GPS data
 	in the complementary filter attitude estimation, but leaves in yaw drift correction
 	based either on magnetometer or GPS COG.
+
+14 August 2014:
+	Parameterized MAVLink.c on HEARTRATE_HZ and modified timing code to handle
+	message rates up to HEARTRATE_HZ. The load spreading values still need work,
+	but the 5800 byte ring buffer without software flow control seems to be sufficient at
+	115.2K baud. Stream rate tested up to 100Hz so far.
