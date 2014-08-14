@@ -238,7 +238,9 @@ void init_mavlink(void)
 
 	// QGroundControl GCS lets user send message to increase stream rate
 	streamRates[MAV_DATA_STREAM_RC_CHANNELS] = MAVLINK_RATE_RC_CHAN;
-	streamRates[MAV_DATA_STREAM_RAW_SENSORS] = MAVLINK_RATE_RAW_SENSORS;
+	streamRates[MAV_DATA_STREAM_RAW_IMU] = MAVLINK_RATE_RAW_IMU;
+	streamRates[MAV_DATA_STREAM_RAW_GPS] = MAVLINK_RATE_RAW_GPS;
+	streamRates[MAV_DATA_STREAM_RAW_IMU] = MAVLINK_RATE_RAW_GPS_STATUS;
 	streamRates[MAV_DATA_STREAM_POSITION] = MAVLINK_RATE_POSITION;
 
 	streamRates[MAV_DATA_STREAM_EXTRA1] = MAVLINK_RATE_SUE;
@@ -877,7 +879,9 @@ void handleMessage(void)
 			if (packet.req_stream_id == MAV_DATA_STREAM_ALL)
 			{
 				// Warning: mavproxy automatically sets all.  Do not include all here, it will overide defaults.
-				streamRates[MAV_DATA_STREAM_RAW_SENSORS] = freq;
+				streamRates[MAV_DATA_STREAM_RAW_IMU] = freq;
+				streamRates[MAV_DATA_STREAM_RAW_GPS] = freq;
+				streamRates[MAV_DATA_STREAM_RAW_GPS_STATUS] = freq;
 				streamRates[MAV_DATA_STREAM_RC_CHANNELS] = freq;
 			}
 			else
@@ -1591,7 +1595,7 @@ void mavlink_output(void)
 	}
 
 	spread_transmission_load = 4;
-	if (mavlink_frequency_send(streamRates[MAV_DATA_STREAM_RAW_SENSORS], mavlink_counter + spread_transmission_load))
+	if (mavlink_frequency_send(streamRates[MAV_DATA_STREAM_RAW_GPS], mavlink_counter + spread_transmission_load))
 	{
 		int16_t gps_fix_type;
 		if (gps_nav_valid())
@@ -1732,7 +1736,7 @@ void mavlink_output(void)
 	//	uint16_t chan3_raw, uint16_t chan4_raw, uint16_t chan5_raw, uint16_t chan6_raw, uint16_t chan7_raw,
 	//	uint16_t chan8_raw, uint8_t rssi)
 	spread_transmission_load = 24;
-	if (mavlink_frequency_send(streamRates[MAV_DATA_STREAM_RAW_SENSORS], mavlink_counter + spread_transmission_load))
+	if (mavlink_frequency_send(streamRates[MAV_DATA_STREAM_RC_CHANNELS], mavlink_counter + spread_transmission_load))
 	{
 		mavlink_msg_rc_channels_raw_send(MAVLINK_COMM_0, msec,
 				(uint16_t)((udb_pwIn[0]) >> 1),
@@ -1759,7 +1763,7 @@ void mavlink_output(void)
 	// See:- http://code.google.com/p/gentlenav/wiki/UDBCoordinateSystems and the "Aviation Convention" diagram.
 
 	spread_transmission_load = 30;
-	if (mavlink_frequency_send(streamRates[MAV_DATA_STREAM_RAW_SENSORS], mavlink_counter + spread_transmission_load))
+	if (mavlink_frequency_send(streamRates[MAV_DATA_STREAM_RAW_IMU], mavlink_counter + spread_transmission_load))
 	{
 #if (MAG_YAW_DRIFT == 1) // Magnetometer is connected
 		mavlink_msg_raw_imu_send(MAVLINK_COMM_0, systime_usec,
