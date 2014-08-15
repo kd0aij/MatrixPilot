@@ -188,7 +188,7 @@ void udb_run(void)
 		// it's possible for an interrupt to occur between turning the orange LED off
 		// and completion of the Idle instruction, but the off time will be little more than
 		// the ISR servicing latency. The Idle timer will still be cycle-accurate.
-		LED_ORANGE = LED_OFF;
+//		LED_ORANGE = LED_OFF;
 		Idle();
 #else
 		// pause cpu counting timer while not in an ISR

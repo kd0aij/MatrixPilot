@@ -59,6 +59,9 @@ while True:
     if output and m.get_type() != 'BAD_DATA':
 #        print(m.__dict__)
         if m.get_type() == 'RAW_IMU':
-            print("msg type: %s, time: %d" % (m.get_type(), m.time_usec/1000))
+            #print("msg type: %s, time: %d" % (m.get_type(), m.time_usec/1000))
             output.write("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n" % (m.time_usec/1000, m.xacc, m.yacc, m.zacc, m.xgyro, m.ygyro, m.zgyro, m.xmag, m.ymag, m.zmag))
+    else:
+        print "bad data following timestamp: ", last_timestamp
+        print m
 
