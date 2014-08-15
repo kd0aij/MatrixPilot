@@ -22,6 +22,7 @@
 #include "options.h"
 #include "oscillator.h"
 #include "mavlink_options.h"
+#include "libUDB_defines.h"
 
 // This file should generate no code.
 // It's just meant for precompiler tests, to catch problems and inconsistencies
@@ -52,6 +53,7 @@
 #endif
 
 #pragma message (SELECTED_VALUE(MIPS))
+#pragma message (SELECTED_VALUE(ACCEL_RANGE))
 
 #if (GPS_TYPE == GPS_STD)
 #pragma message "GPS_TYPE: GPS_STD"

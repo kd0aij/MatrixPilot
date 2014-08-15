@@ -117,6 +117,8 @@ void MPU6000_init16(void)
 	writeMPUSPIreg16(MPUREG_ACCEL_CONFIG, BITS_FS_4G); // Accel scale g = 4096
 #elif (ACCEL_RANGE == 8)
 	writeMPUSPIreg16(MPUREG_ACCEL_CONFIG, BITS_FS_8G); // Accel scale g = 2048
+#elif (ACCEL_RANGE == 16)
+	writeMPUSPIreg16(MPUREG_ACCEL_CONFIG, BITS_FS_16G); // Accel scale g = 1024
 #else
 #error "Invalid ACCEL_RANGE"
 #endif

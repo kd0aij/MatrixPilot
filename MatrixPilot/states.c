@@ -266,6 +266,7 @@ static void ent_waypointS(void) {
     flags._.pitch_feedback = 1;
     flags._.altitude_hold_throttle = (ALTITUDEHOLD_WAYPOINT == AH_FULL);
     flags._.altitude_hold_pitch = (ALTITUDEHOLD_WAYPOINT == AH_FULL || ALTITUDEHOLD_WAYPOINT == AH_PITCH_ONLY);
+    flags._.disable_throttle = 0 ;
 
     if (!(FAILSAFE_TYPE == FAILSAFE_MAIN_FLIGHTPLAN && stateS == &returnS)) {
         init_flightplan(0); // Only reset non-rtl waypoints if not already following waypoints
