@@ -821,6 +821,7 @@
 
 // define this to enable catapult launch arming
 #define CATAPULT_LAUNCH_ENABLE
+#define CATAPULT_ARMED_THROTTLE 200
 
 // replace gps altitude with pressure altitude in IMU location estimation
 //#define USE_PRESSURE_ALT
