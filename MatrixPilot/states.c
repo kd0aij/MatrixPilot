@@ -266,7 +266,6 @@ static void ent_waypointS(void) {
     flags._.pitch_feedback = 1;
     flags._.altitude_hold_throttle = (ALTITUDEHOLD_WAYPOINT == AH_FULL);
     flags._.altitude_hold_pitch = (ALTITUDEHOLD_WAYPOINT == AH_FULL || ALTITUDEHOLD_WAYPOINT == AH_PITCH_ONLY);
-    flags._.disable_throttle = 0 ;
 
     if (!(FAILSAFE_TYPE == FAILSAFE_MAIN_FLIGHTPLAN && stateS == &returnS)) {
         init_flightplan(0); // Only reset non-rtl waypoints if not already following waypoints
@@ -402,6 +401,7 @@ static void cat_armedS(void) {
     // or link lost or gps lost
     if (flight_mode_switch_manual() | !udb_flags._.radio_on | !dcm_flags._.nav_capable) {
         LED_ORANGE = LED_OFF;
+        flags._.disable_throttle = 0 ;
         ent_manualS();
     }// transition to waypointS iff launch detected
     else if (dcm_flags._.launch_detected) {
@@ -417,9 +417,11 @@ static void cat_delayS(void) {
     // or link lost or gps lost
     if (flight_mode_switch_manual() | !udb_flags._.radio_on | !dcm_flags._.nav_capable) {
         LED_ORANGE = LED_OFF;
+        flags._.disable_throttle = 0 ;
         ent_manualS();
     } else if (--launch_timer == 0) {
         DPRINT("delayCheck = %u\r\n", delayCheck);
+        flags._.disable_throttle = 0 ;
         ent_waypointS();
     }
 }
