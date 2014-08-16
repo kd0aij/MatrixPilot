@@ -229,7 +229,7 @@ void read_accel(void) {
 
 #ifdef CATAPULT_LAUNCH_ENABLE
 	// Danger Will Robinson! forward acceleration is negative!
-	if (gplane[1] < -(GRAVITY / 2))
+	if (gplane[1] < -(2 * GRAVITY))
 	{
 		dcm_flags._.launch_detected = 1;
 	}

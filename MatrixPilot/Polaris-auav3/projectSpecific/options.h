@@ -85,7 +85,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Set this value to your GPS type.  (Set to GPS_STD, GPS_UBX_2HZ, GPS_UBX_4HZ, GPS_NMEA, or GPS_MTEK)
-#define GPS_TYPE GPS_STD
+#define GPS_TYPE GPS_UBX_4HZ
 //#define GPS_TYPE GPS_NAVSPARKGL
 //#define DEFAULT_GPS_BAUD 115200
 
@@ -821,7 +821,7 @@
 
 // define this to enable catapult launch arming
 #define CATAPULT_LAUNCH_ENABLE
-#define CATAPULT_ARMED_THROTTLE 400
+#define CATAPULT_ARMED_THROTTLE 600
 
 // replace gps altitude with pressure altitude in IMU location estimation
 //#define USE_PRESSURE_ALT
