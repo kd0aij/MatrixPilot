@@ -1,4 +1,4 @@
-16 July: successful test flight in manual, stabilized and auto (waypoints) mode
+16 July 2013: successful test flight in manual, stabilized and auto (waypoints) mode
 	Addiction aircraft with production sample UDB5 and 3DR LEA6 GPS module using
 	the same options.h settings as AVC, but with race mode off
 	* need to reduce elevator boost and auto mode bank angle
@@ -47,7 +47,7 @@
 	maidened Polaris Ultra at Long Lake. Trim fairly good. Stabilization gains seem
 	OK, nav. gains too low.
 
-8 August: increased nav. roll authority to about 45 degrees of bank and increased
+8 August 2013: increased nav. roll authority to about 45 degrees of bank and increased
 	roll_elev_mix to 1.0
 
 27 July 2014: test flight with branch _mw4fbw.
@@ -74,3 +74,11 @@
 	a 3:1 stretch of two bands. Log00212_raw_imu.ods shows only 3/8 g accel at launch
 	which at 3.7 m/sec^2 is only 45% of the calculated peak acceleration. But this
 	is at a sample rate of only 2Hz and the peak accel will be of very short duration.
+
+17 August 2014: nav gains looking better; successful bomb run at west field.
+	Noticed that minimum radius is smaller for left turns than for right turns;
+	check for trim problems or warping from crash damage.
+	Also, check logs for indications that PID KP gain is too low to achieve maximum
+	control surface deflection.
+	Question: Is an integrator necessary to solve this problem without inducing
+	oscillations with a higher KP gain?

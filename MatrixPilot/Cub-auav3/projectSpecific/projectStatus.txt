@@ -157,6 +157,17 @@
     whether stabilized turns look more coordinated
     Bomb drop run was off to the north and nav about the turns not as good as it
     could be.
-    Next flight: log215? turn centip. comp. back on and do another bomb drop, also
+    Next flight: log215? turn centrip. comp. back on and do another bomb drop, also
     turn yaw stab off to see if the skid tendency goes away in stabilize.
 	Bomb drop was very accurate this time; right on the runway.
+
+2 September: verified that YAW_STABILIZATION_RUDDER fights turns by applying rudder
+	in the opposite direction of roll angle. This was probably the main cause of
+	navigation error in the bad bomb run. Will need to test with YAW_STABILIZATION_RUDDER
+	off and DISABLE_CENTRIPETAL_COMP redefined to see if nav is accurate without
+	centrip. accel. comp.
+	Refactored YAW_STABILIZATION_RUDDER to ROLL_CONTROL_RUDDER, and fixed error in
+	yawCntrl.c (was using yaw_setpoint where roll_setpoint was intended). Rudder
+	now acts to maintain roll_setpoint when ROLL_CONTROL_RUDDER is 1. Since the
+	roll_setpoint is determined by the nav logic when in auto mode, this should
+	increase turn authority in auto.

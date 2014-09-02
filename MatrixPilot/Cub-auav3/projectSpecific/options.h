@@ -103,7 +103,10 @@
 #define ROLL_STABILIZATION_AILERONS         1
 #define ROLL_STABILIZATION_RUDDER           0
 #define PITCH_STABILIZATION                 1
-#define YAW_STABILIZATION_RUDDER            0
+
+// experimental: use rudder to hold roll_setpoint
+#define ROLL_CONTROL_RUDDER                 1
+
 #define YAW_STABILIZATION_AILERON           0
 
 // Aileron and Rudder Navigation
@@ -827,5 +830,10 @@
 
 // Set this to 1 to enable the Mass Storage Driver support over USB on AUAV3
 #define USE_MSD                             0
+
+// define this to enable catapult launch arming
+//#define CATAPULT_LAUNCH_ENABLE
+#undef CATAPULT_LAUNCH_ENABLE
+#define CATAPULT_ARMED_THROTTLE 600
 
 #endif

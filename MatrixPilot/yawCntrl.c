@@ -105,14 +105,14 @@ void normalYawCntrl(void) {
     magClamp(&yaw_setpoint, 11000);
 
     yawAccum.WW = 0; // default case is no roll rudder stabilization
-    if (YAW_STABILIZATION_RUDDER && flags._.pitch_feedback) {
+    if (ROLL_CONTROL_RUDDER && flags._.pitch_feedback) {
         gyroYawFeedback.WW = __builtin_mulus(yawkdrud, omegaAccum[2]);
         if (!desired_behavior._.inverted && !desired_behavior._.hover) // normal
         {
-            yawAccum.WW = __builtin_mulsu(yaw_setpoint + rmat[6], rollkprud);
+            yawAccum.WW = __builtin_mulsu(roll_setpoint + rmat[6], rollkprud);
         } else if (desired_behavior._.inverted) // inverted
         {
-            yawAccum.WW = -__builtin_mulsu(yaw_setpoint + rmat[6], rollkprud);
+            yawAccum.WW = -__builtin_mulsu(roll_setpoint + rmat[6], rollkprud);
         }
     } else {
         gyroYawFeedback.WW = 0;
