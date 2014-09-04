@@ -195,4 +195,4 @@ Bug??? using COF linker output format, linking with static lib VectorMatrix.a do
 	Parameterized MAVLink.c on HEARTRATE_HZ and modified timing code to handle
 	message rates up to HEARTRATE_HZ. The load spreading values still need work,
 	but the 5800 byte ring buffer without software flow control seems to be sufficient at
-	115.2K baud. Stream rate tested up to 100Hz so far.
+	115.2K baud. Stream rate tested up to 200Hz.

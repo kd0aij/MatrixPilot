@@ -21,7 +21,7 @@
 
 #include "defines.h"
 
-#ifdef DISABLE_CENTRIPETAL_COMP
+#ifdef TEST_ACCX_STABILIZATION
 #include "filters.h"
 union int32_w2 accx_filt, accy_filt, accz_filt;
 struct relative2D matrix_accum;
