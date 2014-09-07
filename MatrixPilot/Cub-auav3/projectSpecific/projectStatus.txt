@@ -171,3 +171,14 @@
 	now acts to maintain roll_setpoint when ROLL_CONTROL_RUDDER is 1. Since the
 	roll_setpoint is determined by the nav logic when in auto mode, this should
 	increase turn authority in auto.
+
+6 September: Cub test flight indicates that ROLL_CONTROL_RUDDER is behaving as desired.
+	Turns seem to be the same in both directions. Need to see if this helps the Polaris
+	trim problem.
+	Problem today with IMU altitude estimate: large divergence from GPS altitude,
+	apparently developed while sitting on the ground. Change initialization procedure
+	to eliminate delay between power-up and takeoff; TODO: look into eliminating the divergence
+	problem.
+
+7 September: modified yawCntrl.c to maintain lateral acceleration at zero (keep the
+	"ball" centered). Bench test looks OK on Cub.
