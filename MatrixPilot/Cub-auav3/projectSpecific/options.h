@@ -38,8 +38,8 @@
 #undef USE_MAVLINK_DBGIO
 
 // define this to test alternate stabilization techniques
-#define DISABLE_CENTRIPETAL_COMP
-//#undef DISABLE_CENTRIPETAL_COMP
+//#define DISABLE_CENTRIPETAL_COMP
+#undef DISABLE_CENTRIPETAL_COMP
 
 ////////////////////////////////////////////////////////////////////////////////
 // Set Up Board Type

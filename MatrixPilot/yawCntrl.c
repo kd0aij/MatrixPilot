@@ -46,6 +46,11 @@ const uint16_t hoveryawkp = (uint16_t) (HOVER_YAWKP*RMAX);
 const uint16_t hoveryawkd = (uint16_t) (HOVER_YAWKD*SCALEGYRO*RMAX);
 #endif
 
+#include "filters.h"
+union int32_w2 accx_filt;
+int16_t accx;
+extern fractional gplane[];
+
 void normalYawCntrl(void);
 void hoverYawCntrl(void);
 
@@ -73,6 +78,13 @@ void normalYawCntrl(void) {
     union longww yawAccum;
     union longww gyroYawFeedback;
 //    int16_t ail_rud_mix;
+
+        // lowpass filter the x accelerometer samples
+        // The MPU6000 applies a 42Hz digital lowpass filter, but we probably
+        // want just a few Hz of bandwidth for the accelerometer readings.
+        // Note that this is executed at HEARTBEAT_HZ = 200, so the 3dB point
+        // for lp2 with LPCB_45_HZ will be 4.5Hz
+        accx = -lp2(gplane[0], &accx_filt, LPCB_45_HZ);
 
 #ifdef TestGains
     flags._.GPS_steering = 0; // turn off navigation
@@ -109,10 +121,16 @@ void normalYawCntrl(void) {
         gyroYawFeedback.WW = __builtin_mulus(yawkdrud, omegaAccum[2]);
         if (!desired_behavior._.inverted && !desired_behavior._.hover) // normal
         {
-            yawAccum.WW = __builtin_mulsu(roll_setpoint + rmat[6], rollkprud);
+              // sum yaw setpoint with roll error
+//            yawAccum.WW = __builtin_mulsu(yaw_setpoint + roll_setpoint + rmat[6], rollkprud);
+            // sum yaw setpoint with accx
+            yawAccum.WW = __builtin_mulsu(yaw_setpoint - accx, rollkprud);
         } else if (desired_behavior._.inverted) // inverted
         {
-            yawAccum.WW = -__builtin_mulsu(roll_setpoint + rmat[6], rollkprud);
+              // sum yaw setpoint with roll error
+//            yawAccum.WW = -__builtin_mulsu(yaw_setpoint + roll_setpoint + rmat[6], rollkprud);
+            // sum yaw setpoint with accx
+            yawAccum.WW = -__builtin_mulsu(yaw_setpoint  - accx, rollkprud);
         }
     } else {
         gyroYawFeedback.WW = 0;
