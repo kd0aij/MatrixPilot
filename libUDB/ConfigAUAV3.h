@@ -32,7 +32,7 @@
 #elif ( ACCEL_RANGE == 8)
 #define SCALEACCEL          2.578    // 8 g range
 #elif ( ACCEL_RANGE == 16)
-#define SCALEACCEL          5.162    // 8 g range
+#define SCALEACCEL          5.162    // 16 g range
 #else
 #error "unsupported value for ACCEL_RANGE"
 #endif

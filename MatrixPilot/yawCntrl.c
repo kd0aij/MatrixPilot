@@ -79,12 +79,13 @@ void normalYawCntrl(void) {
     union longww gyroYawFeedback;
 //    int16_t ail_rud_mix;
 
-        // lowpass filter the x accelerometer samples
-        // The MPU6000 applies a 42Hz digital lowpass filter, but we probably
-        // want just a few Hz of bandwidth for the accelerometer readings.
-        // Note that this is executed at HEARTBEAT_HZ = 200, so the 3dB point
-        // for lp2 with LPCB_45_HZ will be 4.5Hz
-        accx = -lp2(gplane[0], &accx_filt, LPCB_45_HZ);
+    // lowpass filter the x accelerometer samples
+    // The MPU6000 applies a 42Hz digital lowpass filter, but we probably
+    // want just a few Hz of bandwidth for the accelerometer readings.
+    // Note that this is executed at HEARTBEAT_HZ = 200, so the 3dB point
+    // for lp2 with LPCB_45_HZ will be 4.5Hz
+    // scale value up such that 1g of lateral acceleration has magnitude 16K
+    accx = -(ACCEL_RANGE) * lp2(gplane[0], &accx_filt, LPCB_45_HZ);
 
 #ifdef TestGains
     flags._.GPS_steering = 0; // turn off navigation
@@ -113,7 +114,7 @@ void normalYawCntrl(void) {
     // add to angle setpoint
     yaw_setpoint += yawNavDeflection;
 
-    // limit combined manual and nav yaw setpoint to less than +/-45 degrees
+    // limit combined manual and nav yaw setpoint
     magClamp(&yaw_setpoint, 11000);
 
     yawAccum.WW = 0; // default case is no roll rudder stabilization
@@ -130,7 +131,7 @@ void normalYawCntrl(void) {
               // sum yaw setpoint with roll error
 //            yawAccum.WW = -__builtin_mulsu(yaw_setpoint + roll_setpoint + rmat[6], rollkprud);
             // sum yaw setpoint with accx
-            yawAccum.WW = -__builtin_mulsu(yaw_setpoint  - accx, rollkprud);
+            yawAccum.WW = -__builtin_mulsu(yaw_setpoint - accx, rollkprud);
         }
     } else {
         gyroYawFeedback.WW = 0;
