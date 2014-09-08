@@ -84,6 +84,23 @@ extern int16_t errorYawground[];
 
 void dead_reckon(void)
 {
+        IMUlocationx._.W0 = 0;
+        IMUlocationy._.W0 = 0;
+        IMUlocationz._.W0 = 0;
+
+        IMUlocationx._.W1 = GPSlocation.x;
+        IMUlocationy._.W1 = GPSlocation.y;
+        IMUlocationz._.W1 = GPSlocation.z;
+
+        IMUintegralAccelerationx._.W0 = 0;
+        IMUintegralAccelerationy._.W0 = 0;
+        IMUintegralAccelerationz._.W0 = 0;
+
+        IMUintegralAccelerationx._.W1 = GPSvelocity.x;
+        IMUintegralAccelerationy._.W1 = GPSvelocity.y;
+        IMUintegralAccelerationz._.W1 = GPSvelocity.z;
+        return;
+
 	if (dcm_flags._.dead_reckon_enable == 1)  // wait for startup of GPS
 	{
 		//	integrate the accelerometers to update IMU velocity
