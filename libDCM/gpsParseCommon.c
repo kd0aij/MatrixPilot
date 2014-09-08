@@ -41,6 +41,9 @@ union longbbbb lat_origin, long_origin, alt_origin;
 uint8_t svs;                                        // number of satellites
 uint8_t lat_cir;
 int16_t cos_lat = 0;
+// floating point version of location and cos_lat
+float loc_f[3];
+float   cos_lat_f;
 int16_t gps_data_age;
 uint8_t *gps_out_buffer = 0;
 int16_t gps_out_buffer_length = 0;
@@ -127,8 +130,14 @@ void udb_background_callback_triggered(void)
 
 		dcm_callback_gps_location_updated();
 
-		accum_nav.WW = ((lat_gps.WW - lat_origin.WW)/90); // in meters, range is about 20 miles
+//                const float eR = 6371.0e3;
+                loc_f[1] = (float)(lat_gps.WW - lat_origin.WW)/89.983f;
+                loc_f[0] = ((float)(long_gps.WW - long_origin.WW)/89.983f) * cos_lat_f;
+                loc_f[2] = (float)(alt_sl_gps.WW - alt_origin.WW)/100.0;
+
+                accum_nav.WW = ((lat_gps.WW - lat_origin.WW)/90); // in meters, range is about 20 miles
 		location[1] = accum_nav._.W0;
+
 
 		accum_nav.WW = long_scale((long_gps.WW - long_origin.WW)/90, cos_lat);
 		location[0] = accum_nav._.W0;

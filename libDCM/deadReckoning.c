@@ -84,13 +84,13 @@ extern int16_t errorYawground[];
 
 void dead_reckon(void)
 {
-        IMUlocationx._.W0 = 0;
-        IMUlocationy._.W0 = 0;
-        IMUlocationz._.W0 = 0;
+        IMUlocationx._.W1 = (int16_t) loc_f[0];
+        IMUlocationy._.W1 = (int16_t) loc_f[1];
+        IMUlocationz._.W1 = (int16_t) loc_f[2];
 
-        IMUlocationx._.W1 = GPSlocation.x;
-        IMUlocationy._.W1 = GPSlocation.y;
-        IMUlocationz._.W1 = GPSlocation.z;
+        IMUlocationx._.W0 = (int16_t) (65536 * (loc_f[0] - IMUlocationx._.W1) - 0.5);
+        IMUlocationy._.W0 = (int16_t) (65536 * (loc_f[1] - IMUlocationx._.W1) - 0.5);
+        IMUlocationz._.W0 = (int16_t) (65536 * (loc_f[2] - IMUlocationx._.W1) - 0.5);
 
         IMUintegralAccelerationx._.W0 = 0;
         IMUintegralAccelerationy._.W0 = 0;

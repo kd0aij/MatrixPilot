@@ -183,6 +183,9 @@ void dcm_set_origin_location(int32_t o_long, int32_t o_lat, int32_t o_alt)
 	lat_cir = accum_nav.__.B2;
 	// estimate the cosine of the latitude, which is used later computing desired course
 	cos_lat = cosine (lat_cir);
+
+        // floating point rep. of cosine of latitude
+        cos_lat_f = cos((3.14159/180.0)*((float)o_lat * 1e-7));
 }
 
 struct relative3D dcm_absolute_to_relative(struct waypoint3D absolute)
