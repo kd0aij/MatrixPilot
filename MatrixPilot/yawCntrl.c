@@ -84,10 +84,10 @@ void normalYawCntrl(void) {
     // want just a few Hz of bandwidth for the accelerometer readings.
     // Note that this is executed at HEARTBEAT_HZ = 200, so the 3dB point
     // for lp2 with LPCB_45_HZ will be 4.5Hz
-    // scale value up such that 1g of lateral acceleration has magnitude 16K
+    // scale value up such that 4g of lateral acceleration has magnitude 16K
     accx = -lp2(gplane[0], &accx_filt, LPCB_45_HZ);
-    magClamp(&accx, 16384/ACCEL_RANGE); // saturate at 16K
-    accx *= (ACCEL_RANGE);
+    magClamp(&accx, 16384/(ACCEL_RANGE/4)); // saturate at 16K
+    accx *= (ACCEL_RANGE/4);
 
 #ifdef TestGains
     flags._.GPS_steering = 0; // turn off navigation
