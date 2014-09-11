@@ -102,11 +102,10 @@
 // Set any of these to 0 to disable the stabilization in that axis.
 #define ROLL_STABILIZATION_AILERONS         1
 #define ROLL_STABILIZATION_RUDDER           0
-#define PITCH_STABILIZATION                 1
-
 // experimental: use rudder to hold roll_setpoint
 #define ROLL_CONTROL_RUDDER                 1
 
+#define PITCH_STABILIZATION                 1
 #define YAW_STABILIZATION_AILERON           0
 
 // Aileron and Rudder Navigation
@@ -389,6 +388,9 @@
 //       (could use "console" instead)
 #define USE_RING_BUFFER
 //#undef USE_RING_BUFFER
+// to be used with OpenLog for software flow control
+// Warning: incompatible with mavlink binary uplink
+#define SOFTWARE_FLOW_CONTROL 1
 
 // MAVLink requires an aircraft Identifier (I.D) as it is deaigned to control multiple aircraft
 // Each aircraft in the sky will need a unique I.D. in the range from 0-255

@@ -1526,11 +1526,11 @@ class clock() :
     
     def synthesize(self,gps_time):
        """Create synthetic time between entries which have identical gps time"""
-       assumed_telemetry_time_delta = 250     # expected time difference between telemetry entries in ms
+       assumed_telemetry_time_delta = 20     # expected time difference between telemetry entries in ms
        if gps_time == self.last_gps_time :
            self.identical_gps_time_count += 1
-           if self.identical_gps_time_count > 4 :
-               print "Warning: More than 4 identical telemetry entries with identical time stamps"
+           if self.identical_gps_time_count > 13 :
+               print "Warning: More than 13 identical telemetry entries with identical time stamps"
                print "at gps time:", gps_time
            return(gps_time + assumed_telemetry_time_delta)
        else:
@@ -2064,6 +2064,7 @@ def create_telemetry_kmz(options,log_book):
 
 def create_log_book(options) :
     """Parse the telemetryfile and create a virtual flight log book object"""
+    raw_imu_cnt = 0
     
     # Set up Basic Initial Values for creating a log book.
     roll = 0  # only used with ardustation roll
@@ -2095,17 +2096,20 @@ def create_log_book(options) :
     # Process the telemetry file
     for msg in t: # msg is either a line of ascii, or a mavlink message
         record_no += 1
+        #if raw_imu_cnt > 10:
+        #    break
         log  = t.parse(msg, record_no, max_tm_actual)
         if log.log_format == "HKGCS_BLANK_LINE" : # blank line in Happy Killmore's GCS
             continue  # Go fetch another line
         if log.log_format == "Error" :# we had an error
             print "Error parsing telemetry line ",record_no 
             continue  # Go get the next line
-        elif log.log_format == "F1" or log.log_format == "F2"  or \
+        elif log.log_format == "F1" or log.log_format == "F2" or \
                log.log_format == "ARDUSTATION!!!": # We have a normal telemetry line
+            raw_imu_cnt+=1
             if debug : print "lat",log.latitude,"lon",log.longitude,"alt",log.altitude, \
                 "wp", log.waypointIndex, "rmat1", log.rmat1
-            if (log.latitude == 0 and log.longitude == 0 and log.altitude == 0 ):
+            if ((log.latitude == 0 and log.longitude == 0 and log.altitude == 0 )):
                 if debug: print "lat or long or alt is 0; ignoring line", record_no
                 continue # Get next line of telemetry  - No GPS yet, can happen at boot time on plane 
             else :
@@ -2129,9 +2133,13 @@ def create_log_book(options) :
                 if ((log.inline_waypoint_x != 0) or (log.inline_waypoint_y != 0) or (log.inline_waypoint_z != 0)):
                     log_book.waypoints_in_telemetry = True
                 log.tm = flight_clock.synthesize(log.tm) # interpolate time between identical entries
+                #print "type: ", log.log_format, " time: ", log.tm
+                
                 if (miss_out_counter > miss_out_interval) :# only store log every X times for large datasets
                     log_book.entries.append(log)
                     miss_out_counter = 0
+        elif log.log_format == "RAW_IMU" : # raw IMU data is filtered and stored in telemetry record
+            pass
         elif log.log_format == "F4" : # We have a type of options.h line
             # format of roll_stabilization has changed over time
             try:
@@ -2204,6 +2212,7 @@ def create_log_book(options) :
             pitch = log.pitch
         else :
             print "Warning: Log Format received:", log.log_format
+            break
         
     initial_points = 10 # no. log entries to find origin at start if no F13 format line
     
@@ -2268,7 +2277,7 @@ def write_csv(options,log_book):
     print >> f_csv, "IN5,IN6,IN7,IN8,OUT1,OUT2,OUT3,OUT4,",
     print >> f_csv, "OUT5,OUT6,OUT7,OUT8,LEX,LEY,LEZ,IMU X,IMU Y,IMU Z,MAG W,MAG N,MAG Z,",
     print >> f_csv, "Waypoint X,WaypointY,WaypointZ,IMUvelocityX,IMUvelocityY,IMUvelocityZ,",
-    print >> f_csv, "Flags,Sonar Dst,ALT_SONAR"
+    print >> f_csv, "Flags,Sonar Dst,ALT_SONAR,IMUraw_xacc,IMUraw_yacc,IMUraw_zacc"
     for entry in log_book.entries :
         print >> f_csv, entry.tm / 1000.0, ",",\
               flight_clock.convert(entry.tm, log_book), ",", \
@@ -2291,7 +2300,8 @@ def write_csv(options,log_book):
               int(entry.earth_mag_vec_E), "," , int(entry.earth_mag_vec_N), "," , int(entry.earth_mag_vec_Z), "," , \
               entry.inline_waypoint_x, ",", entry.inline_waypoint_y, ",", entry.inline_waypoint_z, ",", \
               entry.IMUvelocityx, ",", entry.IMUvelocityy, ",", entry.IMUvelocityz, ",", \
-              entry.flags, ",", entry.sonar_direct, ",",  entry.alt_sonar
+              entry.flags, ",", entry.sonar_direct, ",",  entry.alt_sonar, ",", \
+              entry.IMUraw_xacc, ",", entry.IMUraw_yacc, ",", entry.IMUraw_zacc
 
     f_csv.close()
     return
