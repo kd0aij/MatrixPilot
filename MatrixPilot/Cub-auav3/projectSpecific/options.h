@@ -102,7 +102,7 @@
 // Set any of these to 0 to disable the stabilization in that axis.
 #define ROLL_STABILIZATION_AILERONS         1
 #define ROLL_STABILIZATION_RUDDER           0
-// experimental: use rudder to hold roll_setpoint
+// experimental: use rudder to ...
 #define ROLL_CONTROL_RUDDER                 1
 
 #define PITCH_STABILIZATION                 1
@@ -171,7 +171,7 @@
 // If you select this option, you also need to set magnetometer options in
 // the magnetometerOptions.h file, including declination and magnetometer type.
 #define MAG_YAW_DRIFT                       1
-#define MAG_YAW_ENABLE                      1
+#define MAG_YAW_ENABLE                      0
 #undef ENABLE_MAGOFFSET
 //#define ENABLE_MAGOFFSET
 #undef ENABLE_MAGALIGNMENT

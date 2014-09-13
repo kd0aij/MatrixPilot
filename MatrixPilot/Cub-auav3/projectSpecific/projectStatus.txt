@@ -182,3 +182,8 @@
 
 7 September: modified yawCntrl.c to maintain lateral acceleration at zero (keep the
 	"ball" centered). Bench test looks OK on Cub.
+
+11 September 2014:
+	revised yawCntrl.c to ignore manual rudder input and cancel lateral acceleration
+	when in auto mode, but to mix in manual input in stabilization mode.
+	Disable mag yaw drift correction (MAG_YAW_ENABLE) in options.h
