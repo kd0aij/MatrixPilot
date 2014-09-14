@@ -1756,7 +1756,7 @@ def write_GE_accel_vectors(log_book,flight_origin,filename, flight_clock):
         print >> filename, flight_origin.move_lat(entry.lat[primary_locator]),
         print >> filename, """</latitude>
         <altitude>""",
-        print >> filename, flight_origin.move_alt(entry.alt[primary_locator] + 15.0),
+        print >> filename, flight_origin.move_alt(entry.alt[primary_locator] + 5.0),
         print >> filename, """</altitude>
       </Location>
       <Orientation>
@@ -1772,7 +1772,8 @@ def write_GE_accel_vectors(log_book,flight_origin,filename, flight_clock):
         print >> filename, entry.roll,
         print >> filename, """</tilt>
         <roll>""",
-        print >> filename, entry.pitch,
+        # negating pitch and using in place of roll
+        print >> filename,  - entry.pitch,
         print >> filename, """</roll>
       </Orientation>
       <Scale>"""
