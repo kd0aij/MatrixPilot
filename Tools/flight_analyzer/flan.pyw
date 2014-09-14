@@ -1624,8 +1624,8 @@ def write_earth_mag_vectors(log_book,flight_origin, filename, flight_clock):
     print >> filename, "</Folder>"
 
 def write_earth_wind_2d_vectors(log_book,flight_origin,filename, flight_clock):
-    primary_locator = log_book.primary_locator
     """write the recorded earth wind vectors (2D) to KML"""
+    primary_locator = log_book.primary_locator
     print >> filename, """
       <Folder>
         <open>0</open>
@@ -1706,16 +1706,101 @@ def write_earth_wind_2d_vectors(log_book,flight_origin,filename, flight_clock):
     # This marks the end of the for loop
     print >> filename, "</Folder>"
 
+def write_GE_accel_vectors(log_book,flight_origin,filename, flight_clock):
+    """write the recorded accelerometer vectors to KML"""
+    primary_locator = log_book.primary_locator
+    print >> filename, """
+      <Folder>
+        <open>0</open>
+    <name>X Accel Vectors""",
+    print >> filename, "</name>"
+    counter = 0
+    print >> filename, "<description>X acceleromter vectors plotted in the plane's body reference</description>"
+    for entry in log_book.entries :
+        counter += 1 
+        #when = flight_clock.xml_time # Get the next time in XML format e.g.2007-01-14T21:05:02Z
+        when = flight_clock.convert(entry.tm, log_book)
+        print >> filename, """   <Placemark>"""
+        print >> filename, """<TimeStamp>
+        <when>""", when, """</when>
+        </TimeStamp>
+      <name>Vector""",
+        print >> filename, counter,
+        print >> filename, """</name>
+      <description>Accelerometer Vectors""",
+        print >> filename,  counter ,
+        print >> filename,  \
+               "<p>GPS Time(Secs)", (entry.tm /1000),\
+               "</p><p>status",entry.status, "</p>", \
+               "<p>Desired waypoint",entry.waypointIndex, "</p>", \
+               "<p>X Raw Accel",int(entry.IMUraw_xacc ), "</p>", \
+               "<p>Y Raw Accel",int(entry.IMUraw_yacc),"</p>", \
+               "<p>Z Raw Accel", int(entry.IMUraw_zacc), "</p>", \
+               "</description>",
+        print >> filename,"""
+        <visibility>0</visibility>"""
+        print >> filename, """       <Style id="default"></Style>
+      <Model>"""
+        if log_book.ardustation_pos == "Recorded" :
+            print >> filename, """
+      <altitudeMode>relativeToGround</altitudeMode>"""
+        else:
+            print >> filename, """
+      <altitudeMode>absolute</altitudeMode>"""
+        print >> filename, """
+      <Location>
+        <longitude>""",
+        print >> filename,  flight_origin.move_lon(entry.lon[primary_locator]),
+        print >> filename, """</longitude>
+        <latitude>""",
+        print >> filename, flight_origin.move_lat(entry.lat[primary_locator]),
+        print >> filename, """</latitude>
+        <altitude>""",
+        print >> filename, flight_origin.move_alt(entry.alt[primary_locator] + 15.0),
+        print >> filename, """</altitude>
+      </Location>
+      <Orientation>
+        <heading>""",
+        if log_book.ardustation_pos == "Recorded" :
+            print >> filename, entry.cog / 100.0 ,
+        else :
+            # Move heading by 90 degrees to put accel vector out of wing 
+            print >> filename, entry.heading_degrees - 90,
+        print >> filename, """</heading>
+        <tilt>""",
+        # Using roll here on purposes instead of pitch
+        print >> filename, entry.roll,
+        print >> filename, """</tilt>
+        <roll>""",
+        print >> filename, entry.pitch,
+        print >> filename, """</roll>
+      </Orientation>
+      <Scale>"""
+        x_accel_mag = entry.IMUraw_xacc / 10000
+        print >> filename, "<x>0.02</x>"""
+        print >> filename, "<y>", x_accel_mag,"</y>"
+        print >> filename, """
+        <z>0.02</z>
+        </Scale>
+      <Link>
+        <href>models/arrow.dae</href>
+      </Link>
+      </Model>
+      <DocumentSource>Pete Hollands</DocumentSource>
+    </Placemark>
+"""
+    # This marks the end of the for loop
+    print >> filename, "</Folder>"
                
 def write_flight_vectors(log_book,origin, filename, flight_clock,gps_delay) :
     primary_locator = log_book.primary_locator
     print >> filename, """
       <Folder>
         <open>0</open>
-    <name>Pitch/Roll/Yaw""",
+    <name>Roll/Pitch/Yaw""",
     print >> filename, "</name>"
     counter = 0
-    print >> filename, "<description>Model plane plotted for each second of flight</description>"
+    print >> filename, "<description>Roll, Pitch, Yaw plotted using model plane</description>"
     for entry in log_book.entries :
       counter += 1
       if counter <= gps_delay :
@@ -2052,10 +2137,12 @@ def create_telemetry_kmz(options,log_book):
     gps_delay = options.gps_delay_correction
     print "GPS Delay Correction is set to ", gps_delay 
     write_flight_vectors(log_book,flight_origin,f_pos,flight_clock,gps_delay)
-    if ( log_book.earth_mag_set == TRUE):
+    if ( log_book.earth_mag_set == True):
         write_earth_mag_vectors(log_book,flight_origin,f_pos, flight_clock)
-    if ( log_book.wind_set == TRUE):
+    if ( log_book.wind_set == True):
          write_earth_wind_2d_vectors(log_book,flight_origin,f_pos, flight_clock)
+    if ( log_book.accel_set == True):
+         write_GE_accel_vectors(log_book,flight_origin,f_pos, flight_clock)
 
     write_document_postamble(f_pos)
     f_pos.close()
@@ -2082,6 +2169,7 @@ def create_log_book(options) :
     log_book = flight_log_book()
     log_book.earth_mag_set = False # No magnetometer arrows in GE unless mag telemetry arrives
     log_book.wind_set = False      # No wind vector info in GE unless wind telemetry arrives
+    log_book.accel_set = False         # No accel vector info in GE unless X accel arrives
     log_book.dead_reckoning = 0    # By default dead reckoning is assumed to be off until telemetry arrives
     log_book.primary_locator = GPS # Default is to use GPS for plotting plane position unless IMU info arrives
 
@@ -2139,7 +2227,7 @@ def create_log_book(options) :
                     log_book.entries.append(log)
                     miss_out_counter = 0
         elif log.log_format == "RAW_IMU" : # raw IMU data is filtered and stored in telemetry record
-            pass
+            log_book.accel_set = True
         elif log.log_format == "F4" : # We have a type of options.h line
             # format of roll_stabilization has changed over time
             try:

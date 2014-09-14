@@ -79,8 +79,13 @@ class raw_mavlink_telemetry_file:
                       self.msg.get_type() == 'SERIAL_UDB_EXTRA_F17':
                             return self.msg                
                 elif True and self.msg.get_type() == 'RAW_IMU':
-                    # hacked message is accel, magRaw, magBody instead of accel, gyro, mag
-                    # normal message is accel, gyro, mag(body)
+                    # C Code in MP is:-
+                    # mavlink_msg_raw_imu_send(MAVLINK_COMM_0, systime_usec,
+                    #       (int16_t)udb_xaccel.value, (int16_t)udb_yaccel.value, (int16_t)udb_zaccel.value,
+                    #       (int16_t)udb_xrate.value, (int16_t)udb_yrate.value, (int16_t)udb_zrate.value,
+                    #       //(int16_t)magFieldRaw[0], (int16_t)magFieldRaw[1], (int16_t)magFieldRaw[2],
+		    #       (int16_t)udb_magFieldBody[0], (int16_t)udb_magFieldBody[1], (int16_t)udb_magFieldBody[2]);
+                    # 
                     return self.msg;
                     # print self.msg.xacc,",",self.msg.yacc,",",self.msg.zacc, ",", \
                     #       self.msg.xgyro,",",self.msg.ygyro,",",self.msg.zgyro, ",", \
