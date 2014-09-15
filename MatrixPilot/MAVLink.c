@@ -268,7 +268,7 @@ int16_t udb_serial_callback_get_byte_to_send(void)
 // to be used with OpenLog for software flow control
 // Warning: incompatible with mavlink binary uplink
 extern boolean pauseSerial;
-#define SOFTWARE_FLOW_CONTROL 0
+//#define SOFTWARE_FLOW_CONTROL 1
 
 // compiler built_in mechanism to set and restore IPL
 static int current_cpu_ipl;

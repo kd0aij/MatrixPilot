@@ -389,18 +389,12 @@ void parseSbusData() {
     // digital channels and flags are in byte 23
     if (sbuff[23] & 0x4) sFrameLost++; // FrameLost flag set
     if (sbuff[23] & 0x8) {
-        // failsafe flag is set
+        // failsafe flag is set, increment error count
         sFailSafe++;
-        failSafePulses = 0;
-        udb_flags._.radio_on = 0;
-    } else {
-        // failsafe flag is clear
-        failSafePulses = 44;
-        if ((udb_pwIn[FAILSAFE_INPUT_CHANNEL] > FAILSAFE_INPUT_MIN) && (udb_pwIn[FAILSAFE_INPUT_CHANNEL] < FAILSAFE_INPUT_MAX))
-            udb_flags._.radio_on = 1;
-        else {
-            udb_flags._.radio_on = 0;
-        }
+    } else if ((udb_pwIn[FAILSAFE_INPUT_CHANNEL] > FAILSAFE_INPUT_MIN) &&
+               (udb_pwIn[FAILSAFE_INPUT_CHANNEL] < FAILSAFE_INPUT_MAX)) {
+        // failsafe flag is clear and signal valid; increment valid count
+        failSafePulses++;
     }
 }
 

@@ -196,3 +196,7 @@ Bug??? using COF linker output format, linking with static lib VectorMatrix.a do
 	message rates up to HEARTRATE_HZ. The load spreading values still need work,
 	but the 5800 byte ring buffer without software flow control seems to be sufficient at
 	115.2K baud. Stream rate tested up to 200Hz.
+
+11 September 2014:
+	See Cub-auav3 project status for experiments at branch level with yawCntrl.c
+	Fixed bug in SBUS mode failsafe detection logic.

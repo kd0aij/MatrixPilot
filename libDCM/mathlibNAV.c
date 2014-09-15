@@ -19,6 +19,7 @@
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
 
+#include <math.h>
 #include "libDCM_internal.h"
 
 //  math libraray
@@ -168,6 +169,24 @@ void rotate(struct relative2D *xy, int8_t angle)
 	newy = accum._.W1;
 	xy->x = newx;
 	xy->y = newy;
+}
+
+void rotate_f(struct relative2D_f *xy, float angle)
+{
+	//  rotates xy by angle in degrees, measured in a counter clockwise sense.
+	//  A mathematical angle of plus or minus pi is represented digitally as plus or minus 180.
+	float cosang, sinang;
+	sinang = sinf(angle);
+	cosang = cos(angle);
+	xy->x = cosang * xy->x - sinang * xy->y;
+	xy->y = sinang * xy->x + cosang * xy->y;
+}
+
+float circ360_f(float angle)
+{
+        if (angle < -180) angle += 360.0f;
+        if (angle > 180.0f) angle -= 360.0f;
+        return angle;
 }
 
 int8_t rect_to_polar(struct relative2D *xy)

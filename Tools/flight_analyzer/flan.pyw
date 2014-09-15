@@ -1526,11 +1526,11 @@ class clock() :
     
     def synthesize(self,gps_time):
        """Create synthetic time between entries which have identical gps time"""
-       assumed_telemetry_time_delta = 250     # expected time difference between telemetry entries in ms
+       assumed_telemetry_time_delta = 20     # expected time difference between telemetry entries in ms
        if gps_time == self.last_gps_time :
            self.identical_gps_time_count += 1
-           if self.identical_gps_time_count > 4 :
-               print "Warning: More than 4 identical telemetry entries with identical time stamps"
+           if self.identical_gps_time_count > 13 :
+               print "Warning: More than 13 identical telemetry entries with identical time stamps"
                print "at gps time:", gps_time
            return(gps_time + assumed_telemetry_time_delta)
        else:
@@ -1624,8 +1624,8 @@ def write_earth_mag_vectors(log_book,flight_origin, filename, flight_clock):
     print >> filename, "</Folder>"
 
 def write_earth_wind_2d_vectors(log_book,flight_origin,filename, flight_clock):
-    primary_locator = log_book.primary_locator
     """write the recorded earth wind vectors (2D) to KML"""
+    primary_locator = log_book.primary_locator
     print >> filename, """
       <Folder>
         <open>0</open>
@@ -1706,16 +1706,102 @@ def write_earth_wind_2d_vectors(log_book,flight_origin,filename, flight_clock):
     # This marks the end of the for loop
     print >> filename, "</Folder>"
 
+def write_GE_accel_vectors(log_book,flight_origin,filename, flight_clock):
+    """write the recorded accelerometer vectors to KML"""
+    primary_locator = log_book.primary_locator
+    print >> filename, """
+      <Folder>
+        <open>0</open>
+    <name>X Accel Vectors""",
+    print >> filename, "</name>"
+    counter = 0
+    print >> filename, "<description>X acceleromter vectors plotted in the plane's body reference</description>"
+    for entry in log_book.entries :
+        counter += 1 
+        #when = flight_clock.xml_time # Get the next time in XML format e.g.2007-01-14T21:05:02Z
+        when = flight_clock.convert(entry.tm, log_book)
+        print >> filename, """   <Placemark>"""
+        print >> filename, """<TimeStamp>
+        <when>""", when, """</when>
+        </TimeStamp>
+      <name>Vector""",
+        print >> filename, counter,
+        print >> filename, """</name>
+      <description>Accelerometer Vectors""",
+        print >> filename,  counter ,
+        print >> filename,  \
+               "<p>GPS Time(Secs)", (entry.tm /1000),\
+               "</p><p>status",entry.status, "</p>", \
+               "<p>Desired waypoint",entry.waypointIndex, "</p>", \
+               "<p>X Raw Accel",int(entry.IMUraw_xacc ), "</p>", \
+               "<p>Y Raw Accel",int(entry.IMUraw_yacc),"</p>", \
+               "<p>Z Raw Accel", int(entry.IMUraw_zacc), "</p>", \
+               "</description>",
+        print >> filename,"""
+        <visibility>0</visibility>"""
+        print >> filename, """       <Style id="default"></Style>
+      <Model>"""
+        if log_book.ardustation_pos == "Recorded" :
+            print >> filename, """
+      <altitudeMode>relativeToGround</altitudeMode>"""
+        else:
+            print >> filename, """
+      <altitudeMode>absolute</altitudeMode>"""
+        print >> filename, """
+      <Location>
+        <longitude>""",
+        print >> filename,  flight_origin.move_lon(entry.lon[primary_locator]),
+        print >> filename, """</longitude>
+        <latitude>""",
+        print >> filename, flight_origin.move_lat(entry.lat[primary_locator]),
+        print >> filename, """</latitude>
+        <altitude>""",
+        print >> filename, flight_origin.move_alt(entry.alt[primary_locator] + 5.0),
+        print >> filename, """</altitude>
+      </Location>
+      <Orientation>
+        <heading>""",
+        if log_book.ardustation_pos == "Recorded" :
+            print >> filename, entry.cog / 100.0 ,
+        else :
+            # Move heading by 90 degrees to put accel vector out of wing 
+            print >> filename, entry.heading_degrees - 90,
+        print >> filename, """</heading>
+        <tilt>""",
+        # Using roll here on purposes instead of pitch
+        print >> filename, entry.roll,
+        print >> filename, """</tilt>
+        <roll>""",
+        # negating pitch and using in place of roll
+        print >> filename,  - entry.pitch,
+        print >> filename, """</roll>
+      </Orientation>
+      <Scale>"""
+        x_accel_mag = entry.IMUraw_xacc / 10000
+        print >> filename, "<x>0.02</x>"""
+        print >> filename, "<y>", x_accel_mag,"</y>"
+        print >> filename, """
+        <z>0.02</z>
+        </Scale>
+      <Link>
+        <href>models/arrow.dae</href>
+      </Link>
+      </Model>
+      <DocumentSource>Pete Hollands</DocumentSource>
+    </Placemark>
+"""
+    # This marks the end of the for loop
+    print >> filename, "</Folder>"
                
 def write_flight_vectors(log_book,origin, filename, flight_clock,gps_delay) :
     primary_locator = log_book.primary_locator
     print >> filename, """
       <Folder>
         <open>0</open>
-    <name>Pitch/Roll/Yaw""",
+    <name>Roll/Pitch/Yaw""",
     print >> filename, "</name>"
     counter = 0
-    print >> filename, "<description>Model plane plotted for each second of flight</description>"
+    print >> filename, "<description>Roll, Pitch, Yaw plotted using model plane</description>"
     for entry in log_book.entries :
       counter += 1
       if counter <= gps_delay :
@@ -2052,10 +2138,12 @@ def create_telemetry_kmz(options,log_book):
     gps_delay = options.gps_delay_correction
     print "GPS Delay Correction is set to ", gps_delay 
     write_flight_vectors(log_book,flight_origin,f_pos,flight_clock,gps_delay)
-    if ( log_book.earth_mag_set == TRUE):
+    if ( log_book.earth_mag_set == True):
         write_earth_mag_vectors(log_book,flight_origin,f_pos, flight_clock)
-    if ( log_book.wind_set == TRUE):
+    if ( log_book.wind_set == True):
          write_earth_wind_2d_vectors(log_book,flight_origin,f_pos, flight_clock)
+    if ( log_book.accel_set == True):
+         write_GE_accel_vectors(log_book,flight_origin,f_pos, flight_clock)
 
     write_document_postamble(f_pos)
     f_pos.close()
@@ -2064,6 +2152,7 @@ def create_telemetry_kmz(options,log_book):
 
 def create_log_book(options) :
     """Parse the telemetryfile and create a virtual flight log book object"""
+    raw_imu_cnt = 0
     
     # Set up Basic Initial Values for creating a log book.
     roll = 0  # only used with ardustation roll
@@ -2081,6 +2170,7 @@ def create_log_book(options) :
     log_book = flight_log_book()
     log_book.earth_mag_set = False # No magnetometer arrows in GE unless mag telemetry arrives
     log_book.wind_set = False      # No wind vector info in GE unless wind telemetry arrives
+    log_book.accel_set = False         # No accel vector info in GE unless X accel arrives
     log_book.dead_reckoning = 0    # By default dead reckoning is assumed to be off until telemetry arrives
     log_book.primary_locator = GPS # Default is to use GPS for plotting plane position unless IMU info arrives
 
@@ -2095,17 +2185,20 @@ def create_log_book(options) :
     # Process the telemetry file
     for msg in t: # msg is either a line of ascii, or a mavlink message
         record_no += 1
+        #if raw_imu_cnt > 10:
+        #    break
         log  = t.parse(msg, record_no, max_tm_actual)
         if log.log_format == "HKGCS_BLANK_LINE" : # blank line in Happy Killmore's GCS
             continue  # Go fetch another line
         if log.log_format == "Error" :# we had an error
             print "Error parsing telemetry line ",record_no 
             continue  # Go get the next line
-        elif log.log_format == "F1" or log.log_format == "F2"  or \
+        elif log.log_format == "F1" or log.log_format == "F2" or \
                log.log_format == "ARDUSTATION!!!": # We have a normal telemetry line
+            raw_imu_cnt+=1
             if debug : print "lat",log.latitude,"lon",log.longitude,"alt",log.altitude, \
                 "wp", log.waypointIndex, "rmat1", log.rmat1
-            if (log.latitude == 0 and log.longitude == 0 and log.altitude == 0 ):
+            if ((log.latitude == 0 and log.longitude == 0 and log.altitude == 0 )):
                 if debug: print "lat or long or alt is 0; ignoring line", record_no
                 continue # Get next line of telemetry  - No GPS yet, can happen at boot time on plane 
             else :
@@ -2129,9 +2222,13 @@ def create_log_book(options) :
                 if ((log.inline_waypoint_x != 0) or (log.inline_waypoint_y != 0) or (log.inline_waypoint_z != 0)):
                     log_book.waypoints_in_telemetry = True
                 log.tm = flight_clock.synthesize(log.tm) # interpolate time between identical entries
+                #print "type: ", log.log_format, " time: ", log.tm
+                
                 if (miss_out_counter > miss_out_interval) :# only store log every X times for large datasets
                     log_book.entries.append(log)
                     miss_out_counter = 0
+        elif log.log_format == "RAW_IMU" : # raw IMU data is filtered and stored in telemetry record
+            log_book.accel_set = True
         elif log.log_format == "F4" : # We have a type of options.h line
             # format of roll_stabilization has changed over time
             try:
@@ -2204,6 +2301,7 @@ def create_log_book(options) :
             pitch = log.pitch
         else :
             print "Warning: Log Format received:", log.log_format
+            break
         
     initial_points = 10 # no. log entries to find origin at start if no F13 format line
     
@@ -2268,7 +2366,7 @@ def write_csv(options,log_book):
     print >> f_csv, "IN5,IN6,IN7,IN8,OUT1,OUT2,OUT3,OUT4,",
     print >> f_csv, "OUT5,OUT6,OUT7,OUT8,LEX,LEY,LEZ,IMU X,IMU Y,IMU Z,MAG W,MAG N,MAG Z,",
     print >> f_csv, "Waypoint X,WaypointY,WaypointZ,IMUvelocityX,IMUvelocityY,IMUvelocityZ,",
-    print >> f_csv, "Flags,Sonar Dst,ALT_SONAR"
+    print >> f_csv, "Flags,Sonar Dst,ALT_SONAR,IMUraw_xacc,IMUraw_yacc,IMUraw_zacc"
     for entry in log_book.entries :
         print >> f_csv, entry.tm / 1000.0, ",",\
               flight_clock.convert(entry.tm, log_book), ",", \
@@ -2291,7 +2389,8 @@ def write_csv(options,log_book):
               int(entry.earth_mag_vec_E), "," , int(entry.earth_mag_vec_N), "," , int(entry.earth_mag_vec_Z), "," , \
               entry.inline_waypoint_x, ",", entry.inline_waypoint_y, ",", entry.inline_waypoint_z, ",", \
               entry.IMUvelocityx, ",", entry.IMUvelocityy, ",", entry.IMUvelocityz, ",", \
-              entry.flags, ",", entry.sonar_direct, ",",  entry.alt_sonar
+              entry.flags, ",", entry.sonar_direct, ",",  entry.alt_sonar, ",", \
+              entry.IMUraw_xacc, ",", entry.IMUraw_yacc, ",", entry.IMUraw_zacc
 
     f_csv.close()
     return

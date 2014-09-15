@@ -102,11 +102,10 @@
 // Set any of these to 0 to disable the stabilization in that axis.
 #define ROLL_STABILIZATION_AILERONS         1
 #define ROLL_STABILIZATION_RUDDER           0
-#define PITCH_STABILIZATION                 1
-
-// experimental: use rudder to hold roll_setpoint
+// experimental: use rudder to ...
 #define ROLL_CONTROL_RUDDER                 1
 
+#define PITCH_STABILIZATION                 1
 #define YAW_STABILIZATION_AILERON           0
 
 // Aileron and Rudder Navigation
@@ -172,7 +171,7 @@
 // If you select this option, you also need to set magnetometer options in
 // the magnetometerOptions.h file, including declination and magnetometer type.
 #define MAG_YAW_DRIFT                       1
-#define MAG_YAW_ENABLE                      1
+#define MAG_YAW_ENABLE                      0
 #undef ENABLE_MAGOFFSET
 //#define ENABLE_MAGOFFSET
 #undef ENABLE_MAGALIGNMENT
@@ -389,6 +388,9 @@
 //       (could use "console" instead)
 #define USE_RING_BUFFER
 //#undef USE_RING_BUFFER
+// to be used with OpenLog for software flow control
+// Warning: incompatible with mavlink binary uplink
+#define SOFTWARE_FLOW_CONTROL 1
 
 // MAVLink requires an aircraft Identifier (I.D) as it is deaigned to control multiple aircraft
 // Each aircraft in the sky will need a unique I.D. in the range from 0-255

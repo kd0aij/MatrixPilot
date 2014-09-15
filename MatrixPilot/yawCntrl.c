@@ -47,8 +47,8 @@ const uint16_t hoveryawkd = (uint16_t) (HOVER_YAWKD*SCALEGYRO*RMAX);
 #endif
 
 #include "filters.h"
-union int32_w2 accx_filt;
-int16_t accx;
+union int32_w2 xacc_filt;
+int16_t xacc;
 extern fractional gplane[];
 
 void normalYawCntrl(void);
@@ -74,7 +74,7 @@ void yawCntrl(void) {
 }
 
 void normalYawCntrl(void) {
-    int16_t yawNavDeflection;
+//    int16_t yawNavDeflection;
     union longww yawAccum;
     union longww gyroYawFeedback;
 //    int16_t ail_rud_mix;
@@ -84,66 +84,70 @@ void normalYawCntrl(void) {
     // want just a few Hz of bandwidth for the accelerometer readings.
     // Note that this is executed at HEARTBEAT_HZ = 200, so the 3dB point
     // for lp2 with LPCB_45_HZ will be 4.5Hz
-    // scale value up such that 4g of lateral acceleration has magnitude 16K
-    accx = -lp2(gplane[0], &accx_filt, LPCB_45_HZ);
-    magClamp(&accx, 16384/(ACCEL_RANGE/4)); // saturate at 16K
-    accx *= (ACCEL_RANGE/4);
+    // scale value up such that 1g of lateral acceleration has magnitude 16K
+    xacc = -lp2(gplane[0], &xacc_filt, LPCB_45_HZ);
+    magClamp(&xacc, 16384/(ACCEL_RANGE)); // saturate at 16K
+    xacc *= (ACCEL_RANGE);
 
 #ifdef TestGains
     flags._.GPS_steering = 0; // turn off navigation
     flags._.pitch_feedback = 1; // turn on stabilization
 #endif 
-    // manual input is 2 * delta usec (range [-1000, 1000])
-    int16_t yaw_manual =  REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED,
-            (udb_pwIn[RUDDER_INPUT_CHANNEL] - udb_pwTrim[RUDDER_INPUT_CHANNEL]));
-
-    // To convert yaw_setpoint to a DCM angle, we need to scale it
-    // to range from zero to +/- max. bank angle:
-    // note that DX7 TX needs travel adjust +/-150% to achieve full PWM range
-    // rmat ranges [-16384, 16383] for +/- 90 degrees
-    yaw_setpoint = (yaw_manual << 4) + (yaw_manual << 3);
-
     if (RUDDER_NAVIGATION && flags._.GPS_steering) {
-        yawNavDeflection = determine_navigation_deflection('y') << 3;
+        // in autonomous mode
+//        yawNavDeflection = determine_navigation_deflection('y') << 3;
+//
+//        if (canStabilizeInverted() && current_orientation == F_INVERTED) {
+//            yawNavDeflection = -yawNavDeflection;
+//        }
 
-        if (canStabilizeInverted() && current_orientation == F_INVERTED) {
-            yawNavDeflection = -yawNavDeflection;
-        }
+        // ignore manual rudder and keep the ball centered while in auto
+        // This term calls for yaw rate proportional to the negative of lateral acceleration
+        yaw_setpoint = -xacc;
     } else {
-        yawNavDeflection = 0;
+        // stabilization or manual mode; no slip/skid correction
+        // manual yaw setpoint is a rate demand value
+        // manual input is 2 * delta usec (range [-1000, 1000])
+        int16_t yaw_manual =  REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED,
+                (udb_pwIn[RUDDER_INPUT_CHANNEL] - udb_pwTrim[RUDDER_INPUT_CHANNEL]));
+
+        // multiply by 24
+        yaw_setpoint = (yaw_manual << 4) + (yaw_manual << 3);
     }
 
-    // add to angle setpoint
-    yaw_setpoint += yawNavDeflection;
-
     // limit combined manual and nav yaw setpoint
-    magClamp(&yaw_setpoint, 11000);
+    magClamp(&yaw_setpoint, 16000);
 
-    yawAccum.WW = 0; // default case is no roll rudder stabilization
+    yawAccum.WW = 0;
     if (ROLL_CONTROL_RUDDER && flags._.pitch_feedback) {
+        // stabilization is active
         gyroYawFeedback.WW = __builtin_mulus(yawkdrud, omegaAccum[2]);
-        if (!desired_behavior._.inverted && !desired_behavior._.hover) // normal
-        {
-              // sum yaw setpoint with roll error
+        // assume normal orientation
+        // multiply rate demand by KP gain
+        yawAccum.WW = __builtin_mulsu(yaw_setpoint, rollkprud);
+//             sum yaw setpoint with roll error
 //            yawAccum.WW = __builtin_mulsu(yaw_setpoint + roll_setpoint + rmat[6], rollkprud);
-            // sum yaw setpoint with accx
-            yawAccum.WW = __builtin_mulsu(yaw_setpoint - accx, rollkprud);
-        } else if (desired_behavior._.inverted) // inverted
+
+        if (desired_behavior._.inverted) // inverted
         {
-              // sum yaw setpoint with roll error
-//            yawAccum.WW = -__builtin_mulsu(yaw_setpoint + roll_setpoint + rmat[6], rollkprud);
-            // sum yaw setpoint with accx
-            yawAccum.WW = -__builtin_mulsu(yaw_setpoint - accx, rollkprud);
+            // negate
+            yawAccum.WW *= -1;
+        } else if (desired_behavior._.hover) // hover
+        {
+            // zero
+            yawAccum.WW = 0;
         }
     } else {
         gyroYawFeedback.WW = 0;
         // no stabilization; pass manual input through
-        yawAccum._.W1 = yaw_manual;
+        yawAccum._.W1 = yaw_setpoint;
     }
 
+#if 0
     if (ROLL_STABILIZATION_RUDDER && flags._.pitch_feedback) {
         yawAccum.WW -= __builtin_mulus(rollkdrud, omegaAccum[1]);
     }
+#endif
 
 //    if (flags._.pitch_feedback) {
 //        int16_t ail_offset = (udb_flags._.radio_on) ? (udb_pwIn[AILERON_INPUT_CHANNEL] - udb_pwTrim[AILERON_INPUT_CHANNEL]) : 0;

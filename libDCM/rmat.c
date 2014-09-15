@@ -794,7 +794,10 @@ extern void dead_reckon(void);
 void dcm_run_imu_step(void) {
     // update the matrix, renormalize it, adjust for roll and
     // pitch drift, and send it to the servos.
-    dead_reckon(); // in libDCM:deadReconing.c
+
+    // TODO: dead reckoning is currently disabled to test GPS-only accuracy
+//    dead_reckon(); // in libDCM:deadReconing.c
+    
 #ifndef DISABLE_CENTRIPETAL_COMP
     adj_accel(); // local
 #endif
