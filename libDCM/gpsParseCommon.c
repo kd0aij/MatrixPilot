@@ -18,7 +18,6 @@
 // You should have received a copy of the GNU General Public License
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
-
 #include "libDCM_internal.h"
 #include "gpsParseCommon.h"
 #include "estAltitude.h"
@@ -138,6 +137,7 @@ void udb_background_callback_triggered(void)
 	if (gps_nav_valid())
 	{
 		LED_BLUE = LED_ON;
+
 		commit_gps_data();
 
 		gps_data_age = 0;
@@ -160,17 +160,6 @@ void udb_background_callback_triggered(void)
 #endif // USE_PRESSURE_ALT
 		location[2] = accum_nav._.W0;
 
-                // repeat the location[] calculation in single precision floating point
-                //________________________________________________________________________
-//                const float eR = 6371.0e3f;
-                loc_f[1] = (float)(lat_gps.WW - lat_origin.WW)/89.983f;
-                loc_f[0] = ((float)(long_gps.WW - long_origin.WW)/89.983f) * cos_lat_f;
-                loc_f[2] = (float)(alt_sl_gps.WW - alt_origin.WW)/100.0f;
-
-                // convert from unit16_t deg*100 to FP degrees and Cartesian angle [-180, 180) degrees
-                cog_circ_f = circ360_f(90.0f - (cog_gps.BB / 100.0f));
-                //________________________________________________________________________
-
 		// convert GPS course of 360 degrees to a binary model with 256
 		accum.WW = __builtin_muluu (COURSEDEG_2_BYTECIR, cog_gps.BB) + 0x00008000;
 		// re-orientate from compass (clockwise) to maths (anti-clockwise) with 0 degrees in East
@@ -184,38 +173,26 @@ void udb_background_callback_triggered(void)
 		if (dcm_flags._.gps_history_valid)
 		{
 			cog_delta = cog_circular - cog_previous;
-                        cog_delta_f = circ360_f(cog_circ_f - cog_prev_f);
-
 			sog_delta = sog_gps.BB - sog_previous;
 			climb_rate_delta = climb_gps.BB - climb_rate_previous;
 
 			location_deltaXY.x = location[0] - location_previous[0];
 			location_deltaXY.y = location[1] - location_previous[1];
 			location_deltaZ = location[2] - location_previous[2];
-
-			location_deltaXY_f.x = loc_f[0] - location_prev_f[0];
-			location_deltaXY_f.y = loc_f[1] - location_prev_f[1];
-			location_deltaZ_f = loc_f[2] - location_prev_f[2];
 		}
 		else
 		{
 			cog_delta = 0;
-			cog_delta_f = 0;
                         sog_delta = 0;
                         climb_rate_delta = 0;
 			location_deltaXY.x = 0;
                         location_deltaXY.y = 0;
                         location_deltaZ = 0;
-			location_deltaXY_f.x = 0.0f;
-                        location_deltaXY_f.y = 0.0f;
-                        location_deltaZ_f = 0.0f;
 		}
 		dcm_flags._.gps_history_valid = 1;
 		actual_dir = cog_circular + cog_delta;
-		actual_dir_f = circ360_f(cog_circ_f + cog_delta_f);
                 
 		cog_previous = cog_circular;
-                cog_prev_f = cog_circ_f;
 
 		// Note that all these velocities are in centimeters / second
 
@@ -232,7 +209,6 @@ void udb_background_callback_triggered(void)
 		GPSvelocity.y = accum_velocity._.W1;
 
 		rotate(&location_deltaXY, cog_delta); // this is a key step to account for rotation effects!!
-                rotate_f(&location_deltaXY_f, cog_delta_f);
 
                 //  rotate xy by angle, measured in a counter clockwise sense.
 
@@ -240,28 +216,62 @@ void udb_background_callback_triggered(void)
 		GPSlocation.y = location[1] + location_deltaXY.y;
 		GPSlocation.z = location[2] + location_deltaZ;
 
-		GPSloc_f.x = loc_f[0] + location_deltaXY_f.x;
-		GPSloc_f.y = loc_f[1] + location_deltaXY_f.y;
-		GPSloc_f.z = loc_f[2] + location_deltaZ_f;
-
 		location_previous[0] = location[0];
 		location_previous[1] = location[1];
 		location_previous[2] = location[2];
+
+		velocity_thru_air.y = GPSvelocity.y - estimatedWind[1];
+		velocity_thru_air.x = GPSvelocity.x - estimatedWind[0];
+		velocity_thru_airz  = GPSvelocity.z - estimatedWind[2];
+
+                // assert digital out 2
+                _TRISA6 = 0;
+                DIG2 = 1;
+
+                // repeat the location[] calculation in single precision floating point
+                // estimated additional 11000 cycles per call
+                //________________________________________________________________________
+                //                const float eR = 6371.0e3f;
+                loc_f[1] = (float) (lat_gps.WW - lat_origin.WW) / 89.983f; // 122 + 361 cycles
+                loc_f[0] = ((float) (long_gps.WW - long_origin.WW) / 89.983f) * cos_lat_f; // 122 + 109
+                loc_f[2] = (float) (alt_sl_gps.WW - alt_origin.WW) / 100.0f; // 122 + 361
+
+                // convert from unit16_t deg*100 to FP degrees and Cartesian angle [-180, 180) degrees
+                cog_circ_f = circ360_f(90.0f - (cog_gps.BB / 100.0f)); // 2*122 + 361
+
+                if (dcm_flags._.gps_history_valid) {
+                    cog_delta_f = circ360_f(cog_circ_f - cog_prev_f); // 2*122 cycles
+
+                    location_deltaXY_f.x = loc_f[0] - location_prev_f[0]; // 122
+                    location_deltaXY_f.y = loc_f[1] - location_prev_f[1]; // 122
+                    location_deltaZ_f = loc_f[2] - location_prev_f[2]; // 122
+                } else {
+                    cog_delta_f = 0;
+                    location_deltaXY_f.x = 0.0f;
+                    location_deltaXY_f.y = 0.0f;
+                    location_deltaZ_f = 0.0f;
+                }
+		actual_dir_f = circ360_f(cog_circ_f + cog_delta_f);   // 2*122
+                cog_prev_f = cog_circ_f;
+
+                rotate_f(&location_deltaXY_f, cog_delta_f); // 6167 cycles
+
+                GPSloc_f.x = loc_f[0] + location_deltaXY_f.x;   // 3 * 122
+		GPSloc_f.y = loc_f[1] + location_deltaXY_f.y;
+		GPSloc_f.z = loc_f[2] + location_deltaZ_f;
 
 		location_prev_f[0] = loc_f[0];
 		location_prev_f[1] = loc_f[1];
 		location_prev_f[2] = loc_f[2];
 
-		velocity_thru_air.y = GPSvelocity.y - estimatedWind[1];
-		velocity_thru_air.x = GPSvelocity.x - estimatedWind[0];
-		velocity_thru_airz  = GPSvelocity.z - estimatedWind[2];
+                //________________________________________________________________________
 
                 // from dead_reckon()
                 IMUlocationx._.W1 = (int) GPSloc_f.x;
                 IMUlocationy._.W1 = (int) GPSloc_f.y;
                 IMUlocationz._.W1 = (int) GPSloc_f.z;
 
-                IMUlocationx._.W0 = abs((int) (65536 * (GPSloc_f.x - IMUlocationx._.W1) - 0.5));
+                IMUlocationx._.W0 = abs((int) (65536 * (GPSloc_f.x - IMUlocationx._.W1) - 0.5)); // 3 * (2 * 122 + 109) = 1059
                 IMUlocationy._.W0 = abs((int) (65536 * (GPSloc_f.y - IMUlocationy._.W1) - 0.5));
                 IMUlocationz._.W0 = abs((int) (65536 * (GPSloc_f.z - IMUlocationz._.W1) - 0.5));
 
@@ -272,6 +282,11 @@ void udb_background_callback_triggered(void)
                 IMUintegralAccelerationx._.W1 = GPSvelocity.x;
                 IMUintegralAccelerationy._.W1 = GPSvelocity.y;
                 IMUintegralAccelerationz._.W1 = GPSvelocity.z;
+
+                // deassert digital out 2
+                DIG2 = 0;
+                // elapsed time ~75 usec = 5250 cycles at 70 MIPS
+                // at 4 Hz, this is
 
 #if (HILSIM == 1)
 		air_speed_3DGPS = as_sim.BB; // use Xplane as a pitot
