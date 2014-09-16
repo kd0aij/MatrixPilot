@@ -140,7 +140,7 @@ void normalYawCntrl(void) {
     } else {
         gyroYawFeedback.WW = 0;
         // no stabilization; pass manual input through
-        yawAccum._.W1 = yaw_setpoint;
+        yawAccum._.W1 = yaw_setpoint>>4;
     }
 
 #if 0

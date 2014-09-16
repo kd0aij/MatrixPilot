@@ -1940,6 +1940,8 @@ class origin() :
         # STANDY_PAUSE is from defines.h of MatrixPilot. It determines
         # how long the plane waits after getting a nav_valid from the GPS
         # before storing the origin.
+        debug = 1
+
         STANDBY_PAUSE = 48
         background_timer_resolution = 0.5
         initial_nav_valid_time = 0
@@ -2920,7 +2922,7 @@ class flan_text_frame(Frame):
 
 ########## Start of the Main Program ##########
 
-debug = 0 # set this to 1 of you want debug info to be printed.
+debug = 1 # set this to 1 of you want debug info to be printed.
 GPS = 0
 IMU = 1
             

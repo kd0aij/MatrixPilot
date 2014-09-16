@@ -285,8 +285,8 @@ void udb_background_callback_triggered(void)
 
                 // deassert digital out 2
                 DIG2 = 0;
-                // elapsed time ~75 usec = 5250 cycles at 70 MIPS
-                // at 4 Hz, this is
+                // elapsed time ~100 usec = 7000 cycles at 70 MIPS
+                // at 4 Hz, this is 28000/70e6 = 0.04% cpu load
 
 #if (HILSIM == 1)
 		air_speed_3DGPS = as_sim.BB; // use Xplane as a pitot
