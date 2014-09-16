@@ -183,6 +183,11 @@
 7 September: modified yawCntrl.c to maintain lateral acceleration at zero (keep the
 	"ball" centered). Bench test looks OK on Cub.
 
+8 Sep: navigation good; check log for lateral accel.
+    no manual yaw available in stabilize; rudder ineffective
+    Appears that recovery to level is delayed; check for attitude error vs. correct
+    minimization of slip/skid
+
 11 September 2014:
 	revised yawCntrl.c to ignore manual rudder input and cancel lateral acceleration
 	when in auto mode, but to mix in manual input in stabilization mode.
