@@ -192,3 +192,11 @@
 	revised yawCntrl.c to ignore manual rudder input and cancel lateral acceleration
 	when in auto mode, but to mix in manual input in stabilization mode.
 	Disable mag yaw drift correction (MAG_YAW_ENABLE) in options.h
+
+16 September 2014:
+    Autonomous mode rudder control calls for yaw rate proportional to lateral acceleration.
+	Current negative sign results in right rudder when banked left. The left bank
+    results in x acceleration toward the right wingtip in a static ground test.
+	If this were an uncoordinated turn, that x acceleration would imply that we were
+	skidding out of the turn, and there is a need for left rudder, not right, so
+	flip the sign of the feedback and try again.

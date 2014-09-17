@@ -94,7 +94,7 @@ void normalYawCntrl(void) {
     flags._.pitch_feedback = 1; // turn on stabilization
 #endif 
     if (RUDDER_NAVIGATION && flags._.GPS_steering) {
-        // in autonomous mode
+        // autonomous mode; pilot has no manual rudder control
 //        yawNavDeflection = determine_navigation_deflection('y') << 3;
 //
 //        if (canStabilizeInverted() && current_orientation == F_INVERTED) {
@@ -102,29 +102,25 @@ void normalYawCntrl(void) {
 //        }
 
         // ignore manual rudder and keep the ball centered while in auto
-        // This term calls for yaw rate proportional to the negative of lateral acceleration
-        yaw_setpoint = -xacc;
+        yaw_rate = xacc;
     } else {
         // stabilization or manual mode; no slip/skid correction
         // manual yaw setpoint is a rate demand value
         // manual input is 2 * delta usec (range [-1000, 1000])
-        int16_t yaw_manual =  REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED,
+        yaw_rate =  REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED,
                 (udb_pwIn[RUDDER_INPUT_CHANNEL] - udb_pwTrim[RUDDER_INPUT_CHANNEL]));
-
-        // multiply by 24
-        yaw_setpoint = (yaw_manual << 4) + (yaw_manual << 3);
     }
 
     // limit combined manual and nav yaw setpoint
-    magClamp(&yaw_setpoint, 16000);
+    magClamp(&yaw_rate, 16000);
 
     yawAccum.WW = 0;
     if (ROLL_CONTROL_RUDDER && flags._.pitch_feedback) {
-        // stabilization is active
+        // stabilization mode
         gyroYawFeedback.WW = __builtin_mulus(yawkdrud, omegaAccum[2]);
         // assume normal orientation
         // multiply rate demand by KP gain
-        yawAccum.WW = __builtin_mulsu(yaw_setpoint, rollkprud);
+//        yawAccum.WW = __builtin_mulsu(yaw_rate, rollkprud);
 //             sum yaw setpoint with roll error
 //            yawAccum.WW = __builtin_mulsu(yaw_setpoint + roll_setpoint + rmat[6], rollkprud);
 
@@ -140,7 +136,7 @@ void normalYawCntrl(void) {
     } else {
         gyroYawFeedback.WW = 0;
         // no stabilization; pass manual input through
-        yawAccum._.W1 = yaw_setpoint>>4;
+        yawAccum._.W1 = yaw_rate;
     }
 
 #if 0
