@@ -6,4 +6,5 @@ private
 *.pyc
 *~
 flan_config
+*.o
 

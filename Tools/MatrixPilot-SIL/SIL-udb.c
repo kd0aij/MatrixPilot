@@ -44,6 +44,7 @@ int gettimeofday (struct timeval *tp, struct timezone *tzp);
 #include "SIL-eeprom.h"
 
 uint16_t udb_heartbeat_counter;
+uint64_t systime_usec = 0; // A measure of time in microseconds (should be from Unix Epoch).
 
 int16_t udb_pwIn[MAX_INPUTS];		// pulse widths of radio inputs
 int16_t udb_pwTrim[MAX_INPUTS];	// initial pulse widths for trimming
@@ -148,6 +149,7 @@ void udb_run(void)
 		}
 
 		currentTime = get_current_milliseconds();
+                systime_usec = currentTime * 1000;
 
 		if (currentTime >= nextHeartbeatTime && !(nextHeartbeatTime <= UDB_STEP_TIME && currentTime >= UDB_WRAP_TIME-UDB_STEP_TIME)) {
 			udb_callback_read_sensors();
@@ -170,6 +172,7 @@ void udb_run(void)
                         }
 
 			udb_heartbeat_counter++;
+
 			nextHeartbeatTime = nextHeartbeatTime + UDB_STEP_TIME;
 			if (nextHeartbeatTime > UDB_WRAP_TIME) nextHeartbeatTime -= UDB_WRAP_TIME;
 		}
