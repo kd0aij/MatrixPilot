@@ -119,6 +119,7 @@ void sil_checkForLedUpdates(void)
 
 void sil_rc_input_adjust(char *inChannelName, int inChannelIndex, int delta)
 {
+        printf("index: %i, pwIn: %i, delta: %i, trim: %i\n", inChannelIndex, udb_pwIn[inChannelIndex], delta, udb_pwTrim[inChannelIndex]);
 	udb_pwIn[inChannelIndex] = udb_servo_pulsesat(udb_pwIn[inChannelIndex] + delta);
 	if (inChannelIndex == THROTTLE_INPUT_CHANNEL) {
 		printf("\n%s = %d%%\n", inChannelName, (udb_pwIn[inChannelIndex]-udb_pwTrim[inChannelIndex])/20);

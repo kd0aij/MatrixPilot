@@ -1,7 +1,7 @@
-CC       = gcc
-CFLAGS   = -pipe -Wall -W -O0
+CC       = g++
+CFLAGS   = -pipe -Wall -W -O0 -DSILSIM=1 -fpermissive
 INCPATH  = -Iinclude -I. -I../HILSIM_XPlane -I projectSpecific -I../../libUDB -I../../libDCM -I../../MatrixPilot
-LFLAGS   = 
+LFLAGS   =
 LIBS     = -lm
 RM_FILE  = rm -f
 

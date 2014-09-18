@@ -121,6 +121,7 @@ void udb_init(void)
 	telemetrySocket = UDBSocket_init((SILSIM_TELEMETRY_RUN_AS_SERVER) ? UDBSocketUDPServer : UDBSocketUDPClient, SILSIM_TELEMETRY_PORT, SILSIM_TELEMETRY_HOST, NULL, 0);
 
 	if (strlen(SILSIM_SERIAL_RC_INPUT_DEVICE) > 0) {
+            printf("serial RC input active\n");
 		serialSocket = UDBSocket_init(UDBSocketSerial, 0, NULL, SILSIM_SERIAL_RC_INPUT_DEVICE, SILSIM_SERIAL_RC_INPUT_BAUD);
 	}
 }
@@ -135,11 +136,6 @@ void udb_run(void)
 	uint16_t currentTime;
 	uint16_t nextHeartbeatTime;
 
-
-	if (strlen(SILSIM_SERIAL_RC_INPUT_DEVICE) == 0) {
-		udb_pwIn[THROTTLE_INPUT_CHANNEL] = 2000;
-		udb_pwTrim[THROTTLE_INPUT_CHANNEL] = 2000;
-	}
 
 	nextHeartbeatTime = get_current_milliseconds();
 
@@ -209,8 +205,24 @@ int16_t  udb_servo_pulsesat(int32_t pw)
 void udb_servo_record_trims(void)
 {
 	int16_t i;
-	for (i=1; i <= NUM_INPUTS; i++)
-		udb_pwTrim[i] = udb_pwIn[i] ;
+	if (strlen(SILSIM_SERIAL_RC_INPUT_DEVICE) == 0) {
+            for (i=1; i <= NUM_INPUTS; i++) {
+                if (i != THROTTLE_INPUT_CHANNEL) {
+                    udb_pwIn[i] = 3000;
+                    udb_pwTrim[i] = 3000;
+                } else {
+                    udb_pwIn[i] = 2000;
+                    udb_pwTrim[i] = 2000;
+                }
+                printf("trim[%i]: %i\n", i, udb_pwTrim[i]);
+            }
+	} else {
+            for (i=1; i <= NUM_INPUTS; i++) {
+                udb_pwTrim[i] = udb_pwIn[i] ;
+                printf("trim[%i]: %i\n", i, udb_pwTrim[i]);
+            }
+        }
+
 
 	return ;
 }
@@ -282,7 +294,7 @@ void sleep_milliseconds(uint16_t ms)
 }
 
 
-void sil_handle_seial_rc_input(uint8_t *buffer, int bytesRead)
+void sil_handle_serial_rc_input(uint8_t *buffer, int bytesRead)
 {
 	int i;
 
@@ -364,7 +376,7 @@ boolean handleUDBSockets(void)
 		}
 		else {
 			if (bytesRead>0) {
-				sil_handle_seial_rc_input(buffer, bytesRead);
+				sil_handle_serial_rc_input(buffer, bytesRead);
 				didRead = true;
 			}
 		}

@@ -1,4 +1,7 @@
 // This file is part of MatrixPilot.
+
+#include "options.h"
+
 //
 //    http://code.google.com/p/gentlenav/
 //
@@ -18,6 +21,9 @@
 // You should have received a copy of the GNU General Public License
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
+#if (SILSIM == 1)
+#include <stdlib.h>
+#endif
 
 #include "defines.h"
 
