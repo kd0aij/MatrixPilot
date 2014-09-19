@@ -23,7 +23,9 @@
 #include "estAltitude.h"
 #include "heartbeat.h"
 #include <string.h>
-
+#if (SILSIM == 1)
+#include <stdlib.h>
+#endif
 
 struct relative3D GPSlocation = { 0, 0, 0 };
 struct relative3D_f GPSloc_f = { 0.0f, 0.0f, 0.0f };

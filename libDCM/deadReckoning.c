@@ -18,7 +18,9 @@
 // You should have received a copy of the GNU General Public License
 // along with MatrixPilot.  If not, see <http://www.gnu.org/licenses/>.
 
+#if (SILSIM == 1)
 #include <math.h>
+#endif
 
 #include "libDCM_internal.h"
 #include "../libUDB/heartbeat.h"

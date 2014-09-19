@@ -1,10 +1,10 @@
-CC 	 = g++
-CPP      = g++
+CC 	 = gcc
+CPP      = gcc
 CFLAGS   = -pipe -Wall -W -O2 -DLIN=1 -fPIC
 INCPATH  = -Iinclude -I../../libUDB -I/usr/include/x86_64-linux-gnu/c++/4.8
 #LFLAGS   = -shared -Wl,-rpath  -Llib/XPLM.lib
 LFLAGS   =  -shared -rdynamic -nodefaultlibs -undefined_warning -L/usr/lib/x86_64-linux-gnu -lGL -lGLU
-XFLAGS  = -DLIN -m64
+XFLAGS  = -DLIN -m32
 RM_FILE  = rm -f
 
 OBJECTS_DIR = ./
