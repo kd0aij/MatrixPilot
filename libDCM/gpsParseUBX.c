@@ -582,7 +582,7 @@ msg_PL1(uint8_t gpschar)
             } else {
                 msg_parse = &msg_B3; // error condition
             }
-            //msg_parse = &msg_VELNED; // TODO: this does not look right (wipes out error setting above) - RobD
+            msg_parse = &msg_VELNED; // TODO: this does not look right (wipes out error setting above) - RobD
             break;
         }
 #if (HILSIM == 1)
@@ -831,6 +831,8 @@ commit_bodyrate_data(void)
     p_sim = p_sim_;
     q_sim = q_sim_;
     r_sim = r_sim_;
+//    printf("bodyrate msg: gax: %i, gay: %i, gaz: %i, p: %i, q: %i, r: %i\n",
+//    		g_a_x_sim.BB, g_a_y_sim.BB, g_a_z_sim.BB, p_sim.BB, q_sim.BB, r_sim.BB);
 }
 #endif // HILSIM
 

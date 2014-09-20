@@ -15,11 +15,11 @@
 
 UDBSocket stdioSocket;
 
-uint8_t lastLedBits = 0;
-boolean showLEDs = 0;
-uint8_t inputState = 0;
+static uint8_t lastLedBits = 0;
+static boolean showLEDs = 1;
+static uint8_t inputState = 0;
 
-int hasShownInitStates = 0;
+static int hasShownInitStates = 0;
 
 
 void sil_handle_key_input(char c);
@@ -50,6 +50,7 @@ void sil_ui_init(uint16_t mp_rcon)
 	printf("MatrixPilot SIL%s\n\n", (mp_rcon == 128) ? " (HW Reset)" : "");
 	print_help();
 	printf("\nINIT: Calibrating...\n");
+	printf("showLEDs: %i\n", showLEDs);
 	
 	stdioSocket = UDBSocket_init(UDBSocketStandardInOut, 0, NULL, NULL, 0);
 }
@@ -59,7 +60,6 @@ void sil_ui_will_reset(void)
 {
 	if (stdioSocket) UDBSocket_close(stdioSocket);
 }
-
 
 void sil_ui_update(void)
 {
@@ -97,6 +97,7 @@ void print_LED_status(void)
 		   (leds[1] == LED_ON) ? 'G' : '-',
 		   (leds[2] == LED_ON) ? 'O' : '-',
 		   (leds[3] == LED_ON) ? 'B' : '-');
+	fflush(stdout);
 }
 
 
@@ -117,9 +118,9 @@ void sil_checkForLedUpdates(void)
 }
 
 
-void sil_rc_input_adjust(char *inChannelName, int inChannelIndex, int delta)
+void sil_rc_input_adjust(const char *inChannelName, int inChannelIndex, int delta)
 {
-        printf("index: %i, pwIn: %i, delta: %i, trim: %i\n", inChannelIndex, udb_pwIn[inChannelIndex], delta, udb_pwTrim[inChannelIndex]);
+//        printf("index: %i, pwIn: %i, delta: %i, trim: %i\n", inChannelIndex, udb_pwIn[inChannelIndex], delta, udb_pwTrim[inChannelIndex]);
 	udb_pwIn[inChannelIndex] = udb_servo_pulsesat(udb_pwIn[inChannelIndex] + delta);
 	if (inChannelIndex == THROTTLE_INPUT_CHANNEL) {
 		printf("\n%s = %d%%\n", inChannelName, (udb_pwIn[inChannelIndex]-udb_pwTrim[inChannelIndex])/20);

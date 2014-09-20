@@ -39,23 +39,26 @@ union fbts_int flags;
 int16_t waggle = 0;
 static int wagInterval = 0;
 
-//uint8_t counter = 0;
-
-//#define CALIB_PAUSE (5 * HEARTBEAT_HZ)    // wait for 5 seconds of runs through the state machine
-//#define STANDBY_PAUSE 8		// pause for 4 seconds
-
-#ifdef PRE_CALIBRATED
-#define CALIB_PAUSE (1 * HEARTBEAT_HZ)    // wait for 10 seconds of runs through the state machine
-#else
-#define CALIB_PAUSE (10 * HEARTBEAT_HZ)    // wait for 10 seconds of runs through the state machine
-#endif
-
 #define WAGGLE_SIZE   300
 #define WAGGLE_FREQ   2
-// pause for 24 seconds after first GPS fix
-#define STANDBY_PAUSE 24 * WAGGLE_FREQ
 // waggle 3 times during the end of the standby pause (this number must be less than STANDBY_PAUSE)
 #define NUM_WAGGLES   4
+
+#if (HILSIM ==1)
+#define CALIB_PAUSE (1 * HEARTBEAT_HZ)    // wait for 1 seconds of runs through the state machine
+// pause for 1 seconds after first GPS fix
+#define STANDBY_PAUSE 1 * WAGGLE_FREQ
+#else
+#ifndef PRE_CALIBRATED
+#define CALIB_PAUSE (1 * HEARTBEAT_HZ)    // wait for 1 seconds of runs through the state machine
+// pause for 1 seconds after first GPS fix
+#define STANDBY_PAUSE 1 * WAGGLE_FREQ
+#else
+#define CALIB_PAUSE (10 * HEARTBEAT_HZ)    // wait for 10 seconds of runs through the state machine
+// pause for 24 seconds after first GPS fix
+#define STANDBY_PAUSE 24 * WAGGLE_FREQ
+#endif
+#endif
 
 static int16_t calib_timer = CALIB_PAUSE;
 static int16_t standby_timer = STANDBY_PAUSE;
@@ -151,6 +154,9 @@ static void ent_acquiringS(void) {
 #else
     DPRINT("\r\nent_acquiringS\r\n");
 #endif
+#if (SILSIM == 1)
+    printf("\r\nent_acquiringS\r\n");
+#endif
 
     flags._.GPS_steering = 0;
     flags._.pitch_feedback = 0;
@@ -166,7 +172,6 @@ static void ent_acquiringS(void) {
     udb_servo_record_trims();
 #endif
     dcm_calibrate();
-
     wagInterval = 0;
     waggle = WAGGLE_SIZE;
     throttleFiltered._.W1 = 0;
