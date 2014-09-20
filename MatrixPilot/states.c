@@ -45,16 +45,19 @@ static int wagInterval = 0;
 #define NUM_WAGGLES   4
 
 #if (HILSIM ==1)
-#define CALIB_PAUSE (1 * HEARTBEAT_HZ)    // wait for 1 seconds of runs through the state machine
+// pre-calibrated; shorten calib pause to 1 second
+#define CALIB_PAUSE (1 * HEARTBEAT_HZ)
 // pause for 1 seconds after first GPS fix
 #define STANDBY_PAUSE 1 * WAGGLE_FREQ
 #else
 #ifndef PRE_CALIBRATED
-#define CALIB_PAUSE (1 * HEARTBEAT_HZ)    // wait for 1 seconds of runs through the state machine
-// pause for 1 seconds after first GPS fix
-#define STANDBY_PAUSE 1 * WAGGLE_FREQ
+// pause for sensors to settle
+#define CALIB_PAUSE (10 * HEARTBEAT_HZ)
+// pause for 24 seconds after first GPS fix
+#define STANDBY_PAUSE 24 * WAGGLE_FREQ
 #else
-#define CALIB_PAUSE (10 * HEARTBEAT_HZ)    // wait for 10 seconds of runs through the state machine
+// pre-calibrated; shorten calib pause to 1 second
+#define CALIB_PAUSE (1 * HEARTBEAT_HZ)
 // pause for 24 seconds after first GPS fix
 #define STANDBY_PAUSE 24 * WAGGLE_FREQ
 #endif

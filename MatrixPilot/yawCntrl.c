@@ -107,8 +107,11 @@ void normalYawCntrl(void) {
         // stabilization or manual mode; no slip/skid correction
         // manual yaw setpoint is a rate demand value
         // manual input is 2 * delta usec (range [-1000, 1000])
-        yaw_rate =  REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED,
+        int16_t yaw_manual =  REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED,
                 (udb_pwIn[RUDDER_INPUT_CHANNEL] - udb_pwTrim[RUDDER_INPUT_CHANNEL]));
+
+        // multiply by 24
+        yaw_rate = (yaw_manual << 4) + (yaw_manual << 3);
     }
 
     // limit combined manual and nav yaw setpoint
@@ -120,7 +123,7 @@ void normalYawCntrl(void) {
         gyroYawFeedback.WW = __builtin_mulus(yawkdrud, omegaAccum[2]);
         // assume normal orientation
         // multiply rate demand by KP gain
-//        yawAccum.WW = __builtin_mulsu(yaw_rate, rollkprud);
+        yawAccum.WW = __builtin_mulsu(yaw_rate, rollkprud);
 //             sum yaw setpoint with roll error
 //            yawAccum.WW = __builtin_mulsu(yaw_setpoint + roll_setpoint + rmat[6], rollkprud);
 
@@ -128,15 +131,11 @@ void normalYawCntrl(void) {
         {
             // negate
             yawAccum.WW *= -1;
-        } else if (desired_behavior._.hover) // hover
-        {
-            // zero
-            yawAccum.WW = 0;
         }
     } else {
         gyroYawFeedback.WW = 0;
         // no stabilization; pass manual input through
-        yawAccum._.W1 = yaw_rate;
+        yawAccum.WW = __builtin_mulsu(yaw_rate, rollkprud);
     }
 
 #if 0
