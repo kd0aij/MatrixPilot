@@ -200,3 +200,7 @@
 	If this were an uncoordinated turn, that x acceleration would imply that we were
 	skidding out of the turn, and there is a need for left rudder, not right, so
 	flip the sign of the feedback and try again.
+
+field notes: first flight with yaw_rate=xacc large overshoot in auto mode, reduced on second
+flight with yaw_rate = xacc/4, but seemed to turn wrong direction for xwind leg
+3rd flight; yaw_rate = xacc/16
