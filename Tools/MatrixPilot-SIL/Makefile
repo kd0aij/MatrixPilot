@@ -1,6 +1,7 @@
 CC       = g++
-CFLAGS   = -g -pipe -Wall -W -O0 -DSILSIM=1 -fpermissive 
-#-DUSE_DEBUG_IO
+CFLAGS   = -g -pipe -Wall -W -O0 -DSILSIM=1 -fpermissive
+# -DYAW_STABILIZATION_RUDDER=0
+# -DUSE_DEBUG_IO
 INCPATH  = -Iinclude -I. -I../HILSIM_XPlane -I projectSpecific -I../../libUDB -I../../libDCM -I../../MatrixPilot
 LFLAGS   =
 LIBS     = -lm

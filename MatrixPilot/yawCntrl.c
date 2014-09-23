@@ -102,7 +102,7 @@ void normalYawCntrl(void) {
 //        }
 
         // ignore manual rudder and keep the ball centered while in auto
-        yaw_rate = xacc >> 4;
+        yaw_rate = xacc;
     } else {
         // stabilization or manual mode; no slip/skid correction
         // manual yaw setpoint is a rate demand value

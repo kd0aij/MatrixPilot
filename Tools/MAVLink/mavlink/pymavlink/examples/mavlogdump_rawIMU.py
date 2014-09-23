@@ -45,9 +45,9 @@ if types is not None:
     types = types.split(',')
     
 if output:
-    output.write("msec, xacc, yacc, zacc, xgyro, ygyro, zgyro, xmag, ymag, zmag\n")    
+    output.write("msec, roll, pitch, yaw, xacc, yacc, zacc, xgyro, ygyro, zgyro, xmag, ymag, zmag\n")    
     
-accm = None
+m_a = None
 while True:
     m = mlog.recv_match(condition=opts.condition, blocking=opts.follow)
     if m is None:
@@ -58,9 +58,19 @@ while True:
     last_timestamp = 0
     if output and m.get_type() != 'BAD_DATA':
 #        print(m.__dict__)
+
+        if m.get_type() == 'ATTITUDE':
+            m_a = m
+            m_a.roll *= 180/3.14159
+            m_a.pitch *= 180/3.14159
+            m_a.yaw *= 180/3.14159
+            #print m_a
+			
         if m.get_type() == 'RAW_IMU':
-            #print("msg type: %s, time: %d" % (m.get_type(), m.time_usec/1000))
-            output.write("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n" % (m.time_usec/1000, m.xacc, m.yacc, m.zacc, m.xgyro, m.ygyro, m.zgyro, m.xmag, m.ymag, m.zmag))
+            if m_a is not None:
+                #print("msg type: %s, time: %d, roll: %d" % (m.get_type(), m.time_usec/1000, m_a.time_boot_ms))
+                output.write("%d, %f, %f, %f, %d, %d, %d, %d, %d, %d, %d, %d, %d\n" % 
+                (m.time_usec/1000, m_a.roll, m_a.pitch, m_a.yaw, m.xacc, m.yacc, m.zacc, m.xgyro, m.ygyro, m.zgyro, m.xmag, m.ymag, m.zmag))
     else:
         print "bad data following timestamp: ", last_timestamp
         print m

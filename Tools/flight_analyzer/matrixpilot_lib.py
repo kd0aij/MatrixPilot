@@ -84,7 +84,7 @@ class raw_mavlink_telemetry_file:
                     #       (int16_t)udb_xaccel.value, (int16_t)udb_yaccel.value, (int16_t)udb_zaccel.value,
                     #       (int16_t)udb_xrate.value, (int16_t)udb_yrate.value, (int16_t)udb_zrate.value,
                     #       //(int16_t)magFieldRaw[0], (int16_t)magFieldRaw[1], (int16_t)magFieldRaw[2],
-		    #       (int16_t)udb_magFieldBody[0], (int16_t)udb_magFieldBody[1], (int16_t)udb_magFieldBody[2]);
+		            #       (int16_t)udb_magFieldBody[0], (int16_t)udb_magFieldBody[1], (int16_t)udb_magFieldBody[2]);
                     # 
                     return self.msg;
                     # print self.msg.xacc,",",self.msg.yacc,",",self.msg.zacc, ",", \

@@ -136,6 +136,10 @@ void udb_run(void) {
 	uint16_t startmsec, curmsec;
 	get_current_time(&startseconds, &startmsec);
 
+	if (strlen(SILSIM_SERIAL_RC_INPUT_DEVICE) == 0) {
+		udb_pwIn[THROTTLE_INPUT_CHANNEL] = 2000;
+		udb_pwTrim[THROTTLE_INPUT_CHANNEL] = 2000;
+	}
 	nextHeartbeatTime = get_current_milliseconds();
 
 	while (1) {
@@ -160,7 +164,11 @@ void udb_run(void) {
 
 			udb_background_callback_periodic(); // Run at heartrate
 			udb_servo_callback_prepare_outputs();
-			sil_ui_update();
+
+            // call at 40Hz
+            if (udb_heartbeat_counter % (HEARTBEAT_HZ / 40) == 0) {
+				sil_ui_update();
+            }
 
 			// Run at 0.5Hz
 			if (udb_heartbeat_counter % (2 * HEARTBEAT_HZ) == 0) {
@@ -178,8 +186,7 @@ void udb_run(void) {
 			udb_heartbeat_counter++;
 
 			nextHeartbeatTime = nextHeartbeatTime + UDB_STEP_TIME;
-			if (nextHeartbeatTime > UDB_WRAP_TIME)
-				nextHeartbeatTime -= UDB_WRAP_TIME;
+			if (nextHeartbeatTime > UDB_WRAP_TIME) nextHeartbeatTime -= UDB_WRAP_TIME;
 		}
 		process_queued_events();
 	}
@@ -225,6 +232,9 @@ void udb_servo_record_trims(void) {
 		}
 	}
 
+//	for (i=1; i <= NUM_INPUTS; i++)
+//		udb_pwTrim[i] = udb_pwIn[i] ;
+
 	return;
 }
 
@@ -253,12 +263,9 @@ uint16_t get_reset_flags(void) {
 void sil_reset(void) {
 	sil_ui_will_reset();
 
-	if (gpsSocket)
-		UDBSocket_close(gpsSocket);
-	if (telemetrySocket)
-		UDBSocket_close(telemetrySocket);
-	if (serialSocket)
-		UDBSocket_close(serialSocket);
+	if (gpsSocket) UDBSocket_close(gpsSocket);
+	if (telemetrySocket) UDBSocket_close(telemetrySocket);
+	if (serialSocket) UDBSocket_close(serialSocket);
 
 	char *args[3] = { mp_argv[0], (char*)UDB_HW_RESET_ARG, 0 };
 	execv(mp_argv[0], args);
@@ -350,8 +357,7 @@ boolean handleUDBSockets(void) {
 			for (i = 0; i < bytesRead; i++) {
 				udb_gps_callback_received_byte(buffer[i]);
 			}
-			if (bytesRead > 0)
-				didRead = true;
+			if (bytesRead > 0) didRead = true;
 		}
 	}
 
@@ -365,8 +371,7 @@ boolean handleUDBSockets(void) {
 			for (i = 0; i < bytesRead; i++) {
 				udb_serial_callback_received_byte(buffer[i]);
 			}
-			if (bytesRead > 0)
-				didRead = true;
+			if (bytesRead > 0) didRead = true;
 		}
 	}
 
