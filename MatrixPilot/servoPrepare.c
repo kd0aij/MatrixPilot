@@ -57,6 +57,7 @@ void init_servoPrepare(void) // initialize the PWM
         udb_pwIn[i] = ((i == THROTTLE_INPUT_CHANNEL) ? 0 : CHANNEL_TRIMPOINT);
     udb_pwTrim[i] = udb_pwIn[i];
 #else
+    // FIXME: looks like this assignment is useless
         udb_pwTrim[i] = ((i == THROTTLE_INPUT_CHANNEL) ? 0 : 3000);
     udb_pwTrim[i] = udb_pwIn[i];
 #endif

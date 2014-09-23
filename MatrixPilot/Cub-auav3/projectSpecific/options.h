@@ -223,7 +223,7 @@
 //   1-4 enables only the first 1-4 of the 4 standard input channels
 //   5 also enables E8 as the 5th input channel
 // For UDB4 boards: Set to 1-8
-#define NUM_INPUTS                          6
+#define NUM_INPUTS                          7
 
 // respect TX trim settings
 #define FIXED_TRIMPOINT     1
@@ -247,6 +247,8 @@
 #define PASSTHROUGH_B_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_C_INPUT_CHANNEL         CHANNEL_UNUSED
 #define PASSTHROUGH_D_INPUT_CHANNEL         CHANNEL_UNUSED
+
+// DX7 Cub channel 7 is AUX2 and controlled by the hover throttle rocker
 
 // NUM_OUTPUTS:
 // For classic boards: Set to 3, 4, 5, or 6

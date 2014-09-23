@@ -201,6 +201,12 @@
 	skidding out of the turn, and there is a need for left rudder, not right, so
 	flip the sign of the feedback and try again.
 
-field notes: first flight with yaw_rate=xacc large overshoot in auto mode, reduced on second
-flight with yaw_rate = xacc/4, but seemed to turn wrong direction for xwind leg
-3rd flight; yaw_rate = xacc/16
+21 September 2014: field notes: first flight with yaw_rate=xacc large overshoot in auto mode, reduced on second
+	flight with yaw_rate = xacc/4, but seemed to turn wrong direction for xwind leg
+	3rd flight; yaw_rate = xacc/16
+
+23 Septermber 2014:
+	turn off cross tracking in waypoints.h. Last 3 waypoints are 10m AGL
+	Use channel 7 (hover throttle rocker) to toggle xacc nulling with rudder
+	UP (above center) manual rudder in manual/stab, xacc null in auto
+	DOWN (4 clicks below center) xacc null in manual/stab, manual in auto

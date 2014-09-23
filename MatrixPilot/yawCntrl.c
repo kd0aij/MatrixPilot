@@ -89,34 +89,43 @@ void normalYawCntrl(void) {
     magClamp(&xacc, 16384/(ACCEL_RANGE)); // saturate at 16K
     xacc *= (ACCEL_RANGE);
 
+    // manual yaw setpoint is a rate demand value
+    // manual input is 2 * delta usec (range [-1000, 1000])
+    int16_t yaw_manual =  REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED,
+            (udb_pwIn[RUDDER_INPUT_CHANNEL] - udb_pwTrim[RUDDER_INPUT_CHANNEL]));
+
 #ifdef TestGains
     flags._.GPS_steering = 0; // turn off navigation
     flags._.pitch_feedback = 1; // turn on stabilization
 #endif 
+    // with hover throttle UP: manual rudder control in manual and stabilize
+    // and xacc nulling in auto mode
+    // With hover throttle DOWN: xacc nulling in manual and stabilize
+    // and manual rudder in auto mode
     if (RUDDER_NAVIGATION && flags._.GPS_steering) {
-        // autonomous mode; pilot has no manual rudder control
-//        yawNavDeflection = determine_navigation_deflection('y') << 3;
-//
-//        if (canStabilizeInverted() && current_orientation == F_INVERTED) {
-//            yawNavDeflection = -yawNavDeflection;
-//        }
+        if (udb_pwIn[7] > 2900) {
+            // disable lateral accel nulling if hover throttle is low
 
-        // ignore manual rudder and keep the ball centered while in auto
-        yaw_rate = xacc;
+            // ignore manual rudder and keep the ball centered while in auto
+            yaw_rate = xacc;
+        } else {
+            // multiply manual yaw by 24
+            yaw_rate = (yaw_manual << 4) + (yaw_manual << 3);
+        }
     } else {
-        // stabilization or manual mode; no slip/skid correction
-        // manual yaw setpoint is a rate demand value
-        // manual input is 2 * delta usec (range [-1000, 1000])
-        int16_t yaw_manual =  REVERSE_IF_NEEDED(RUDDER_CHANNEL_REVERSED,
-                (udb_pwIn[RUDDER_INPUT_CHANNEL] - udb_pwTrim[RUDDER_INPUT_CHANNEL]));
-
-        // multiply by 24
-        yaw_rate = (yaw_manual << 4) + (yaw_manual << 3);
+        if (udb_pwIn[7] > 2900) {
+            // multiply manual yaw by 24
+            yaw_rate = (yaw_manual << 4) + (yaw_manual << 3);
+        } else {
+            // ignore manual rudder and keep the ball centered while in auto
+            yaw_rate = xacc;
+        }
     }
 
     // limit combined manual and nav yaw setpoint
     magClamp(&yaw_rate, 16000);
 
+    // this just turns off gyro feedback when in manual mode
     yawAccum.WW = 0;
     if (ROLL_CONTROL_RUDDER && flags._.pitch_feedback) {
         // stabilization mode
