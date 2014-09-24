@@ -203,7 +203,7 @@
 
 21 September 2014: field notes: first flight with yaw_rate=xacc large overshoot in auto mode, reduced on second
 	flight with yaw_rate = xacc/4, but seemed to turn wrong direction for xwind leg
-	3rd flight; yaw_rate = xacc/16
+	3rd flight; yaw_rate = xacc/16: bomb drop indicates no apparent lag in GPS
 
 23 Septermber 2014:
 	turn off cross tracking in waypoints.h. Last 3 waypoints are 10m AGL

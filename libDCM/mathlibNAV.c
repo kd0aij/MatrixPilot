@@ -24,7 +24,8 @@
 
 //  math libraray
 
-#define RADIANTOCIRCULAR 10430 
+#define RADIANTOCIRCULAR 10430
+#define DEG_TO_RADIANS (3.14159 / 180)
 
 //  sine table for angles from zero to pi/2 with an increment of pi/128 radian.
 //  sine values are multiplied by 2**14
@@ -176,6 +177,8 @@ void rotate_f(struct relative2D_f *xy, float angle)
 	//  rotates xy by angle in degrees, measured in a counter clockwise sense.
 	//  A mathematical angle of plus or minus pi is represented digitally as plus or minus 180.
 	float cosang, sinang;
+        // convert from degress to radians
+        angle *= DEG_TO_RADIANS;
 	sinang = sinf(angle);   // 2238 cycles
 	cosang = cosf(angle);   // 3249 cycles
 	xy->x = cosang * xy->x - sinang * xy->y;    // 122 + 2*109

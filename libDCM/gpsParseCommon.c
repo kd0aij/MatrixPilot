@@ -235,6 +235,12 @@ void udb_background_callback_triggered(void)
                 // estimated additional 11000 cycles per call
                 //________________________________________________________________________
                 //                const float eR = 6371.0e3f;
+
+                // difference is 32 bit integer degrees*10^7; precision about 1/90 meter, about 10^-2
+                // Since 1 meter = 90 counts, converting the difference to 32 bit floating point
+                // with 24 bit mantissa provides precision of 2^-24 = 6*10^-8 meters * 2^exponent. 
+                // For displacements up to 131 Kilometers (exponent 17)
+                // this exceeds the integer precision.
                 loc_f[1] = (float) (lat_gps.WW - lat_origin.WW) / 89.983f; // 122 + 361 cycles
                 loc_f[0] = ((float) (long_gps.WW - long_origin.WW) / 89.983f) * cos_lat_f; // 122 + 109
                 loc_f[2] = (float) (alt_sl_gps.WW - alt_origin.WW) / 100.0f; // 122 + 361
