@@ -2922,7 +2922,7 @@ class flan_text_frame(Frame):
 
 ########## Start of the Main Program ##########
 
-debug = 1 # set this to 1 of you want debug info to be printed.
+debug = 0 # set this to 1 of you want debug info to be printed.
 GPS = 0
 IMU = 1
             
