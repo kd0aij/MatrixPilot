@@ -103,22 +103,22 @@ void normalYawCntrl(void) {
     // With hover throttle DOWN: xacc nulling in manual and stabilize
     // and manual rudder in auto mode
     if (RUDDER_NAVIGATION && flags._.GPS_steering) {
-        if (udb_pwIn[7] > 2900) {
+        if (1 || udb_pwIn[7] > 2900) {
+            // multiply manual yaw by 24
+            yaw_rate = (yaw_manual << 4) + (yaw_manual << 3);
+        } else {
             // disable lateral accel nulling if hover throttle is low
 
             // ignore manual rudder and keep the ball centered while in auto
-            yaw_rate = xacc;
-        } else {
-            // multiply manual yaw by 24
-            yaw_rate = (yaw_manual << 4) + (yaw_manual << 3);
+            yaw_rate = xacc >> 2;
         }
     } else {
-        if (udb_pwIn[7] > 2900) {
+        if (1 || udb_pwIn[7] > 2900) {
             // multiply manual yaw by 24
             yaw_rate = (yaw_manual << 4) + (yaw_manual << 3);
         } else {
             // ignore manual rudder and keep the ball centered while in auto
-            yaw_rate = xacc;
+            yaw_rate = xacc >> 2;
         }
     }
 
