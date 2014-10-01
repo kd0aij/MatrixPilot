@@ -62,13 +62,9 @@
 #if ((SERIAL_OUTPUT_FORMAT == SERIAL_MAVLINK) || (GAINS_VARIABLE == 1) || (USE_CONFIGFILE == 1))
 	extern uint16_t pitchgain;
 	extern uint16_t pitchkd;
-	extern uint16_t rudderElevMixGain;
-	extern uint16_t rollElevMixGain;
 #else
 	extern const uint16_t pitchgain;
 	extern const uint16_t pitchkd;
-	extern const uint16_t rudderElevMixGain;
-	extern const uint16_t rollElevMixGain;
 #endif
 //#define ELEVATOR_BOOST                    0.5
 

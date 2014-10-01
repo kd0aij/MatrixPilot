@@ -96,6 +96,7 @@ uint16_t vector3_normalize(int16_t result[], int16_t input[]);
 int32_t long_scale(int32_t arg1, int16_t arg2);
 // miscellaneous
 void magClamp(int16_t *in, int16_t mag);
+void VectorCross(int16_t * dest, int16_t * src1, int16_t * src2);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vars

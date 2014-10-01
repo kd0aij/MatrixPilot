@@ -173,7 +173,7 @@ void dcm_init_rmat(void) {
 #endif
 }
 
-static void VectorCross(fractional * dest, fractional * src1, fractional * src2) {
+void VectorCross(fractional * dest, fractional * src1, fractional * src2) {
 	// Implement the cross product. *dest = *src1X*src2;
 	union longww crossaccum;
 	crossaccum.WW = __builtin_mulss(src1[1], src2[2]);

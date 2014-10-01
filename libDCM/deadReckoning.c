@@ -61,7 +61,9 @@ union longww IMUvelocityx =  { 0 };
 union longww IMUvelocityy =  { 0 };
 union longww IMUvelocityz =  { 0 };
 
-//      location, as estimated by the IMU
+int16_t forward_ground_speed = 0 ;
+
+// location, as estimated by the IMU
 // high word is meters, low word is fractional meters
 union longww IMUlocationx =  { 0 };
 union longww IMUlocationy =  { 0 };

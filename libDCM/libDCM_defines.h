@@ -33,6 +33,15 @@ struct absolute3D { int32_t x; int32_t y; int32_t z; };
 struct waypoint3D { int32_t x; int32_t y; int16_t z; };
 struct fixedOrigin3D {int32_t x; int32_t y; float z; };
 
+// New generic vector types
+
+typedef struct { float x; float y; }                vect2_t;
+typedef struct { float x; float y; float z; }       vect3_t;
+typedef struct { int16_t x; int16_t y; }            vect2_16t;
+typedef struct { int16_t x; int16_t y; int16_t z; } vect3_16t;
+typedef struct { int32_t x; int32_t y; }            vect2_32t;
+typedef struct { int32_t x; int32_t y; int32_t z; } vect3_32t;
+
 struct dcm_flag_bits {
 #ifdef CATAPULT_LAUNCH_ENABLE
 			uint16_t unused					: 3 ;

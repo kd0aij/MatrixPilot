@@ -65,6 +65,7 @@ void init_servoPrepare(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Control code - rollCntrl.c, pitchCntrl.c, yawCntrl.c, altitudeCntrl.c
+void helicalTurnCntrl(void);
 void rollCntrl(void);
 void pitchCntrl(void);
 void yawCntrl(void);
