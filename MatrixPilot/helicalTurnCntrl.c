@@ -97,7 +97,19 @@ void helicalTurnCntrl( void )
 	if ( steeringInput > MAX_INPUT ) steeringInput = MAX_INPUT ;
 	if ( steeringInput < - MAX_INPUT ) steeringInput = - MAX_INPUT ;
 
-	accum.WW = __builtin_mulsu( steeringInput , turngainfbw ) / ( 2*MAX_INPUT) ;
+#if (SILSIM == 1)
+#include "heartbeat.h"
+extern uint16_t udb_heartbeat_counter;
+	float temp =  turngainfbw * (steeringInput  / ( 2.0*MAX_INPUT)) ;
+        accum.WW = (int32_t)temp;
+
+        if ( (udb_heartbeat_counter % (HEARTBEAT_HZ)) == 0) {
+            printf("steering input: %i, temp: %f, accum.WW: %i\n",
+                    steeringInput, temp, accum.WW);
+        }
+#else
+	accum.WW = __builtin_mulsu( steeringInput , turngainfbw ) / (int32_t)( 2*MAX_INPUT) ;
+#endif
 
         if ((AILERON_NAVIGATION||RUDDER_NAVIGATION) && flags._.GPS_steering)
 	{
@@ -108,7 +120,7 @@ void helicalTurnCntrl( void )
 	if ( accum.WW <  - (int32_t) 2* (int32_t ) RMAX + 1 ) accum.WW = - (int32_t) 2* (int32_t ) RMAX + 1 ;
 
 	desiredTurnRateRadians = accum._.W0 ;
-
+        
 	// compute the desired tilt from desired turn rate and air speed
 	// range for acceleration is plus minus 4 times gravity
 	// range for turning rate is plus minus 4 radians per second
@@ -211,14 +223,5 @@ void helicalTurnCntrl( void )
 	// compute the rotation rate error vector
 
 	VectorSubtract( 3 , rotationRateError , omegaAccum , desiredRotationRateGyro ) ;
-
-#if (SILSIM == 1)
-#include "heartbeat.h"
-extern uint16_t udb_heartbeat_counter;
-                if ( (udb_heartbeat_counter % (HEARTBEAT_HZ)) == 0) {
-                    printf("steering input: %i, turngainfbw: %i, desiredTurnRateRadians: %i\n",
-                            steeringInput, turngainfbw, desiredTurnRateRadians);
-                }
-#endif
 
 }

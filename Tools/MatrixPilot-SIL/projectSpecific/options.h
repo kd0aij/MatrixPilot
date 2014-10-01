@@ -144,7 +144,7 @@
 // altitude is determined by the position of the throttle stick on the transmitter.
 // NOTE: even when set to AH_NONE, MatrixPilot will still try to stabilize pitch as long
 // as PITCH_STABILIZATION is set to 1 above, but will not aim for any specific altitude.
-#define ALTITUDEHOLD_STABILIZED				AH_FULL
+#define ALTITUDEHOLD_STABILIZED				AH_NONE
 #define ALTITUDEHOLD_WAYPOINT               AH_FULL
 
 // Speed Control
@@ -497,11 +497,8 @@
 // waypoint navigation mode and fly by wire mode respectively.
 // They are specified in terms of the maximum desired turning rate in degrees per second in each mode.
 // The largest possible value is 240 degrees per second, anything larger will be clipped to 240.
-//#define TURN_RATE_NAV							30.0
-//#define TURN_RATE_FBW							60.0
-
-#define TURN_RATE_NAV							3.0
-#define TURN_RATE_FBW							6.0
+#define TURN_RATE_NAV							30.0
+#define TURN_RATE_FBW							60.0
 
 // Aileron/Roll Control Gains
 // ROLLKP is the proportional gain
@@ -511,7 +508,7 @@
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
 //#define ROLLKP								0.20
 //#define ROLLKD								0.05
-#define ROLLKP								0.1
+#define ROLLKP								0.5
 #define ROLLKD								0.0
 #define YAWKP_AILERON						0.6*0
 #define YAWKD_AILERON						0.1*0
@@ -529,7 +526,7 @@
 //#define ELEVATOR_BOOST						0.50
 
 //#define PITCHGAIN							0.50
-#define PITCHGAIN							0.1
+#define PITCHGAIN							0.5
 //#define PITCHKD								0.1
 //#define ELEVATOR_BOOST						0.50
 #define PITCHKD								0.0
