@@ -98,15 +98,8 @@ void helicalTurnCntrl( void )
 	if ( steeringInput < - MAX_INPUT ) steeringInput = - MAX_INPUT ;
 
 #if (SILSIM == 1)
-#include "heartbeat.h"
-extern uint16_t udb_heartbeat_counter;
 	float temp =  turngainfbw * (steeringInput  / ( 2.0*MAX_INPUT)) ;
         accum.WW = (int32_t)temp;
-
-        if ( (udb_heartbeat_counter % (HEARTBEAT_HZ)) == 0) {
-            printf("steering input: %i, temp: %f, accum.WW: %i\n",
-                    steeringInput, temp, accum.WW);
-        }
 #else
 	accum.WW = __builtin_mulsu( steeringInput , turngainfbw ) / (int32_t)( 2*MAX_INPUT) ;
 #endif
