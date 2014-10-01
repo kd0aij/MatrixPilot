@@ -21,6 +21,7 @@
 
 #include "defines.h"
 #include "servoPrepare.h"
+#include "heartbeat.h"
 
 // Perform control based on the airframe type.
 // Use the radio to determine the baseline pulse widths if the radio is on.
@@ -80,6 +81,7 @@ void servoMix(void)
 			udb_pwOut[THROTTLE_OUTPUT_CHANNEL] = udb_servo_pulsesat(temp);
 		}
 #endif
+              
 
 	// V-Tail airplane airframe
 	// Mix roll_control and waggle into ailerons

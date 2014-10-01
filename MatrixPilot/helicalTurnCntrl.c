@@ -99,7 +99,7 @@ void helicalTurnCntrl( void )
 
 	accum.WW = __builtin_mulsu( steeringInput , turngainfbw ) / ( 2*MAX_INPUT) ;
 
-	if ((AILERON_NAVIGATION||RUDDER_NAVIGATION) && flags._.GPS_steering)
+        if ((AILERON_NAVIGATION||RUDDER_NAVIGATION) && flags._.GPS_steering)
 	{
 		accum.WW += (int32_t) determine_navigation_deflection('t');		
 	}
@@ -211,5 +211,14 @@ void helicalTurnCntrl( void )
 	// compute the rotation rate error vector
 
 	VectorSubtract( 3 , rotationRateError , omegaAccum , desiredRotationRateGyro ) ;
+
+#if (SILSIM == 1)
+#include "heartbeat.h"
+extern uint16_t udb_heartbeat_counter;
+                if ( (udb_heartbeat_counter % (HEARTBEAT_HZ)) == 0) {
+                    printf("steering input: %i, turngainfbw: %i, desiredTurnRateRadians: %i\n",
+                            steeringInput, turngainfbw, desiredTurnRateRadians);
+                }
+#endif
 
 }

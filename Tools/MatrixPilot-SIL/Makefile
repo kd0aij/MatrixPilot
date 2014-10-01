@@ -52,6 +52,7 @@ SIL-events.o \
 ../../MatrixPilot/navigate.o \
 ../../MatrixPilot/nv_memory_table.o \
 ../../MatrixPilot/parameter_table.o \
+../../MatrixPilot/helicalTurnCntrl.o \
 ../../MatrixPilot/pitchCntrl.o \
 ../../MatrixPilot/rollCntrl.o \
 ../../MatrixPilot/servoMix.o \

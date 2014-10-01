@@ -20,6 +20,9 @@
 
 
 #include "defines.h"
+#if (SILSIM == 1)
+#include <stdlib.h>
+#endif
 
 #if (FLIGHT_PLAN_TYPE == FP_WAYPOINTS)
 

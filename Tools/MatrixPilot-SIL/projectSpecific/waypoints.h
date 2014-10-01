@@ -50,10 +50,10 @@
 #define USE_FIXED_ORIGIN		0
 #define FIXED_ORIGIN_LOCATION	{ -1223178100, 474634556, 98.0 }	// KSEA runway 16R
 
-// AAM East Field runway center 39°50'31.83"N  105°12'44.81"W
+// AAM East Field runway center 39ï¿½50'31.83"N  105ï¿½12'44.81"W
 //#define FIXED_ORIGIN_LOCATION	{ -1052124472, 398421750, 1808.0 }
 
-// AAM West Field runway center  39°50'31.97"N  105°13'10.17"W (105.2194917, 39.842213889)
+// AAM West Field runway center  39ï¿½50'31.97"N  105ï¿½13'10.17"W (105.2194917, 39.842213889)
 // altitude estimated from LEA-6 GPS readings in Polaris Ultra log2228
 //#define FIXED_ORIGIN_LOCATION	{ -1052194917, 398422138, 1820.0 }
 
@@ -189,12 +189,12 @@ const struct waypointDef waypoints[] = {
 // and after flights, since turning off the transmitter will cause the throttle to come on.
 
 const struct waypointDef rtlWaypoints[] = {
-    {{   0, 1000, 50}, CAM_VIEW_LAUNCH}, //Waypoint start final
-    {{   0, 500, 20}, CAM_VIEW_LAUNCH}, //Waypoint mid final
-    {{   0, 0, 10}, CAM_VIEW_LAUNCH}, //Waypoint land
-    {{   0, -500, 5}, F_LAND, CAM_VIEW_LAUNCH}, //Waypoint land
-    {{   0, -1000, 50}, F_LAND, CAM_VIEW_LAUNCH}, //Waypoint land
-};
+		{ { 0, 1000, 50 }, F_NORMAL, CAM_VIEW_LAUNCH }, //Waypoint start final
+		{ { 0, 500, 20 }, F_NORMAL, CAM_VIEW_LAUNCH }, //Waypoint mid final
+		{ { 0, 0, 10 }, F_NORMAL, CAM_VIEW_LAUNCH }, //Waypoint land
+		{ { 0, -500, 5 }, F_LAND, CAM_VIEW_LAUNCH }, //Waypoint land
+		{ { 0, -1000, 50 }, F_LAND, CAM_VIEW_LAUNCH }, //Waypoint land
+		};
 
 
 

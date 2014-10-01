@@ -519,8 +519,8 @@
 
 #define FEED_FORWARD 1.0
 
-#define TURN_RATE_FBW 60
-#define TURN_RATE_NAV 30
+#define TURN_RATE_FBW 60.0
+#define TURN_RATE_NAV 30.0
 
 // Neutral pitch angle of the plane (in degrees) when flying inverted
 // Use this to add extra "up" elevator while the plane is inverted, to avoid losing altitude.

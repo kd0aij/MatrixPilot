@@ -75,7 +75,7 @@ void setTargetAltitude(int16_t targetAlt);
 void init_yawCntrl(void);
 void init_rollCntrl(void);
 void init_pitchCntrl(void);
-
+void init_navigation(void);
 
 // wind gain adjustment
 uint16_t wind_gain_adjustment(void);

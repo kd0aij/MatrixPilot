@@ -35,6 +35,15 @@ void manualPassthrough(void);
 void init_servoPrepare(void) // initialize the PWM
 {
 	int16_t i;
+        
+        init_yawCntrl();
+        init_rollCntrl();
+        init_pitchCntrl();
+
+        init_navigation();
+//        init_airspeedCntrl();
+//        init_altitudeCntrl();
+//        init_altitudeCntrlVariable();
 
 #if (USE_NV_MEMORY == 1)
 	if (udb_skip_flags.skip_radio_trim == 1)
@@ -83,6 +92,11 @@ void dcm_servo_callback_prepare_outputs(void)
 		updateBehavior();
 		wind_gain = wind_gain_adjustment();
 		helicalTurnCntrl();
+#if (SILSIM == 1)
+                if ( (udb_heartbeat_counter % (HEARTBEAT_HZ)) == 0) {
+                    printf("controls: roll:%i, pitch: %i, yaw: %i\n", roll_control, pitch_control, yaw_control);
+                }
+#endif
 		rollCntrl();
 		yawCntrl();
 		altitudeCntrl();
