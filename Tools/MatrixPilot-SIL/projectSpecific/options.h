@@ -544,10 +544,8 @@
 // MANUAL_AILERON_RUDDER_MIX is the fraction of manual aileron control to mix into the rudder when
 // in stabilized or waypoint mode.  This mainly helps aileron-initiated turning while in stabilized.
 // RUDDER_BOOST is the additional gain multiplier for the manually commanded rudder deflection
-//#define YAWKP_RUDDER						0.05
-//#define YAWKD_RUDDER						0.05
-#define YAWKP_RUDDER						0.5
-#define YAWKD_RUDDER						0.5
+#define YAWKP_RUDDER						0.05
+#define YAWKD_RUDDER						0.05
 #define ROLLKP_RUDDER						0.00
 #define ROLLKD_RUDDER						0.00
 #define MANUAL_AILERON_RUDDER_MIX			0.00
