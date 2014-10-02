@@ -508,7 +508,7 @@
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
 //#define ROLLKP								0.20
 //#define ROLLKD								0.05
-#define ROLLKP								0.5
+#define ROLLKP								0.2
 #define ROLLKD								0.0
 #define YAWKP_AILERON						0.6*0
 #define YAWKD_AILERON						0.1*0
@@ -526,7 +526,7 @@
 //#define ELEVATOR_BOOST						0.50
 
 //#define PITCHGAIN							0.50
-#define PITCHGAIN							0.5
+#define PITCHGAIN							0.2
 //#define PITCHKD								0.1
 //#define ELEVATOR_BOOST						0.50
 #define PITCHKD								0.0

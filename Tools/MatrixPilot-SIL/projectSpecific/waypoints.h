@@ -160,14 +160,14 @@
 //};
 
 const struct waypointDef waypoints[] = {
-//    {{   0, 500, 50}, F_TAKEOFF, CAM_VIEW_LAUNCH}, //Waypoint 0
-//    {{ 500, 500, 50}, F_NORMAL, CAM_VIEW_LAUNCH}, //Waypoint 1
-//    {{ 500,   0, 50}, F_NORMAL, CAM_VIEW_LAUNCH}, //Waypoint 2
-//    {{   0,   0, 50}, F_NORMAL, CAM_VIEW_LAUNCH}, //Waypoint 3
-    {{   0, 500, 50}, F_CROSS_TRACK, CAM_VIEW_LAUNCH}, //Waypoint 0
-    {{ 500, 500, 50}, F_CROSS_TRACK, CAM_VIEW_LAUNCH}, //Waypoint 1
-    {{ 500,   0, 50}, F_CROSS_TRACK, CAM_VIEW_LAUNCH}, //Waypoint 2
-    {{   0,   0, 50}, F_CROSS_TRACK, CAM_VIEW_LAUNCH}, //Waypoint 3
+    {{   0, 500, 50}, F_TAKEOFF, CAM_VIEW_LAUNCH}, //Waypoint 0
+    {{ 500, 500, 50}, F_NORMAL, CAM_VIEW_LAUNCH}, //Waypoint 1
+    {{ 500,   0, 50}, F_NORMAL, CAM_VIEW_LAUNCH}, //Waypoint 2
+    {{   0,   0, 50}, F_NORMAL, CAM_VIEW_LAUNCH}, //Waypoint 3
+//    {{   0, 500, 50}, F_CROSS_TRACK, CAM_VIEW_LAUNCH}, //Waypoint 0
+//    {{ 500, 500, 50}, F_CROSS_TRACK, CAM_VIEW_LAUNCH}, //Waypoint 1
+//    {{ 500,   0, 50}, F_CROSS_TRACK, CAM_VIEW_LAUNCH}, //Waypoint 2
+//    {{   0,   0, 50}, F_CROSS_TRACK, CAM_VIEW_LAUNCH}, //Waypoint 3
 };
 //const struct waypointDef waypoints[] = {
 //    {{   500, 500, 50}, F_TAKEOFF, CAM_VIEW_LAUNCH}, //Waypoint 0
