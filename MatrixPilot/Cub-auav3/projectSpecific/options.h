@@ -123,13 +123,13 @@
 // holds the cross track error to smaller values.
 // 64 meters is probably the largest value you might use on a fast model jet (more than 50 meters/sec)
 // Use 32 meters for 20 to 50 meters/sec, and 16 meters for less than that.
-#define CROSS_TRACK_MARGIN                  16
+#define CROSS_TRACK_MARGIN                  64
 
 // Wind Gain Adjustment
 // This is an option for modulating the navigation gains in flight
 // to maintain a constant turn radius in heavy winds in waypoing mode.
 // Define WIND_GAIN_ADJUSTMENT as 1 to turn this feature on.
-#define WIND_GAIN_ADJUSTMENT                1
+#define WIND_GAIN_ADJUSTMENT                0
 
 // Altitude Hold
 // Use altitude hold in stabilized mode?  In waypoint mode?

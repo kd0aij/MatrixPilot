@@ -132,8 +132,8 @@ void udb_init(void) {
 void udb_run(void) {
 	uint16_t currentTime;
 	uint16_t nextHeartbeatTime;
-	uint32_t startseconds, curseconds;
-	uint16_t startmsec, curmsec;
+	uint32_t startseconds;
+	uint16_t startmsec;
 	get_current_time(&startseconds, &startmsec);
 
 	if (strlen(SILSIM_SERIAL_RC_INPUT_DEVICE) == 0) {
@@ -148,7 +148,7 @@ void udb_run(void) {
 		}
 
 		currentTime = get_current_milliseconds();
-		systime_usec = currentTime * 1000;
+		systime_usec += UDB_STEP_TIME * 1000;
 
 		if (currentTime >= nextHeartbeatTime
 				&& !(nextHeartbeatTime <= UDB_STEP_TIME

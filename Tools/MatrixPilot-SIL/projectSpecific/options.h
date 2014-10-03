@@ -126,7 +126,7 @@
 // holds the cross track error to smaller values.
 // 64 meters is probably the largest value you might use on a fast model jet (more than 50 meters/sec)
 // Use 32 meters for 20 to 50 meters/sec, and 16 meters for less than that.
-#define CROSS_TRACK_MARGIN                  64
+#define CROSS_TRACK_MARGIN                  (64)
 
 // Wind Gain Adjustment
 // This is an option for modulating the navigation gains in flight
@@ -151,7 +151,7 @@
 // If you define SPEED_CONTROL to be 1, MatrixPilot will take air speed into account
 // in the altitude controls, and will trim the throttle and pitch to maintain air speed.
 // Define DESIRED_SPEED to be the air speed that you want, in meters/second.
-#define SPEED_CONTROL                       0
+#define SPEED_CONTROL                       1
 #define DESIRED_SPEED						16.0 // meters/second
 
 // Inverted flight
