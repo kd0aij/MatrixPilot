@@ -148,7 +148,7 @@ void udb_run(void) {
 		}
 
 		currentTime = get_current_milliseconds();
-		systime_usec = currentTime * 1000;
+		systime_usec += UDB_STEP_TIME * 1000;
 
 		if (currentTime >= nextHeartbeatTime
 				&& !(nextHeartbeatTime <= UDB_STEP_TIME

@@ -126,7 +126,7 @@
 // holds the cross track error to smaller values.
 // 64 meters is probably the largest value you might use on a fast model jet (more than 50 meters/sec)
 // Use 32 meters for 20 to 50 meters/sec, and 16 meters for less than that.
-#define CROSS_TRACK_MARGIN                  (512)
+#define CROSS_TRACK_MARGIN                  (64)
 
 // Wind Gain Adjustment
 // This is an option for modulating the navigation gains in flight
@@ -151,9 +151,8 @@
 // If you define SPEED_CONTROL to be 1, MatrixPilot will take air speed into account
 // in the altitude controls, and will trim the throttle and pitch to maintain air speed.
 // Define DESIRED_SPEED to be the air speed that you want, in meters/second.
-#define SPEED_CONTROL						1
-//#define DESIRED_SPEED						100.0 // meters/second
-#define DESIRED_SPEED						200.0 // meters/second
+#define SPEED_CONTROL                       1
+#define DESIRED_SPEED						16.0 // meters/second
 
 // Inverted flight
 // Set these to 1 to enable stabilization of inverted flight in stabilized and/or waypoint modes.
@@ -187,8 +186,8 @@
 // Setting RACING_MODE to 1 will keep the plane at a set throttle value while in waypoint mode.
 // RACING_MODE_WP_THROTTLE is the throttle value to use, and should be set between 0.0 and 1.0.
 // Racing performance can be improved by disabling cross tracking for your waypoints.
-#define RACING_MODE							0
-#define RACING_MODE_WP_THROTTLE		.8
+#define RACING_MODE			1
+#define RACING_MODE_WP_THROTTLE		.5
 
 // Set this to 1 if you want the UAV Dev Board to fly your plane without a radio transmitter or
 // receiver. (Totally autonomous.)  This is just meant for simulation and debugging.  It is not
@@ -508,7 +507,7 @@
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
 //#define ROLLKP								0.20
 //#define ROLLKD								0.05
-#define ROLLKP								0.2
+#define ROLLKP								0.4
 #define ROLLKD								0.0
 #define YAWKP_AILERON						0.6*0
 #define YAWKD_AILERON						0.1*0
@@ -723,7 +722,7 @@
 // Set this to either FP_WAYPOINTS or FP_LOGO
 // The Waypoint definitions and options are located in the waypoints.h file.
 // The Logo flight plan definitions and options are located in the flightplan-logo.h file.
-#define FLIGHT_PLAN_TYPE					FP_WAYPOINTS
+#define FLIGHT_PLAN_TYPE					FP_LOGO
 
 
 ////////////////////////////////////////////////////////////////////////////////
