@@ -107,11 +107,12 @@
 
 #define PITCH_STABILIZATION                 1
 #define YAW_STABILIZATION_AILERON           0
+#define YAW_STABILIZATION_RUDDER            1
 
 // Aileron and Rudder Navigation
 // Set either of these to 0 to disable use of that control surface for navigation.
 #define AILERON_NAVIGATION                  1
-#define RUDDER_NAVIGATION                   1
+#define RUDDER_NAVIGATION                   0
 
 // Cross track margin, in meters
 // This is used when the cross track option is attached to a waypoint

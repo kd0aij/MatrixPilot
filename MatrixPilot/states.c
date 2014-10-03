@@ -42,13 +42,13 @@ static int wagInterval = 0;
 #define WAGGLE_SIZE   300
 #define WAGGLE_FREQ   2
 // waggle 3 times during the end of the standby pause (this number must be less than STANDBY_PAUSE)
-#define NUM_WAGGLES   4
+#define NUM_WAGGLES   2
 
 #if (HILSIM ==1)
 // pre-calibrated; shorten calib pause to 1 second
 #define CALIB_PAUSE (1 * HEARTBEAT_HZ)
-// pause for 1 seconds after first GPS fix
-#define STANDBY_PAUSE 1 * WAGGLE_FREQ
+// pause for 3 seconds after first GPS fix
+#define STANDBY_PAUSE 3 * WAGGLE_FREQ
 #else
 #ifndef PRE_CALIBRATED
 // pause for sensors to settle

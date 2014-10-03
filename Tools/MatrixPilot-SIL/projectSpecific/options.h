@@ -52,6 +52,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Set Up Board Type
 // See the MatrixPilot wiki for more details on different board types.
+// UDB4_BOARD also used for HILSIM/SILSIM
 #define BOARD_TYPE                          UDB4_BOARD
 //#define BOARD_TYPE                          UDB5_BOARD
 //#define BOARD_TYPE                          AUAV3_BOARD
@@ -107,10 +108,9 @@
 #define ROLL_STABILIZATION_RUDDER           0
 // experimental: use rudder to ...
 #define ROLL_CONTROL_RUDDER                 1
-
 #define PITCH_STABILIZATION                 1
 #define YAW_STABILIZATION_AILERON           0
-#define YAW_STABILIZATION_RUDDER            0
+#define YAW_STABILIZATION_RUDDER            1
 
 // Aileron and Rudder Navigation
 // Set either of these to 0 to disable use of that control surface for navigation.
@@ -126,7 +126,7 @@
 // holds the cross track error to smaller values.
 // 64 meters is probably the largest value you might use on a fast model jet (more than 50 meters/sec)
 // Use 32 meters for 20 to 50 meters/sec, and 16 meters for less than that.
-#define CROSS_TRACK_MARGIN                  16
+#define CROSS_TRACK_MARGIN                  64
 
 // Wind Gain Adjustment
 // This is an option for modulating the navigation gains in flight
@@ -176,7 +176,7 @@
 // the magnetometerOptions.h file, including declination and magnetometer type.
 #define MAG_YAW_DRIFT                       1
 
-#define MAG_YAW_ENABLE                      0
+#define MAG_YAW_ENABLE                      1
 #undef ENABLE_MAGOFFSET
 //#define ENABLE_MAGOFFSET
 #undef ENABLE_MAGALIGNMENT
@@ -186,8 +186,8 @@
 // Setting RACING_MODE to 1 will keep the plane at a set throttle value while in waypoint mode.
 // RACING_MODE_WP_THROTTLE is the throttle value to use, and should be set between 0.0 and 1.0.
 // Racing performance can be improved by disabling cross tracking for your waypoints.
-#define RACING_MODE							0
-#define RACING_MODE_WP_THROTTLE		.8
+#define RACING_MODE			1
+#define RACING_MODE_WP_THROTTLE		.5
 
 // Set this to 1 if you want the UAV Dev Board to fly your plane without a radio transmitter or
 // receiver. (Totally autonomous.)  This is just meant for simulation and debugging.  It is not
@@ -280,7 +280,7 @@
 #define AILERON_SECONDARY_OUTPUT_CHANNEL    CHANNEL_UNUSED
 #define CAMERA_PITCH_OUTPUT_CHANNEL         CHANNEL_UNUSED
 #define CAMERA_YAW_OUTPUT_CHANNEL           CHANNEL_UNUSED
-#define TRIGGER_OUTPUT_CHANNEL              CHANNEL_5
+#define TRIGGER_OUTPUT_CHANNEL              CHANNEL_UNUSED
 #define PASSTHROUGH_A_OUTPUT_CHANNEL        CHANNEL_UNUSED
 #define PASSTHROUGH_B_OUTPUT_CHANNEL        CHANNEL_UNUSED
 #define PASSTHROUGH_C_OUTPUT_CHANNEL        CHANNEL_UNUSED
@@ -470,12 +470,11 @@
 
 // Note, durations in milliseconds are rounded down to the nearest 25ms.
 
-#define TRIGGER_TYPE                        TRIGGER_TYPE_SERVO
-#define TRIGGER_ACTION                      TRIGGER_PULSE_LOW
-#define TRIGGER_SERVO_LOW                   2500
-#define TRIGGER_SERVO_HIGH                  3800
-//#define TRIGGER_INIT_VALUE                  TRIGGER_SERVO_HIGH
-#define TRIGGER_PULSE_DURATION              1000
+#define TRIGGER_TYPE                        TRIGGER_TYPE_NONE
+#define TRIGGER_ACTION                      TRIGGER_PULSE_HIGH
+#define TRIGGER_SERVO_LOW                   2000
+#define TRIGGER_SERVO_HIGH                  4000
+#define TRIGGER_PULSE_DURATION              250
 #define TRIGGER_REPEAT_PERIOD               4000
 
 
@@ -497,13 +496,13 @@
 // Aileron/Roll Control Gains
 // ROLLKP is the proportional gain
 // ROLLKD is the derivative (gyro) gain
-// YAWKP_AILERON determines the maximum bank angle setpoint as a fraction of +/- 90 degrees
+// YAWKP_AILERON is the proportional feedback gain for ailerons in response to yaw error
 // YAWKD_AILERON is the derivative feedback gain for ailerons in response to yaw rotation
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
-#define ROLLKP				0.1 //0.22
-#define ROLLKD				0.1 //0.02
-#define YAWKP_AILERON		0.375 // 0.05
-#define YAWKD_AILERON		0.0 //0.11 //0.05
+#define ROLLKP				0.4 //0.22
+#define ROLLKD				0.08 //0.02
+#define YAWKP_AILERON		0.35 // 0.05
+#define YAWKD_AILERON		0.2 //0.11 //0.05
 #define AILERON_BOOST		0.5
 
 // Elevator/Pitch Control Gains
@@ -513,9 +512,9 @@
 // ROLL_ELEV_MIX is the degree of elevator adjustment for aileron
 // ELEVATOR_BOOST is the additional gain multiplier for the manually commanded elevator deflection
 #define PITCHGAIN			0.2 // 0.150
-#define PITCHKD				0.1 //0.015 // 0.075
-#define RUDDER_ELEV_MIX		0.2
-#define ROLL_ELEV_MIX		0.0
+#define PITCHKD				0.05 //0.015 // 0.075
+#define RUDDER_ELEV_MIX		0.04
+#define ROLL_ELEV_MIX		0.8
 #define ELEVATOR_BOOST		0.5
 
 // Neutral pitch angle of the plane (in degrees) when flying inverted
@@ -530,9 +529,9 @@
 // MANUAL_AILERON_RUDDER_MIX is the fraction of manual aileron control to mix into the rudder when
 // in stabilized or waypoint mode.  This mainly helps aileron-initiated turning while in stabilized.
 // RUDDER_BOOST is the additional gain multiplier for the manually commanded rudder deflection
-#define YAWKP_RUDDER				0.2 // 0.1
-#define YAWKD_RUDDER				0 //0.03 // 0.1
-#define ROLLKP_RUDDER				0.1
+#define YAWKP_RUDDER				0.05 // 0.1
+#define YAWKD_RUDDER				0.01 //0.03 // 0.1
+#define ROLLKP_RUDDER				0.04
 #define ROLLKD_RUDDER				0 //0.05
 #define MANUAL_AILERON_RUDDER_MIX	0.0
 #define RUDDER_BOOST				0.5
@@ -639,15 +638,15 @@
 // The range of altitude within which to linearly vary the throttle
 // and pitch to maintain altitude.  A bigger value makes altitude hold
 // smoother, and is suggested for very fast planes.
-#define HEIGHT_MARGIN 5
+#define HEIGHT_MARGIN                        5
 
 // Use ALT_HOLD_THROTTLE_MAX when below HEIGHT_MARGIN of the target height.
 // Interpolate between ALT_HOLD_THROTTLE_MAX and ALT_HOLD_THROTTLE_MIN
 // when within HEIGHT_MARGIN of the target height.
 // Use ALT_HOLD_THROTTLE_MIN when above HEIGHT_MARGIN of the target height.
 // Throttle values are from 0.0 - 1.0.
-#define ALT_HOLD_THROTTLE_MIN 0.25
-#define ALT_HOLD_THROTTLE_MAX                1.0
+#define ALT_HOLD_THROTTLE_MIN               0.35
+#define ALT_HOLD_THROTTLE_MAX                .85
 
 // Use ALT_HOLD_PITCH_MAX when below HEIGHT_MARGIN of the target height.
 // Interpolate between ALT_HOLD_PITCH_MAX and ALT_HOLD_PITCH_MIN when
@@ -725,7 +724,7 @@
 //#define ID_VEHICLE_REGISTRATION "TW2-PDH-UK"
 //#define ID_LEAD_PILOT "Pete Hollands"
 //#define ID_DIY_DRONES_URL "http://www.diydrones.com/profile/PeterHollands"
-#define ID_VEHICLE_MODEL_NAME   "Parkzone Sport Cub"
+#define ID_VEHICLE_MODEL_NAME   "Xplanes PT60"
 #define ID_VEHICLE_REGISTRATION "KD0AIJ"
 #define ID_LEAD_PILOT           "Mark Whitehorn"
 #define ID_DIY_DRONES_URL       "http://www.diydrones.com/profile/markw"
@@ -813,13 +812,8 @@
 // external port assignment.
 // Assign the console to an internal UART with CONSOLE_UART, map this console to
 // external port connection with DBG_PORT.
-// AUAV3 port 4 is non-opto, labeled GPS_RX,TX
 #define GPS_PORT                            4
-// AUAV3 port 3 is non-opto, labeled U3_RX,TX
 #define TLM_PORT                            3
-// AUAV3 port 2 is opto-coupled, labeled U2_RX,TX
-#define SBUS_PORT                           2
-// AUAV3 port 1 is opto-coupled, labeled U1_RX,TX
 #define DBG_PORT                            1
 
 
