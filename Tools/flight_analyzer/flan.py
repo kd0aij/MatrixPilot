@@ -1774,7 +1774,7 @@ def write_GE_accel_vectors(log_book,flight_origin,filename, flight_clock):
         <roll>""",
         # negating pitch and using in place of roll
         print >> filename,  - entry.pitch,
-        # scaling of accel vector: IMUraw_xacc 1g magnitude is 4096 (4g range), width of vector
+        # scaling of accel vector: IMUraw_xacc 1g magnitude is 4096 (4g range)
         # .00375 is about half the wingspan of the plane icon; scale 0.5g to that length
         print >> filename, """</roll>
       </Orientation>
