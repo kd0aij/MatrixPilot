@@ -186,7 +186,6 @@
         <itemPath>projectSpecific/magnetometerOptions.h</itemPath>
         <itemPath>projectSpecific/osd_layout.h</itemPath>
         <itemPath>projectSpecific/options.h</itemPath>
-        <itemPath>projectSpecific/notes.txt</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="LinkerScript"

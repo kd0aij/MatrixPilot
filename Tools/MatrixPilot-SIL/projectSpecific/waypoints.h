@@ -25,7 +25,7 @@
 // Waypoint handling
 
 // Move on to the next waypoint when getting within this distance of the current goal (in meters)
-#define WAYPOINT_RADIUS 		20
+#define WAYPOINT_RADIUS 		10
 
 // Origin Location
 // When using relative waypoints, the default is to interpret those waypoints as relative to the
@@ -154,7 +154,7 @@
 //    {{ -100,  0, 50}, F_NORMAL, CAM_VIEW_LAUNCH}, //Waypoint 3
 //};
 
-// AAM West Field runway center  39°50'31.97"N  105°13'10.17"W (105.2194917, 39.842213889)
+// AAM West Field runway center  39ï¿½50'31.97"N  105ï¿½13'10.17"W (105.2194917, 39.842213889)
 #define USE_FIXED_ORIGIN		0
 #define FIXED_ORIGIN_LOCATION	{ -1052194917, 398422138, 1817.0 }
 
@@ -162,12 +162,12 @@
 // This is a lefthand pattern for takeoff to the east
 
 const struct waypointDef waypoints[] = {
-	{ { 84, 3, 20 } , F_NORMAL + F_TAKEOFF, CAM_VIEW_LAUNCH } , //Waypoint 1
-	{ { 83, 49, 30 } , F_NORMAL , CAM_VIEW_LAUNCH } , //Waypoint 2
-	{ { -103, 53, 30 } , F_NORMAL , CAM_VIEW_LAUNCH } , //Waypoint 3
-	{ { -103, 7, 25 } , F_NORMAL , CAM_VIEW_LAUNCH } , //Waypoint 4
-	{ { -14, 4, 20 } , F_NORMAL , CAM_VIEW_LAUNCH } , //Waypoint 5
-	{ { 15, 3, 20 } , F_NORMAL + F_TRIGGER , CAM_VIEW_LAUNCH } , //Waypoint 6
+	{ { 84, 3, 20 } , F_CROSS_TRACK + F_TAKEOFF, CAM_VIEW_LAUNCH } , //Waypoint 1
+	{ { 83, 49, 30 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 2
+	{ { -103, 53, 30 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 3
+	{ { -103, 7, 25 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 4
+	{ { -14, 4, 20 } , F_CROSS_TRACK , CAM_VIEW_LAUNCH } , //Waypoint 5
+	{ { 15, 3, 20 } , F_CROSS_TRACK + F_TRIGGER , CAM_VIEW_LAUNCH } , //Waypoint 6
 };
 
 //const struct waypointDef waypoints[] = {

@@ -126,7 +126,7 @@
 // holds the cross track error to smaller values.
 // 64 meters is probably the largest value you might use on a fast model jet (more than 50 meters/sec)
 // Use 32 meters for 20 to 50 meters/sec, and 16 meters for less than that.
-#define CROSS_TRACK_MARGIN                  (64)
+#define CROSS_TRACK_MARGIN                  (24)
 
 // Wind Gain Adjustment
 // This is an option for modulating the navigation gains in flight
@@ -151,7 +151,7 @@
 // If you define SPEED_CONTROL to be 1, MatrixPilot will take air speed into account
 // in the altitude controls, and will trim the throttle and pitch to maintain air speed.
 // Define DESIRED_SPEED to be the air speed that you want, in meters/second.
-#define SPEED_CONTROL                       1
+#define SPEED_CONTROL                       0
 #define DESIRED_SPEED						16.0 // meters/second
 
 // Inverted flight
@@ -186,7 +186,7 @@
 // Setting RACING_MODE to 1 will keep the plane at a set throttle value while in waypoint mode.
 // RACING_MODE_WP_THROTTLE is the throttle value to use, and should be set between 0.0 and 1.0.
 // Racing performance can be improved by disabling cross tracking for your waypoints.
-#define RACING_MODE			1
+#define RACING_MODE			0
 #define RACING_MODE_WP_THROTTLE		.5
 
 // Set this to 1 if you want the UAV Dev Board to fly your plane without a radio transmitter or
@@ -638,15 +638,15 @@
 // The range of altitude within which to linearly vary the throttle
 // and pitch to maintain altitude.  A bigger value makes altitude hold
 // smoother, and is suggested for very fast planes.
-#define HEIGHT_MARGIN                        5
+#define HEIGHT_MARGIN                        20
 
 // Use ALT_HOLD_THROTTLE_MAX when below HEIGHT_MARGIN of the target height.
 // Interpolate between ALT_HOLD_THROTTLE_MAX and ALT_HOLD_THROTTLE_MIN
 // when within HEIGHT_MARGIN of the target height.
 // Use ALT_HOLD_THROTTLE_MIN when above HEIGHT_MARGIN of the target height.
 // Throttle values are from 0.0 - 1.0.
-#define ALT_HOLD_THROTTLE_MIN               0.35
-#define ALT_HOLD_THROTTLE_MAX                .85
+#define ALT_HOLD_THROTTLE_MIN               0.0
+#define ALT_HOLD_THROTTLE_MAX                1.0
 
 // Use ALT_HOLD_PITCH_MAX when below HEIGHT_MARGIN of the target height.
 // Interpolate between ALT_HOLD_PITCH_MAX and ALT_HOLD_PITCH_MIN when
@@ -704,7 +704,7 @@
 // Set this to either FP_WAYPOINTS or FP_LOGO
 // The Waypoint definitions and options are located in the waypoints.h file.
 // The Logo flight plan definitions and options are located in the flightplan-logo.h file.
-#define FLIGHT_PLAN_TYPE                    FP_LOGO
+#define FLIGHT_PLAN_TYPE                    FP_WAYPOINTS
 
 
 ///////////////////////////////////////////////////////////////////////////////////

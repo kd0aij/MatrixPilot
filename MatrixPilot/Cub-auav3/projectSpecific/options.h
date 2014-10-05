@@ -103,7 +103,7 @@
 #define ROLL_STABILIZATION_AILERONS         1
 #define ROLL_STABILIZATION_RUDDER           0
 // experimental: use rudder to ...
-#define ROLL_CONTROL_RUDDER                 1
+#define ROLL_CONTROL_RUDDER                 0
 
 #define PITCH_STABILIZATION                 1
 #define YAW_STABILIZATION_AILERON           0
@@ -500,10 +500,10 @@
 // YAWKP_AILERON determines the maximum bank angle setpoint as a fraction of +/- 90 degrees
 // YAWKD_AILERON is the derivative feedback gain for ailerons in response to yaw rotation
 // AILERON_BOOST is the additional gain multiplier for the manually commanded aileron deflection
-#define ROLLKP				0.1 //0.22
-#define ROLLKD				0.1 //0.02
-#define YAWKP_AILERON		0.375 // 0.05
-#define YAWKD_AILERON		0.0 //0.11 //0.05
+#define ROLLKP				0.4 //0.22
+#define ROLLKD				0.08 //0.02
+#define YAWKP_AILERON		0.35 // 0.05
+#define YAWKD_AILERON		0.2 //0.11 //0.05
 #define AILERON_BOOST		0.5
 
 // Elevator/Pitch Control Gains
@@ -513,9 +513,9 @@
 // ROLL_ELEV_MIX is the degree of elevator adjustment for aileron
 // ELEVATOR_BOOST is the additional gain multiplier for the manually commanded elevator deflection
 #define PITCHGAIN			0.2 // 0.150
-#define PITCHKD				0.1 //0.015 // 0.075
-#define RUDDER_ELEV_MIX		0.2
-#define ROLL_ELEV_MIX		1.0
+#define PITCHKD				0.05 //0.015 // 0.075
+#define RUDDER_ELEV_MIX		0.04
+#define ROLL_ELEV_MIX		0.8
 #define ELEVATOR_BOOST		0.5
 
 // Neutral pitch angle of the plane (in degrees) when flying inverted
@@ -639,7 +639,7 @@
 // The range of altitude within which to linearly vary the throttle
 // and pitch to maintain altitude.  A bigger value makes altitude hold
 // smoother, and is suggested for very fast planes.
-#define HEIGHT_MARGIN 5
+#define HEIGHT_MARGIN                        20
 
 // Use ALT_HOLD_THROTTLE_MAX when below HEIGHT_MARGIN of the target height.
 // Interpolate between ALT_HOLD_THROTTLE_MAX and ALT_HOLD_THROTTLE_MIN
